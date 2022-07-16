@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as mpl
 import yfinance as yf
 
 
 class PortfolioAnalytics():
-    def _init_(self, tickers, data, period):
+    def _init_(self, tickers, period):
         self.tickers=tickers
-        self.data=data
         self.period=period
 
     def list_securities(self):
@@ -33,7 +33,7 @@ class PortfolioAnalytics():
         std = np.std(portfolio_returns)
         return std
 
-
+    def plot_
 # TODO: plot of daily, monthly returns
 # TODO: test
 
