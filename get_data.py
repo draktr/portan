@@ -13,14 +13,14 @@ class GetData():
             df_list=list()
             for ticker in self.ticker:
                 time_series = yf.download(ticker, group_by="Ticker", begin=self.begin, end=self.end)
-                time_series['ticker'] = ticker
+                time_series["ticker"] = ticker
                 df_list.append(time_series)
 
         else:
             df_list=list()
             for ticker in self.ticker:
                 time_series = yf.download(ticker, group_by="Ticker", period=self.period)
-                time_series['ticker'] = ticker
+                time_series["ticker"] = ticker
                 df_list.append(time_series)
 
         # combine all dataframes into a single dataframe
@@ -29,4 +29,4 @@ class GetData():
 
     def save_to_csv(self):
         # save to csv
-        self.data.to_csv('ticker.csv')
+        self.data.to_csv("ticker.csv")
