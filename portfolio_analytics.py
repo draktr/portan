@@ -2,29 +2,35 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as mpl
 import yfinance as yf
-
+import datetime
 
 class PortfolioAnalytics():
-    def __init__(self, tickers, period):
+    def __init__(self, tickers, start, end):
         self.tickers=tickers
-        self.period=period
+        self.start=start
+        self.end=end
+
+        self.all_securities_returns = pd.DataFrame(columns=self.tickers)
+        for ticker in self.tickers:
+            self.prices = yf.download(ticker, start=self.start, end=self.end)
+            daily_returns = self.prices["Adj Close"].pct_change()
+            self.all_securities_returns[ticker] = daily_returns
+        #TODO: if-else about importing .csv data, periods etc
 
     def list_securities(self):
         for ticker in self.tickers:
             security = yf.Ticker(ticker)
             print(security.info["longName"])
 
-    def all_securities_returns(self):
-        all_securities_returns = pd.DataFrame(columns=self.tickers)
-        for ticker in self.tickers:
-            prices = yf.download(ticker, self.period)
-            daily_returns = prices["Adj Close"].pct_change()
-            all_securities_returns[ticker] = daily_returns
-        all_securities_returns.to_numpy()
-        return all_securities_returns
+    def returns_with_dates(self, weights):
+        returns_with_dates = pd.DataFrame(columns=["Dates", "Returns"])
+        returns_with_dates["Dates"] = self.all_securities_returns.index
+        returns = self.portfolio_returns(weights)
+        returns_with_dates["Returns"] = returns
+        return returns_with_dates
 
     def portfolio_returns(self, weights):
-        returns = self.all_securities_returns
+        returns = self.all_securities_returns.to_numpy()
         portfolio_returns = np.dot(returns, weights)
         return portfolio_returns
 
@@ -71,3 +77,7 @@ class PortfolioAnalytics():
 
 
 # TODO: same analytics for each security in the portfolio separately
+
+# TODO: sharpe, sortio and other ratios
+# TODO: ulcer index adn other measurements of pain
+
