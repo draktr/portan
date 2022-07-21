@@ -36,8 +36,8 @@ class PortfolioAnalytics():
 
     def portfolio_daily_volatility(self, weights):
         portfolio_returns = self.portfolio_returns(weights)
-        std = np.std(portfolio_returns)
-        return std
+        volatility = np.std(portfolio_returns)
+        return volatility
 
     def portfolio_cumulative_returns(self, weights):
         portfolio_returns = self.returns_with_dates(weights)
@@ -77,9 +77,37 @@ class PortfolioAnalytics():
         ax1.set_title("Portfolio Cumulative Returns")
         mpl.show()
 
+    def average_daily_return(self, weights):
+        returns = self.returns_with_dates(weights)
+        average_return = returns.mean()
+        return average_return
+
+    def sharpe(self, weights, risk_free_rate):
+        portfolio_returns = self.portfolio_returns(weights)
+        mean_daily_returns = np.mean(portfolio_returns)
+        volatility = np.std(portfolio_returns)
+        sharpe_ratio = (100*mean_daily_returns - risk_free_rate)/volatility
+        return sharpe_ratio
+
+    def downside_deviation(self, weights, risk_free_rate):
+        portfolio_returns = self.portfolio_returns(weights)
+        portfolio_returns = portfolio_returns - risk_free_rate
+        portfolio_returns = portfolio_returns[portfolio_returns<0]
+        downside_deviation = np.std(portfolio_returns)
+        return downside_deviation
+
+    def sortino(self, weights, risk_free_rate):
+        portfolio_returns = self.portfolio_returns(weights)
+        mean_daily_returns = np.mean(portfolio_returns)
+        downside_volatility = self.downside_deviation(weights, risk_free_rate)
+        sortino_ratio = (100*mean_daily_returns - risk_free_rate)/downside_volatility
+        return sortino_ratio
+
 
 # TODO: same analytics for each security in the portfolio separately
-# TODO: add dates for plot methods
-# TODO: sharpe, sortio and other ratios
+# TODO: other ratios, maximum drawdown
 # TODO: ulcer index adn other measurements of pain
-
+# TODO: do portfolio metrics in one method
+# TODO: calculate returns when initiating
+# TODO: separate one for checking which weigths
+# TODO: asset covariance or correlation matrix
