@@ -5,20 +5,25 @@ import yfinance as yf
 
 
 class PortfolioAnalytics():
-    def __init__(self, tickers, weights, start, end, initial_aum=10000, risk_free_rate=0.01):
+    def __init__(self, tickers, weights, start, end, data = None, initial_aum=10000, risk_free_rate=0.01):
         self.tickers=tickers
         self.start=start
         self.end=end
-        # ? self.weights = weights
         self.initial_aum = initial_aum
         self.risk_free_rate = risk_free_rate
+        self.data=data # takes in only the data of type GetData.save_adj_close_only()
 
-        self.securities_returns = pd.DataFrame(columns=self.tickers)
-        self.prices = pd.DataFrame(columns=self.tickers)
-        for ticker in self.tickers:
-            price_current = yf.download(ticker, start=self.start, end=self.end)
-            self.prices[ticker] = price_current["Adj Close"]
-            self.securities_returns[ticker] = price_current["Adj Close"].pct_change()
+        if data==None:
+            self.securities_returns = pd.DataFrame(columns=self.tickers)
+            self.prices = pd.DataFrame(columns=self.tickers)
+            for ticker in self.tickers:
+                price_current = yf.download(ticker, start=self.start, end=self.end)
+                self.prices[ticker] = price_current["Adj Close"]
+                self.securities_returns[ticker] = price_current["Adj Close"].pct_change()
+        else:
+            self.prices = pd.read_csv(self.data, index_col=["Date"])
+            self.securities_returns = pd.DataFrame(columns=self.tickers, index=self.prices.index)
+            self.securities_returns = self.prices.pct_change()
 
         # funds allocated to each security
         self.funds_allocation = np.multiply(self.initial_aum, weights)
@@ -32,7 +37,6 @@ class PortfolioAnalytics():
 
         # portfolio returns (numpy array)
         self.portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
-        #TODO: if-else about importing .csv data, periods etc
 
     def list_securities(self):
         for ticker in self.tickers:
