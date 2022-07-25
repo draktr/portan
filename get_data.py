@@ -1,32 +1,37 @@
+import os
 import pandas as pd
 import yfinance as yf
 
 class GetData():
-    def _init_(self, ticker, begin, end, period):
+    def __init__(self, ticker, begin, end, period=None):
         self.ticker=ticker
         self.begin=begin
         self.end=end
         self.period=period
+        self.df_list=list()
 
-    def get_time_series(self):
         if self.period==None:
-            df_list=list()
             for ticker in self.ticker:
                 time_series = yf.download(ticker, group_by="Ticker", begin=self.begin, end=self.end)
                 time_series["ticker"] = ticker
-                df_list.append(time_series)
+                self.df_list.append(time_series)
 
         else:
-            df_list=list()
             for ticker in self.ticker:
                 time_series = yf.download(ticker, group_by="Ticker", period=self.period)
                 time_series["ticker"] = ticker
-                df_list.append(time_series)
+                self.df_list.append(time_series)
 
         # combine all dataframes into a single dataframe
-        self.data = pd.concat(df_list)
-        return self.data
+        self.data = pd.concat(self.df_list)
 
-    def save_to_csv(self):
-        # save to csv
-        self.data.to_csv("ticker.csv")
+    def save_together(self):
+        self.data.to_csv("all_tickers_data.csv")
+
+    def save_separately(self):
+        os.mkdir("tickers_data")
+        os.chdir("tickers_data")
+        for i in range(len(self.ticker)):
+            data = self.df_list[i]
+            ticker = data["ticker"][0]
+            data.to_csv("%s_data.csv"%ticker)
