@@ -63,7 +63,7 @@ class OmegaAnalysis():
             all_values[portfolio] = omega_values
 
         all_values.plot(title="Omega Curve", xlabel="Minimum Acceptable Return (%)", ylabel="Omega Ratio", ylim=(0, 1.5))
-        if show==True:
+        if save is True:
+            mpl.savefig("omega_curves.png", dpi=300)
+        if show is True:
             mpl.show()
-        if save==True:
-            mpl.savefig("omega_curves.png")
