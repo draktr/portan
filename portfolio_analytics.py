@@ -5,13 +5,13 @@ import yfinance as yf
 
 
 class PortfolioAnalytics():
-    def __init__(self, tickers, weights, start, end, data = None, initial_aum=10000, risk_free_rate=0.01):
+    def __init__(self, tickers, weights, start, end, data = None, initial_aum=10000, risk_free_rate=0.03):
         self.tickers=tickers
         self.start=start
         self.end=end
-        self.initial_aum = initial_aum
-        self.risk_free_rate = risk_free_rate
         self.data=data # takes in only the data of type GetData.save_adj_close_only()
+        self.initial_aum = initial_aum
+        self.risk_free_rate = risk_free_rate # takes in decimals (not percentage)
 
         if data==None:
             self.securities_returns = pd.DataFrame(columns=self.tickers)
@@ -37,6 +37,9 @@ class PortfolioAnalytics():
 
         # portfolio returns (numpy array)
         self.portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
+        self.mean_daily_returns = np.nanmean(self.portfolio_returns)
+        self.volatility = np.nanstd(self.portfolio_returns)
+
 
     def list_securities(self):
         for ticker in self.tickers:
@@ -48,10 +51,6 @@ class PortfolioAnalytics():
         returns_with_dates = pd.DataFrame(columns=["Returns"], index=self.securities_returns.index)
         returns_with_dates["Returns"] = self.portfolio_returns
         return returns_with_dates
-
-    def portfolio_daily_volatility(self):
-        volatility = np.std(self.portfolio_returns)
-        return volatility
 
     def portfolio_cumulative_returns(self):
         portfolio_returns = self.returns_with_dates()
@@ -97,21 +96,30 @@ class PortfolioAnalytics():
         return average_return
 
     def sharpe(self):
-        mean_daily_returns = np.mean(self.portfolio_returns)
-        volatility = np.std(self.portfolio_returns)
-        sharpe_ratio = (100*mean_daily_returns - self.risk_free_rate)/volatility
+        sharpe_ratio = 100*(self.mean_daily_returns - self.risk_free_rate)/self.volatility
         return sharpe_ratio
 
-    def downside_deviation(self):
-        portfolio_returns = self.portfolio_returns - self.risk_free_rate
-        portfolio_returns = portfolio_returns[portfolio_returns<0]
-        downside_deviation = np.std(portfolio_returns)
-        return downside_deviation
+    def upside_volatility(self):
+        positive_portfolio_returns = self.portfolio_returns - self.risk_free_rate
+        positive_portfolio_returns = positive_portfolio_returns[positive_portfolio_returns>0]
+        upside_volatility = np.std(positive_portfolio_returns)
+        return upside_volatility
+
+    def volatility_skewness(self):
+        upside = self.upside_volatility()
+        downside = self.downside_volatility()
+        skewness = upside/downside
+        return skewness
+
+    def downside_volatility(self):
+        negative_portfolio_returns = self.portfolio_returns - self.risk_free_rate
+        negative_portfolio_returns = negative_portfolio_returns[negative_portfolio_returns<0]
+        downside_volatility = np.std(negative_portfolio_returns)
+        return downside_volatility
 
     def sortino(self):
-        mean_daily_returns = np.mean(self.portfolio_returns)
-        downside_volatility = self.downside_deviation()
-        sortino_ratio = (100*mean_daily_returns - self.risk_free_rate)/downside_volatility
+        downside_volatility = self.downside_volatility()
+        sortino_ratio = 100*(self.mean_daily_returns - self.risk_free_rate)/downside_volatility
         return sortino_ratio
 
     def maximum_drawdown(self, period=365):
@@ -153,10 +161,20 @@ class PortfolioAnalytics():
         mpl.show()
 
     def martin(self, period=14):
-        mean_daily_returns = np.mean(self.portfolio_returns)
         ulcer_index = self.ulcer(period)
-        sharpe_ratio = (100*mean_daily_returns - self.risk_free_rate)/ulcer_index
+        sharpe_ratio = 100*(self.mean_daily_returns - self.risk_free_rate)/ulcer_index
         return sharpe_ratio
+
+    def omega_ratio(self, annual_threshold=0.03):
+        daily_threshold = (annual_threshold + 1)**np.sqrt(1/252)-1
+        returns = self.returns_with_dates()
+
+        excess_returns = returns-daily_threshold
+        winning = excess_returns[excess_returns>0].sum()
+        losing = -(excess_returns[excess_returns<=0].sum())
+
+        omega=winning/losing
+        return omega
 
 # TODO: same analytics for each security in the portfolio separately
 # TODO: other ratios
@@ -164,10 +182,6 @@ class PortfolioAnalytics():
 # TODO: do portfolio metrics in one method
 # TODO: separate one for checking which weigths
 # TODO: asset covariance or correlation matrix
-# TODO figure out 100* percentage stuff for the ratios
-# TODO: look into martin, sharepe etc bc nans
-
-# TODO: figure out what else can be put in the __init__() (mean_daily_return etc)
-# TODO: market report (indices, yield curve etc)
+# ? annualizing ratios?
 
 # cloud providers, chip names (SOXX), cyber security
