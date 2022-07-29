@@ -178,6 +178,41 @@ class PortfolioAnalytics():
         skewness = upside/downside
         return skewness
 
+    def omega_excess_return(self, benchmark_tickers, benchmark_weights, data=None):
+        portfolio_downside_volatility = self.downside_volatility()
+        benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
+        benchmark_downside_volatility = self.downside_volatility(benchmark_returns)
+
+        omega_excess_return = self.portfolio_returns - 3*portfolio_downside_volatility*benchmark_downside_volatility
+        return omega_excess_return
+
+    def upside_potential_ratio(self):
+        downside_volatility = self.downside_volatility()
+        upside = self.portfolio_returns - self.risk_free_rate
+        upside = upside[upside>0].sum()
+        upside_potential_ratio = upside/downside_volatility
+        return upside_potential_ratio
+
+    def downside_beta(self, benchmark_tickers, benchmark_weights, data=None, minimum_acceptable_return=0.03):
+        negative_benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
+        negative_benchmark_returns = negative_benchmark_returns - minimum_acceptable_return
+        negative_benchmark_returns = negative_benchmark_returns[negative_benchmark_returns<0]
+
+        negative_portfolio_returns = self.portfolio_returns - minimum_acceptable_return
+        negative_portfolio_returns = negative_portfolio_returns[negative_portfolio_returns<0]
+
+        downside_beta, downside_alpha = np.polyfit(negative_benchmark_returns, negative_portfolio_returns, 1)
+
+        return downside_beta
+
+    def downside_volatility_ratio(self, benchmark_tickers, benchmark_weights, data=None):
+        benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
+
+        portfolio_downside_volatility = self.downside_volatility()
+        benchmark_downside_volatility = self.downside_volatility(benchmark_returns)
+
+        downside_volatility_ratio = portfolio_downside_volatility/benchmark_downside_volatility
+        return downside_volatility_ratio
 
     def sortino(self):
         downside_volatility = self.downside_volatility()
