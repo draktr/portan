@@ -193,7 +193,7 @@ class PortfolioAnalytics():
         upside_potential_ratio = upside/downside_volatility
         return upside_potential_ratio
 
-    def downside_beta(self, benchmark_tickers, benchmark_weights, data=None, minimum_acceptable_return=0.03):
+    def downside_capm(self, benchmark_tickers, benchmark_weights, data=None, minimum_acceptable_return=0.03):
         negative_benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
         negative_benchmark_returns = negative_benchmark_returns - minimum_acceptable_return
         negative_benchmark_returns = negative_benchmark_returns[negative_benchmark_returns<0]
@@ -201,9 +201,12 @@ class PortfolioAnalytics():
         negative_portfolio_returns = self.portfolio_returns - minimum_acceptable_return
         negative_portfolio_returns = negative_portfolio_returns[negative_portfolio_returns<0]
 
-        downside_beta, downside_alpha = np.polyfit(negative_benchmark_returns, negative_portfolio_returns, 1)
+        model = LinearRegression().fit(negative_benchmark_returns, negative_portfolio_returns)
+        downside_alpha = model.intercept_
+        downside_beta = model.coef_
+        downside_r_squared = model.score(negative_benchmark_returns, negative_portfolio_returns)
 
-        return downside_beta
+        return downside_beta, downside_alpha, downside_r_squared
 
     def downside_volatility_ratio(self, benchmark_tickers, benchmark_weights, data=None):
         benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
