@@ -31,13 +31,13 @@ class MarketReporter():
         yields = pdr.DataReader(treasuries, "fred")
         yields = yields.reindex_axis(labels=["1-month", "3-month", "6-month", "1-year", "2-year", "3-year", "5-year", "7-year", "10-year", "20-year", "30-year"], axis=1)
 
-        print(yields)
-
         yields.loc[date].plot(label=date)
         if save is True:
             mpl.savefig("yield_curve_us.png", dpi=300)
         if show is True:
             mpl.show()
+
+        return yields
 
     def yield_curve_euro(self, date="2022-06-01", show=True, save=False):
         raw_data = pdr.DataReader("teimf060", "eurostat")
@@ -46,15 +46,15 @@ class MarketReporter():
         yields["5-year"]=raw_data.iloc[:, 2]
         yields["10-year"]=raw_data.iloc[:, 1]
 
-        print(yields)
-
         yields.loc[date].plot(label=date)
         if save is True:
             mpl.savefig("yield_curve_euro.png", dpi=300)
         if show is True:
             mpl.show()
 
-    def eu_ten_year_bond_yields(self):
+        return yields
+
+    def ten_year_bond_yields_eu(self):
         yields=pdr.DataReader("teimf050", "eurostat")
 
         countries=list()
@@ -63,7 +63,6 @@ class MarketReporter():
         yields.columns=countries
 
         return yields
-
 
     def commodities(self):
         tickers=["MCL=F", "NG=F", "ZW=F", "HG=F", "GC=F", "SI=F"]
@@ -85,3 +84,24 @@ class MarketReporter():
             mpl.savefig("vix.png", dpi=300)
         if show is True:
             mpl.show()
+
+    def monetary_us(self):
+        monetary_us_codes = ["DFF", "REAINTRATREARAT1YE", "WM1NS", "M2SL", "MABMM301USM189S", "M1V", "M2V"]
+        monetary_us = pdr.DataReader(monetary_us_codes, "fred")
+        return monetary_us
+
+    def macroeconomic_us(self):
+        macreconomic_us_codes = ["GDPC1", "UNRATE", "M318501Q027NBEA", "GFDEBTN", "BOPGSTB", "FPCPITOTLZGUSA", "CORESTICKM159SFRBATL"]
+        macroeconomic_us =pdr.DataReader(macreconomic_us_codes, "fred")
+        return macroeconomic_us
+
+    def breakeven_inflations_us(self):
+        breakeven_inflations_us_codes = ["T5YIE", "T10YIE", "T20YIEM", "T30YIEM"]
+        breakeven_inflations_us = pdr.DataReader(breakeven_inflations_us_codes, "fred")
+        return breakeven_inflations_us
+
+    def important_rates_us(self):
+        rates_codes = ["SOFR", "DPRIME", "MORTGAGE30US"]
+        important_rates = pdr.DataReader(rates_codes, "fred")
+        return important_rates
+        # disount window at FED?
