@@ -12,10 +12,11 @@ class MarketReporter():
         self.two_days_ago=self.today-timedelta(days=2)
         self.week_ago=self.today-timedelta(days=7)
 
-    def majors(self):
+    def majors(self): # TODO: make a shorter version
         tickers=["^GSPC", "^DJI", "^IXIC", "^TNX", "VIX", "USDEUR=X", "USDSGD=X", "USDGBP=X" "^RUT", "^FTSE", "^STOXX50E", "^GDAXI", "^HSI", "^STI", "000001.SS", "399001.SZ"]
         current_quotes = pd.Series(index=tickers)
 
+        #TODO: dont use for loop
         for ticker in tickers:
             security=yf.Ticker(ticker)
             current_quotes[ticker]=security.info["regularMarketPrice"]
@@ -25,7 +26,7 @@ class MarketReporter():
 
         return current_quotes
 
-    def yield_curve_us(self, date="2022-06-30", save=False, show=True):
+    def yield_curve_us(self, date="2022-06-30", show=True, save=False):
         treasuries = ["DGS1MO", "DGS3MO", "DGS6MO", "DGS1", "DGS2", "DGS3", "DGS5", "DGS7", "DGS10", "DGS20", "DGS30"]
         yields = pdr.DataReader(treasuries, "fred")
         yields = yields.reindex_axis(labels=["1-month", "3-month", "6-month", "1-year", "2-year", "3-year", "5-year", "7-year", "10-year", "20-year", "30-year"], axis=1)
@@ -34,6 +35,53 @@ class MarketReporter():
 
         yields.loc[date].plot(label=date)
         if save is True:
-            mpl.savefig("yield_curve.png", dpi=300)
+            mpl.savefig("yield_curve_us.png", dpi=300)
+        if show is True:
+            mpl.show()
+
+    def yield_curve_euro(self, date="2022-06-01", show=True, save=False):
+        raw_data = pdr.DataReader("teimf060", "eurostat")
+        yields = pd.DataFrame(index=raw_data.index, columns=["1-year", "5-year", "10-year"])
+        yields["1-year"]=raw_data.iloc[:, 0]
+        yields["5-year"]=raw_data.iloc[:, 2]
+        yields["10-year"]=raw_data.iloc[:, 1]
+
+        print(yields)
+
+        yields.loc[date].plot(label=date)
+        if save is True:
+            mpl.savefig("yield_curve_euro.png", dpi=300)
+        if show is True:
+            mpl.show()
+
+    def eu_ten_year_bond_yields(self):
+        yields=pdr.DataReader("teimf050", "eurostat")
+
+        countries=list()
+        for i in range(len(yields.columns)):
+            countries[i]=yields.columns[i][1]
+        yields.columns=countries
+
+        return yields
+
+
+    def commodities(self):
+        tickers=["MCL=F", "NG=F", "ZW=F", "HG=F", "GC=F", "SI=F"]
+        current_quotes = pd.Series(index=tickers)
+
+        for ticker in tickers:
+            future=yf.Ticker(ticker)
+            current_quotes[ticker]=future.info["regularMarketPrice"]
+
+        names=["Oil Future", "Natural Gas Future", "Wheat Future", "Copper Future", "Gold Spot", "Silver Spot"]
+        current_quotes.reindex(names)
+
+        return current_quotes
+
+    def vix(self, show=True, save=False):
+        vix_data = yf.download("VIX")
+        vix_data["Adj Close"].plot(title="CBOE Volatility Index", xlabel="Date", ylabel="VIX", legen=None)
+        if save is True:
+            mpl.savefig("vix.png", dpi=300)
         if show is True:
             mpl.show()
