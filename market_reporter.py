@@ -12,7 +12,22 @@ class MarketReporter():
         self.two_days_ago=self.today-timedelta(days=2)
         self.week_ago=self.today-timedelta(days=7)
 
-    def majors(self): # TODO: make a shorter version
+    def majors(self):
+        tickers=["^GSPC", "^DJI", "^IXIC", "^TNX", "VIX", "USDEUR=X"]
+        current_quotes = pd.Series(index=tickers)
+
+        #TODO: dont use for loop
+        for ticker in tickers:
+            security=yf.Ticker(ticker)
+            current_quotes[ticker]=security.info["regularMarketPrice"]
+
+        names=["S&P500", "Dow Jones Industrial Average", "NASDAQ Composite", "10-year US Treasury Yield", "CBOE Volatility Index", "USDEUR"]
+        current_quotes.reindex(names)
+
+        return current_quotes
+
+
+    def majors_long(self):
         tickers=["^GSPC", "^DJI", "^IXIC", "^TNX", "VIX", "USDEUR=X", "USDSGD=X", "USDGBP=X" "^RUT", "^FTSE", "^STOXX50E", "^GDAXI", "^HSI", "^STI", "000001.SS", "399001.SZ"]
         current_quotes = pd.Series(index=tickers)
 
@@ -95,13 +110,27 @@ class MarketReporter():
         macroeconomic_us =pdr.DataReader(macreconomic_us_codes, "fred")
         return macroeconomic_us
 
-    def breakeven_inflations_us(self):
-        breakeven_inflations_us_codes = ["T5YIE", "T10YIE", "T20YIEM", "T30YIEM"]
-        breakeven_inflations_us = pdr.DataReader(breakeven_inflations_us_codes, "fred")
-        return breakeven_inflations_us
+    def inflation_expectations_us(self):
+        expectations_codes = ["EXPINF5YR", "EXPINF10YR", "EXPINF20YR", "EXPINF30YR" "T5YIE", "T10YIE", "T20YIEM", "T30YIEM"]
+        expectations = pdr.DataReader(expectations_codes, "fred")
+        return expectations
 
     def important_rates_us(self):
-        rates_codes = ["SOFR", "DPRIME", "MORTGAGE30US"]
+        rates_codes = ["DFF", "SOFR", "DPRIME", "MORTGAGE30US"]
         important_rates = pdr.DataReader(rates_codes, "fred")
         return important_rates
-        # disount window at FED?
+
+    def euribor(self):
+        euribor_codes = ["ECB/RTD_M_S0_N_C_EUR1M_E", "ECB/RTD_M_S0_N_C_EUR3M_E", "ECB/RTD_M_S0_N_C_EUR6M_E", "ECB/RTD_M_S0_N_C_EUR1Y_E"]
+        euribor = pdr.DataReader(euribor_codes, "quandl")
+        return euribor
+
+    def corporate_yields(self)):
+        yields_codes = ["AAA", "DBAA", "BAMLH0A0HYM2EY", "BAMLH0A3HYCEY"]
+        yields = pdr.DataReader(yields_codes, "fred")
+        return yields
+
+    def credit_spreads_us(self):
+        spreads_codes = ["AAA10Y", "BAA10Y", "BAMLH0A0HYM2", "BAMLH0A3HYC"]
+        spreads = pdr.DataReader(spreads_codes, "fred")
+        return spreads
