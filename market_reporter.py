@@ -18,19 +18,25 @@ class MarketReporter():
             security=yf.Ticker(ticker)
             current_quotes[ticker]=security.info["regularMarketPrice"]
 
-        current_quotes.index=["S&P500", "Dow Jones Industrial Average", "NASDAQ Composite", "10-year US Treasury Yield", "CBOE Volatility Index", "USDEUR"]
+        current_quotes.index=["S&P500", "Dow Jones Industrial Average", "NASDAQ Composite", \
+                              "10-year US Treasury Yield", "CBOE Volatility Index", "USDEUR"]
 
         return current_quotes
 
     def majors_long(self):
-        tickers=["^GSPC", "^DJI", "^IXIC", "^TNX", "VIX", "USDEUR=X", "USDSGD=X", "USDGBP=X" "^RUT", "^FTSE", "^STOXX50E", "^GDAXI", "^HSI", "^STI", "000001.SS", "399001.SZ"]
+        tickers=["^GSPC", "^DJI", "^IXIC", "^TNX", "VIX", "USDEUR=X", "USDSGD=X", "USDGBP=X", \
+                 "^RUT", "^FTSE", "^STOXX50E", "^GDAXI", "^HSI", "^STI", "000001.SS", "399001.SZ"]
         current_quotes = pd.Series(index=tickers)
 
         for ticker in tickers:
             security=yf.Ticker(ticker)
             current_quotes[ticker]=security.info["regularMarketPrice"]
 
-        current_quotes.index=["S&P500", "Dow Jones Industrial Average", "NASDAQ Composite", "10-year US Treasury Yield", "CBOE Volatility Index", "USDEUR", "USDSGD", "USDGBP", "Russell 2000", "FTSE 100", "Euro STOXX 50", "DAX 40", "Hang Seng Index", "The Straits Times Index", "Shanghai Composite", "Shenzhen Index"]
+        current_quotes.index=["S&P500", "Dow Jones Industrial Average", "NASDAQ Composite", \
+                              "10-year US Treasury Yield", "CBOE Volatility Index", "USDEUR", \
+                              "USDSGD", "USDGBP", "Russell 2000", "FTSE 100", "Euro STOXX 50", \
+                              "DAX 40", "Hang Seng Index", "The Straits Times Index", \
+                              "Shanghai Composite", "Shenzhen Index"]
 
         return current_quotes
 
@@ -42,9 +48,17 @@ class MarketReporter():
             future=yf.Ticker(ticker)
             current_quotes[ticker]=future.info["regularMarketPrice"]
 
-        current_quotes.index=["Oil Future", "Natural Gas Future", "Wheat Future", "Copper Future", "Gold Spot", "Silver Spot"]
+        current_quotes.index=["Oil Future", "Natural Gas Future", "Wheat Future", "Copper Future", \
+                              "Gold Spot", "Silver Spot"]
 
         return current_quotes
+
+    def quotes_custom(self, tickers, info="regularMarketPrice", long_names=False):
+        quotes=pdr.get_quote_yahoo(tickers)
+        if long_names is True:
+            quotes.index=quotes["longName"]
+
+        return quotes[info]
 
     def vix(self, show=True, save=False):
         vix_data = yf.download("VIX")
@@ -55,16 +69,19 @@ class MarketReporter():
             mpl.show()
 
     def yield_curve_us(self, date=None, show=True, save=False):
-        treasuries = ["DGS1MO", "DGS3MO", "DGS6MO", "DGS1", "DGS2", "DGS3", "DGS5", "DGS7", "DGS10", "DGS20", "DGS30"]
+        treasuries = ["DGS1MO", "DGS3MO", "DGS6MO", "DGS1", "DGS2", "DGS3", "DGS5", "DGS7", \
+                      "DGS10", "DGS20", "DGS30"]
 
         if date is None:
             yields = pdr.DataReader(treasuries, "fred", start=self.week_ago)
-            yields.columns = ["1-month", "3-month", "6-month", "1-year", "2-year", "3-year", "5-year", "7-year", "10-year", "20-year", "30-year"]
+            yields.columns = ["1-month", "3-month", "6-month", "1-year", "2-year", "3-year", \
+                              "5-year", "7-year", "10-year", "20-year", "30-year"]
             yields.iloc[-1].plot(label=yields.index[-1])
 
         else:
             yields = pdr.DataReader(treasuries, "fred")
-            yields.columns = ["1-month", "3-month", "6-month", "1-year", "2-year", "3-year", "5-year", "7-year", "10-year", "20-year", "30-year"]
+            yields.columns = ["1-month", "3-month", "6-month", "1-year", "2-year", "3-year", \
+                              "5-year", "7-year", "10-year", "20-year", "30-year"]
             yields.loc[date].plot(label=date)
 
         print(yields)
@@ -117,12 +134,14 @@ class MarketReporter():
         return monetary_us
 
     def macroeconomic_us(self):
-        macreconomic_codes = ["GDPC1", "UNRATE", "M318501Q027NBEA", "GFDEBTN", "BOPGSTB", "FPCPITOTLZGUSA", "CORESTICKM159SFRBATL"]
+        macreconomic_codes = ["GDPC1", "UNRATE", "M318501Q027NBEA", "GFDEBTN", "BOPGSTB", "FPCPITOTLZGUSA", \
+                              "CORESTICKM159SFRBATL"]
         macroeconomic_us =pdr.DataReader(macreconomic_codes, "fred")
         return macroeconomic_us
 
     def inflation_expectations_us(self):
-        expectations_codes = ["EXPINF5YR", "EXPINF10YR", "EXPINF20YR", "EXPINF30YR" "T5YIE", "T10YIE", "T20YIEM", "T30YIEM"]
+        expectations_codes = ["EXPINF5YR", "EXPINF10YR", "EXPINF20YR", "EXPINF30YR" "T5YIE", "T10YIE", \
+                              "T20YIEM", "T30YIEM"]
         expectations = pdr.DataReader(expectations_codes, "fred")
         return expectations
 
@@ -132,7 +151,8 @@ class MarketReporter():
         return rates
 
     def euribor(self):
-        euribor_codes = ["ECB/RTD_M_S0_N_C_EUR1M_E", "ECB/RTD_M_S0_N_C_EUR3M_E", "ECB/RTD_M_S0_N_C_EUR6M_E", "ECB/RTD_M_S0_N_C_EUR1Y_E"]
+        euribor_codes = ["ECB/RTD_M_S0_N_C_EUR1M_E", "ECB/RTD_M_S0_N_C_EUR3M_E", "ECB/RTD_M_S0_N_C_EUR6M_E", \
+                         "ECB/RTD_M_S0_N_C_EUR1Y_E"]
         euribor = pdr.DataReader(euribor_codes, "quandl")
         return euribor
 
