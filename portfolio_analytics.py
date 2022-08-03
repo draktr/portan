@@ -363,6 +363,28 @@ class PortfolioAnalytics():
 
         return tracking_error
 
+    def correlation_matrix(self, show=True, save=False):
+        matrix=self.prices.corr().round(2)
+
+        sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
+        if save is True:
+            mpl.savefig("correlation_matrix.png", dpi=300)
+        if show is True:
+            mpl.show()
+
+        return matrix
+
+    def covariance_matrix(self, show=True, save=False):
+        matrix=self.prices.cov().round(2)
+
+        sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
+        if save is True:
+            mpl.savefig("covariance_matrix.png", dpi=300)
+        if show is True:
+            mpl.show()
+
+        return matrix
+
 # TODO: same analytics for each security in the portfolio separately
 # TODO: as other class: benchmarking, PMPT, MPT, etc
 # TODO: separate one for checking which weigths
