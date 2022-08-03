@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as mpl
+import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from datetime import datetime
+from scipy import integrate, stats
 import yfinance as yf
 
 
@@ -129,7 +131,7 @@ class PortfolioAnalytics():
         beta = model.coef_
         r_squared = model.score(excess_benchmark_returns, excess_portfolio_returns)
 
-        return alpha, beta, r_squared
+        return alpha, beta, r_squared, excess_portfolio_returns, excess_benchmark_returns
 
     def plot_capm(self, benchmark_tickers, benchmark_weights, data=None, show=True, save=False):
 
@@ -222,14 +224,30 @@ class PortfolioAnalytics():
         sortino_ratio = 100*(self.mean_daily_returns - self.risk_free_rate)/downside_volatility
         return sortino_ratio
 
-    def maximum_drawdown(self, period=365):
+    def drawdown(self):
+        wealth_index = 1000*(1+self.returns_with_dates()).cumprod()
+        previous_peaks = wealth_index.cummax()
+        drawdowns = (wealth_index - previous_peaks)/previous_peaks
+
+        return drawdowns
+
+    def maximum_drawdown(self, period=1000):
         peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
         peak_index_int = self.portfolio_state.index.get_loc(peak_index)
         trough = np.min(self.portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
 
-        maximum_drawdown = (trough-peak)/peak
+        maximum_drawdown = trough-peak
         return maximum_drawdown
+
+    def maximum_drawdown_percentage(self, period=1000):
+        peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
+        peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
+        peak_index_int = self.portfolio_state.index.get_loc(peak_index)
+        trough = np.min(self.portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
+
+        maximum_drawdown_ratio = (trough-peak)/peak
+        return maximum_drawdown_ratio
 
     def ulcer(self, period=14, start=1):
         close = np.empty(period)
@@ -276,15 +294,95 @@ class PortfolioAnalytics():
         omega=winning/losing
         return omega
 
+    def jensen_alpha(self, benchmark_tickers, benchmark_weights, data=None):
+        standard_alpha, standard_beta, standard_r_squared, excess_portfolio_returns, \
+            excess_benchmark_returns = self.capm(benchmark_tickers, benchmark_weights, data)
+
+        mean_excess_benchmark_returns = np.nanmean(excess_benchmark_returns)
+
+        jensen_alpha = self.mean_daily_returns - self.risk_free_rate - standard_beta(mean_excess_benchmark_returns - self.risk_free_rate)
+
+        return jensen_alpha
+
+    def treynor(self, benchmark_tickers, benchmark_weights, data=None):
+        standard_alpha, standard_beta, standard_r_squared, excess_portfolio_returns, \
+            excess_benchmark_returns = self.capm(benchmark_tickers, benchmark_weights, data)
+
+        treynor_ratio = 100*(self.mean_daily_returns-self.risk_free_rate)/standard_beta
+
+        return treynor_ratio
+
+    def higher_partial_moment(self, annual_threshold=0.03, moment=3):
+        n = len(self.portfolio_returns)
+
+        higher_partial_moment = (1/n)*np.sum(np.power(np.max(self.portfolio_returns-annual_threshold, 0), moment))
+
+        return higher_partial_moment
+
+    def lower_partial_moment(self, annual_threshold=0.03, moment=3):
+        n = len(self.portfolio_returns)
+
+        lower_partial_moment = (1/n)*np.sum(np.power(np.max(annual_threshold-self.portfolio_returns, 0), moment))
+
+        return lower_partial_moment
+
+    def kappa(self, annual_threshold=0.03, moment=3):
+        lower_partial_moment = self.lower_partial_moment(annual_threshold, moment)
+
+        kappa_ratio = (self.mean_daily_returns - annual_threshold)/np.power(lower_partial_moment, (1/moment))
+
+        return kappa_ratio
+
+    def calmar(self, period=1000):
+        maximum_drawdown = self.maximum_drawdown_percentage(period)
+        calmar_ratio = self.mean_daily_returns-self.risk_free_rate/maximum_drawdown
+
+        return calmar_ratio
+
+    def sterling(self, drawdowns=3):
+        portfolio_drawdowns = self.drawdown()
+        sorted_drawdowns = np.argsort(portfolio_drawdowns)
+        d_average_drawdown = np.mean(sorted_drawdowns[-drawdowns:])
+
+        sterling_ratio = (self.portfolio_returns - self.risk_free_rate)/np.abs(d_average_drawdown)
+
+        return sterling_ratio
+
+    def gain_loss(self, annual_threshold=0.03, moment=1):
+        hpm=self.higher_partial_moment(annual_threshold, moment)
+        lpm=self.lower_partial_moment(annual_threshold, moment)
+
+        gain_loss_ratio = hpm/lpm
+
+        return gain_loss_ratio
+
+    def tracking_error(self, benchmark_tickers, benchmark_weights, data=None):
+        benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
+
+        tracking_error = np.std(self.portfolio_returns, benchmark_returns)
+
+        return tracking_error
+
 # TODO: same analytics for each security in the portfolio separately
-# TODO: other ratios
-# TODO: ulcer index adn other measurements of pain
-# TODO: do portfolio metrics in one method
+# TODO: as other class: benchmarking, PMPT, MPT, etc
 # TODO: separate one for checking which weigths
-# TODO: asset covariance or correlation matrix
-# TODO: excess stuff for alpha and beta analysis
+# TODO: split them into classes such as they are grouped by what they are dependant on
+# TODO: sort out using annualized threshold, but daily returns
+# TODO: change len() to .shape[0]
+# TODO: take care of ax1=fig.add_axes([0.1,0.1,0.8,0.8])
+
+#TODO: backtesting class
+
+# TODO: do portfolio metrics in one method (__init__) OR do a complete report() function
+
 # TODO: mpl to plt
 # TODO: replace threshold with MAR, in omega_analysis as well
+# __name__==__main__
+# risk_free_rate to rfr
+# make var names smaller
+# pytest
+
+
 # ? annualizing ratios?
 # period=len(data) | x*np.sqrt(period)
 
