@@ -385,6 +385,70 @@ class PortfolioAnalytics():
 
         return matrix
 
+    def analytical_var(self, value, dof, distribution="normal"):
+
+        if distribution=="normal":
+            var=stats.norm(self.mean_daily_returns, self.volatility).cdf(value)
+            expected_loss=(stats.norm(self.mean_daily_returns, self.volatility).pdf(stats.norm(self.mean_daily_returns, self.volatility).ppf((1 - var))) * self.volatility)/(1 - var) - self.mean_daily_returns
+
+        elif distribution=="t":
+            var=stats.t(dof).cdf(value)
+            percent_point_function = stats.t(dof).ppf((1 - var))
+            expected_loss = -1/(1 - var) * (1-dof)**(-1) * (dof-2 + percent_point_function**2) * stats.t(dof).pdf(percent_point_function)*self.volatility - self.mean_daily_returns
+
+        else:
+            print("Distribution Unavailable.")
+
+        return var, expected_loss
+
+    def historical_var(self, value):
+        returns_below_value = self.portfolio_returns[self.portfolio_returns<value]
+        var=len(returns_below_value)/len(self.portfolio_returns)
+
+        return var
+
+    def plot_analytical_var(self, value, dof, z=3, distribution="Normal", show=True, save=False):
+        x = np.linspace(self.mean_daily_returns-z*self.volatility, self.mean_daily_returns+z*self.volatility, len(self.portfolio_returns))
+
+        if distribution=="Normal":
+            pdf=stats.norm(self.mean_daily_returns, self.volatility).pdf(x)
+        elif distribution=="t":
+            pdf=stats.t(dof).pdf(x)
+        else:
+            print("Distribution Unavailable")
+
+        cutoff = (np.abs(x - value)).argmin()
+
+        fig=mpl.figure()
+        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
+        ax1.plot(x, pdf, linewidth=2, color="b", label="Analytical (Theoretical) Distribution of Portfolio Returns")
+        ax1.fill_between(x[0:cutoff], pdf[0:cutoff], facecolor="r", label="Analytical VaR")
+        ax1.legend()
+        ax1.set_xlabel("Daily Returns")
+        ax1.set_ylabel("Density of Daily Returns")
+        ax1.set_title("Analytical (Theoretical," + distribution + ") Return Distribution and VaR Plot")
+        if save is True:
+            mpl.savefig("analytical_var.png", dpi=300)
+        if show is True:
+            mpl.show()
+
+    def plot_historical_var(self, value, number_of_bins, show=True, save=False):
+        sorted_portfolio_returns = np.sort(self.portfolio_returns)
+        bins = np.linspace(sorted_portfolio_returns[0], sorted_portfolio_returns[-1], number_of_bins) #? stop+1
+
+        fig=mpl.figure()
+        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
+        ax1.hist(sorted_portfolio_returns, bins, label="Historical Distribution of Portfolio Returns")
+        ax1.axvline(x=value, ymin=0, color="r", label="Historical VaR Cutoff")
+        ax1.legend()
+        ax1.set_xlabel("Daily Returns")
+        ax1.set_ylabel("Frequency of Daily Returns")
+        ax1.set_title("Historical Return Distribution and VaR Plot")
+        if save is True:
+            mpl.savefig("historical_var.png", dpi=300)
+        if show is True:
+            mpl.show()
+
 # TODO: same analytics for each security in the portfolio separately
 # TODO: as other class: benchmarking, PMPT, MPT, etc
 # TODO: separate one for checking which weigths
