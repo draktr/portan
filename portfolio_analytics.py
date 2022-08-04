@@ -1,21 +1,31 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as mpl
+import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy import stats
 from sklearn.linear_model import LinearRegression
 from datetime import datetime
-from scipy import integrate, stats
 import yfinance as yf
 
 
 class PortfolioAnalytics():
-    def __init__(self, tickers, weights, start="1970-01-01", end=str(datetime.now())[0:10], data=None, initial_aum=10000, risk_free_rate=0.03):
+    def __init__(self,
+                 tickers,
+                 weights,
+                 start="1970-01-01",
+                 end=str(datetime.now())[0:10],
+                 data=None,
+                 initial_aum=10000,
+                 mar=0.03,
+                 rfr=0.03):
+
         self.tickers=tickers
         self.start=start
         self.end=end
         self.data=data # takes in only the data of kind GetData.save_adj_close_only()
         self.initial_aum = initial_aum
-        self.risk_free_rate = risk_free_rate # takes in decimals (not percentage)
+        self.mar=mar
+        self.rfr = rfr # takes in decimals (not percentage)
 
         if data is None:
             self.prices = pd.DataFrame(columns=self.tickers)
@@ -44,7 +54,7 @@ class PortfolioAnalytics():
 
         # portfolio returns (numpy array)
         self.portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
-        self.mean_daily_returns = np.nanmean(self.portfolio_returns)
+        self.mean_returns = np.nanmean(self.portfolio_returns)
         self.volatility = np.nanstd(self.portfolio_returns)
 
 
@@ -54,7 +64,7 @@ class PortfolioAnalytics():
             print(security.info["longName"])
 
     def returns_with_dates(self):
-        # returns pandas dataframe
+
         returns_with_dates = pd.DataFrame(columns=["Returns"], index=self.securities_returns.index)
         returns_with_dates["Returns"] = self.portfolio_returns
         return returns_with_dates
@@ -64,44 +74,67 @@ class PortfolioAnalytics():
         portfolio_cumulative_returns = (portfolio_returns["Returns"] + 1).cumprod()
         return portfolio_cumulative_returns
 
-    def plot_portfolio_returns(self):
+    def plot_portfolio_returns(self,
+                               show=True,
+                               save=False):
+
         portfolio_returns = self.returns_with_dates()
 
-        fig=mpl.figure()
+        fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
         portfolio_returns["Returns"].plot()
         ax1.set_xlabel("Date")
         ax1.set_ylabel("Daily Returns")
         ax1.set_title("Portfolio Daily Returns")
-        mpl.show()
+        if save is True:
+            plt.savefig("portfolio_returns.png", dpi=300)
+        if show is True:
+            plt.show()
 
-    def plot_portfolio_returns_distribution(self):
+    def plot_portfolio_returns_distribution(self,
+                                            show=True,
+                                            save=False):
+
         portfolio_returns = self.returns_with_dates()
 
-        fig = mpl.figure()
+        fig = plt.figure()
         ax1 = fig.add_axes([0.1,0.1,0.8,0.8])
         portfolio_returns.plot.hist(bins = 90)
         ax1.set_xlabel("Daily Returns")
         ax1.set_ylabel("Frequency")
         ax1.set_title("Portfolio Returns Distribution")
-        mpl.show()
+        if save is True:
+            plt.savefig("portfolio_returns_distribution.png", dpi=300)
+        if show is True:
+            plt.show()
 
-    def plot_portfolio_cumulative_returns(self):
+    def plot_portfolio_cumulative_returns(self,
+                                          show=True,
+                                          save=False):
+
         portfolio_cumulative_returns = self.portfolio_cumulative_returns()
 
-        fig = mpl.figure()
+        fig = plt.figure()
         ax1 = fig.add_axes([0.1,0.1,0.8,0.8])
         portfolio_cumulative_returns.plot()
         ax1.set_xlabel("Date")
         ax1.set_ylabel("Cumulative Returns")
         ax1.set_title("Portfolio Cumulative Returns")
-        mpl.show()
+        if save is True:
+            plt.savefig("portfolio_cumulative_returns.png", dpi=300)
+        if show is True:
+            plt.show()
 
-    def excess_return(self, minimum_acceptable_return=0.03):
-        excess_return = self.portfolio_returns - minimum_acceptable_return
+    def excess_return(self):
+
+        excess_return = self.portfolio_returns - self.mar
         return excess_return
 
-    def benchmark(self, benchmark_tickers, benchmark_weights, data=None):
+    def benchmark(self,
+                  benchmark_tickers,
+                  benchmark_weights,
+                  data=None):
+
         if data is None:
             benchmark_securities_prices = pd.DataFrame(columns=benchmark_tickers)
             benchmark_securities_returns = pd.DataFrame(columns=benchmark_tickers)
@@ -121,10 +154,14 @@ class PortfolioAnalytics():
 
         return benchmark_returns
 
-    def capm(self, benchmark_tickers, benchmark_weights, data=None):
-        excess_portfolio_returns = self.portfolio_returns - self.risk_free_rate
+    def capm(self,
+             benchmark_tickers,
+             benchmark_weights,
+             data=None):
+
+        excess_portfolio_returns = self.portfolio_returns - self.rfr
         excess_benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
-        excess_benchmark_returns = excess_benchmark_returns - self.risk_free_rate
+        excess_benchmark_returns = excess_benchmark_returns - self.rfr
 
         model = LinearRegression().fit(excess_benchmark_returns, excess_portfolio_returns)
         alpha = model.intercept_
@@ -133,15 +170,20 @@ class PortfolioAnalytics():
 
         return alpha, beta, r_squared, excess_portfolio_returns, excess_benchmark_returns
 
-    def plot_capm(self, benchmark_tickers, benchmark_weights, data=None, show=True, save=False):
+    def plot_capm(self,
+                  benchmark_tickers,
+                  benchmark_weights,
+                  data=None,
+                  show=True,
+                  save=False):
 
-        excess_portfolio_returns = self.portfolio_returns - self.risk_free_rate
+        excess_portfolio_returns = self.portfolio_returns - self.rfr
         excess_benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
-        excess_benchmark_returns = excess_benchmark_returns - self.risk_free_rate
+        excess_benchmark_returns = excess_benchmark_returns - self.rfr
 
         beta, alpha = np.polyfit(excess_benchmark_returns, excess_portfolio_returns, 1)
 
-        fig=mpl.figure()
+        fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
         ax1.scatter(excess_benchmark_returns, excess_portfolio_returns)
         ax1.plot(excess_benchmark_returns, alpha+beta*excess_benchmark_returns)
@@ -150,25 +192,27 @@ class PortfolioAnalytics():
         ax1.set_ylabel("Portfolio Excess Returns")
         ax1.set_title("Portfolio Excess Returns Against Benchmark")
         if save is True:
-            mpl.savefig("capm.png", dpi=300)
+            plt.savefig("capm.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
     def sharpe(self):
-        sharpe_ratio = 100*(self.mean_daily_returns - self.risk_free_rate)/self.volatility
+        sharpe_ratio = 100*(self.mean_returns - self.rfr)/self.volatility
         return sharpe_ratio
 
     def upside_volatility(self):
-        positive_portfolio_returns = self.portfolio_returns - self.risk_free_rate
+        positive_portfolio_returns = self.portfolio_returns - self.rfr
         positive_portfolio_returns = positive_portfolio_returns[positive_portfolio_returns>0]
         upside_volatility = np.std(positive_portfolio_returns)
         return upside_volatility
 
-    def downside_volatility(self, returns=None): #? use MAR instead of RFR?
+    def downside_volatility(self,
+                            returns=None):
+
         if returns is None:
-            negative_portfolio_returns = self.portfolio_returns - self.risk_free_rate
+            negative_portfolio_returns = self.portfolio_returns - self.mar
         else:
-            negative_portfolio_returns = returns - self.risk_free_rate
+            negative_portfolio_returns = returns - self.mar
 
         negative_portfolio_returns = negative_portfolio_returns[negative_portfolio_returns<0]
         downside_volatility = np.std(negative_portfolio_returns)
@@ -180,7 +224,11 @@ class PortfolioAnalytics():
         skewness = upside/downside
         return skewness
 
-    def omega_excess_return(self, benchmark_tickers, benchmark_weights, data=None):
+    def omega_excess_return(self,
+                            benchmark_tickers,
+                            benchmark_weights,
+                            data=None):
+
         portfolio_downside_volatility = self.downside_volatility()
         benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
         benchmark_downside_volatility = self.downside_volatility(benchmark_returns)
@@ -190,17 +238,21 @@ class PortfolioAnalytics():
 
     def upside_potential_ratio(self):
         downside_volatility = self.downside_volatility()
-        upside = self.portfolio_returns - self.risk_free_rate
+        upside = self.portfolio_returns - self.rfr
         upside = upside[upside>0].sum()
         upside_potential_ratio = upside/downside_volatility
         return upside_potential_ratio
 
-    def downside_capm(self, benchmark_tickers, benchmark_weights, data=None, minimum_acceptable_return=0.03):
+    def downside_capm(self,
+                      benchmark_tickers,
+                      benchmark_weights,
+                      data=None):
+
         negative_benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
-        negative_benchmark_returns = negative_benchmark_returns - minimum_acceptable_return
+        negative_benchmark_returns = negative_benchmark_returns - self.rfr
         negative_benchmark_returns = negative_benchmark_returns[negative_benchmark_returns<0]
 
-        negative_portfolio_returns = self.portfolio_returns - minimum_acceptable_return
+        negative_portfolio_returns = self.portfolio_returns - self.rfr
         negative_portfolio_returns = negative_portfolio_returns[negative_portfolio_returns<0]
 
         model = LinearRegression().fit(negative_benchmark_returns, negative_portfolio_returns)
@@ -210,7 +262,11 @@ class PortfolioAnalytics():
 
         return downside_beta, downside_alpha, downside_r_squared
 
-    def downside_volatility_ratio(self, benchmark_tickers, benchmark_weights, data=None):
+    def downside_volatility_ratio(self,
+                                  benchmark_tickers,
+                                  benchmark_weights,
+                                  data=None):
+
         benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
 
         portfolio_downside_volatility = self.downside_volatility()
@@ -221,17 +277,19 @@ class PortfolioAnalytics():
 
     def sortino(self):
         downside_volatility = self.downside_volatility()
-        sortino_ratio = 100*(self.mean_daily_returns - self.risk_free_rate)/downside_volatility
+        sortino_ratio = 100*(self.mean_returns - self.rfr)/downside_volatility
         return sortino_ratio
 
-    def drawdown(self):
+    def drawdowns(self):
         wealth_index = 1000*(1+self.returns_with_dates()).cumprod()
         previous_peaks = wealth_index.cummax()
         drawdowns = (wealth_index - previous_peaks)/previous_peaks
 
         return drawdowns
 
-    def maximum_drawdown(self, period=1000):
+    def maximum_drawdown(self,
+                         period=1000):
+
         peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
         peak_index_int = self.portfolio_state.index.get_loc(peak_index)
@@ -240,7 +298,9 @@ class PortfolioAnalytics():
         maximum_drawdown = trough-peak
         return maximum_drawdown
 
-    def maximum_drawdown_percentage(self, period=1000):
+    def maximum_drawdown_percentage(self,
+                                    period=1000):
+
         peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
         peak_index_int = self.portfolio_state.index.get_loc(peak_index)
@@ -249,7 +309,10 @@ class PortfolioAnalytics():
         maximum_drawdown_ratio = (trough-peak)/peak
         return maximum_drawdown_ratio
 
-    def ulcer(self, period=14, start=1):
+    def ulcer(self,
+              period=14,
+              start=1):
+
         close = np.empty(period)
         percentage_drawdown = np.empty(period)
 
@@ -265,153 +328,207 @@ class PortfolioAnalytics():
         ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
         return ulcer_index
 
-    def plot_ulcer(self, period=14):
+    def plot_ulcer(self,
+                   period=14,
+                   show=True,
+                   save=False):
+
         ulcer_values = pd.DataFrame(columns=["Ulcer Index"], index=self.portfolio_state.index)
-        for i in range(len(self.portfolio_state)-period):
+        for i in range(self.portfolio_state.shape[0]-period):
             ulcer_values.iloc[-i]["Ulcer Index"] = self.ulcer(period, start=i)
 
-        fig=mpl.figure()
+        fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
         ulcer_values["Ulcer Index"].plot()
         ax1.set_xlabel("Date")
         ax1.set_ylabel("Ulcer Index")
         ax1.set_title("Portfolio Ulcer Index")
-        mpl.show()
+        if save is True:
+            plt.savefig("ulcer.png", dpi=300)
+        if show is True:
+            plt.show()
 
-    def martin(self, period=14):
+    def martin(self,
+               period=14):
+
         ulcer_index = self.ulcer(period)
-        sharpe_ratio = 100*(self.mean_daily_returns - self.risk_free_rate)/ulcer_index
+        sharpe_ratio = 100*(self.mean_returns - self.rfr)/ulcer_index
         return sharpe_ratio
 
-    def omega_ratio(self, annual_threshold=0.03):
-        daily_threshold = (annual_threshold + 1)**np.sqrt(1/252)-1
+    def omega_ratio(self):
+
+        mar_daily = (self.mar + 1)**np.sqrt(1/252)-1
         returns = self.returns_with_dates()
 
-        excess_returns = returns-daily_threshold
+        excess_returns = returns-mar_daily
         winning = excess_returns[excess_returns>0].sum()
         losing = -(excess_returns[excess_returns<=0].sum())
 
         omega=winning/losing
         return omega
 
-    def jensen_alpha(self, benchmark_tickers, benchmark_weights, data=None):
+    def jensen_alpha(self,
+                     benchmark_tickers,
+                     benchmark_weights,
+                     data=None):
+        #TODO: soort out the unused ones
         standard_alpha, standard_beta, standard_r_squared, excess_portfolio_returns, \
             excess_benchmark_returns = self.capm(benchmark_tickers, benchmark_weights, data)
 
         mean_excess_benchmark_returns = np.nanmean(excess_benchmark_returns)
 
-        jensen_alpha = self.mean_daily_returns - self.risk_free_rate - standard_beta(mean_excess_benchmark_returns - self.risk_free_rate)
+        jensen_alpha = self.mean_returns - self.rfr - standard_beta(mean_excess_benchmark_returns - self.rfr)
 
         return jensen_alpha
 
-    def treynor(self, benchmark_tickers, benchmark_weights, data=None):
+    def treynor(self,
+                benchmark_tickers,
+                benchmark_weights,
+                data=None):
+
         standard_alpha, standard_beta, standard_r_squared, excess_portfolio_returns, \
             excess_benchmark_returns = self.capm(benchmark_tickers, benchmark_weights, data)
 
-        treynor_ratio = 100*(self.mean_daily_returns-self.risk_free_rate)/standard_beta
+        treynor_ratio = 100*(self.mean_returns-self.rfr)/standard_beta
 
         return treynor_ratio
 
-    def higher_partial_moment(self, annual_threshold=0.03, moment=3):
-        n = len(self.portfolio_returns)
+    def higher_partial_moment(self,
+                              moment=3):
 
-        higher_partial_moment = (1/n)*np.sum(np.power(np.max(self.portfolio_returns-annual_threshold, 0), moment))
+        n = self.portfolio_returns.shape[0] #TODO: change this name
+
+        higher_partial_moment = (1/n)*np.sum(np.power(np.max(self.portfolio_returns-self.mar, 0), moment))
 
         return higher_partial_moment
 
-    def lower_partial_moment(self, annual_threshold=0.03, moment=3):
-        n = len(self.portfolio_returns)
+    def lower_partial_moment(self,
+                             moment=3):
 
-        lower_partial_moment = (1/n)*np.sum(np.power(np.max(annual_threshold-self.portfolio_returns, 0), moment))
+        n = self.portfolio_returns.shape[0] #TODO: change this name
+
+        lower_partial_moment = (1/n)*np.sum(np.power(np.max(self.mar-self.portfolio_returns, 0), moment))
 
         return lower_partial_moment
 
-    def kappa(self, annual_threshold=0.03, moment=3):
-        lower_partial_moment = self.lower_partial_moment(annual_threshold, moment)
+    def kappa(self,
+              moment=3):
+        lower_partial_moment = self.lower_partial_moment(self.mar, moment)
 
-        kappa_ratio = (self.mean_daily_returns - annual_threshold)/np.power(lower_partial_moment, (1/moment))
+        kappa_ratio = (self.mean_returns - self.rfr)/np.power(lower_partial_moment, (1/moment))
 
         return kappa_ratio
 
-    def calmar(self, period=1000):
+    def calmar(self,
+               period=1000):
         maximum_drawdown = self.maximum_drawdown_percentage(period)
-        calmar_ratio = self.mean_daily_returns-self.risk_free_rate/maximum_drawdown
+        calmar_ratio = self.mean_returns-self.rfr/maximum_drawdown
 
         return calmar_ratio
 
-    def sterling(self, drawdowns=3):
-        portfolio_drawdowns = self.drawdown()
+    def sterling(self,
+                 drawdowns=3):
+
+        portfolio_drawdowns = self.drawdowns()
         sorted_drawdowns = np.argsort(portfolio_drawdowns)
         d_average_drawdown = np.mean(sorted_drawdowns[-drawdowns:])
 
-        sterling_ratio = (self.portfolio_returns - self.risk_free_rate)/np.abs(d_average_drawdown)
+        sterling_ratio = (self.portfolio_returns - self.rfr)/np.abs(d_average_drawdown)
 
         return sterling_ratio
 
-    def gain_loss(self, annual_threshold=0.03, moment=1):
-        hpm=self.higher_partial_moment(annual_threshold, moment)
-        lpm=self.lower_partial_moment(annual_threshold, moment)
+    def gain_loss(self,
+                  mar=0.03,
+                  moment=1):
+
+        hpm=self.higher_partial_moment(mar, moment)
+        lpm=self.lower_partial_moment(mar, moment)
 
         gain_loss_ratio = hpm/lpm
 
         return gain_loss_ratio
 
-    def tracking_error(self, benchmark_tickers, benchmark_weights, data=None):
+    def tracking_error(self,
+                       benchmark_tickers,
+                       benchmark_weights,
+                       data=None):
+
         benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
 
         tracking_error = np.std(self.portfolio_returns, benchmark_returns)
 
         return tracking_error
 
-    def correlation_matrix(self, show=True, save=False):
+    def correlation_matrix(self,
+                           show=True,
+                           save=False):
+
         matrix=self.prices.corr().round(2)
 
         sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
         if save is True:
-            mpl.savefig("correlation_matrix.png", dpi=300)
+            plt.savefig("correlation_matrix.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
         return matrix
 
-    def covariance_matrix(self, show=True, save=False):
+    def covariance_matrix(self,
+                          show=True,
+                          save=False):
+
         matrix=self.prices.cov().round(2)
 
         sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
         if save is True:
-            mpl.savefig("covariance_matrix.png", dpi=300)
+            plt.savefig("covariance_matrix.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
         return matrix
 
-    def analytical_var(self, value, dof, distribution="normal"):
+    def analytical_var(self,
+                       value,
+                       dof,
+                       distribution="normal"):
 
         if distribution=="normal":
-            var=stats.norm(self.mean_daily_returns, self.volatility).cdf(value)
-            expected_loss=(stats.norm(self.mean_daily_returns, self.volatility).pdf(stats.norm(self.mean_daily_returns, self.volatility).ppf((1 - var))) * self.volatility)/(1 - var) - self.mean_daily_returns
+            var=stats.norm(self.mean_returns, self.volatility).cdf(value)
+            expected_loss=(stats.norm(self.mean_returns, self.volatility). \
+                          pdf(stats.norm(self.mean_returns, self.volatility). \
+                          ppf((1 - var))) * self.volatility)/(1 - var) - self.mean_returns
 
         elif distribution=="t":
             var=stats.t(dof).cdf(value)
             percent_point_function = stats.t(dof).ppf((1 - var))
-            expected_loss = -1/(1 - var) * (1-dof)**(-1) * (dof-2 + percent_point_function**2) * stats.t(dof).pdf(percent_point_function)*self.volatility - self.mean_daily_returns
+            expected_loss = -1/(1 - var)*(1-dof)**(-1)*(dof-2 + percent_point_function**2) \
+                            *stats.t(dof).pdf(percent_point_function)*self.volatility-self.mean_returns
 
         else:
             print("Distribution Unavailable.")
 
         return var, expected_loss
 
-    def historical_var(self, value):
+    def historical_var(self,
+                       value):
+
         returns_below_value = self.portfolio_returns[self.portfolio_returns<value]
-        var=len(returns_below_value)/len(self.portfolio_returns)
+        var=returns_below_value.shape[0]/self.portfolio_returns.shape[0]
 
         return var
 
-    def plot_analytical_var(self, value, dof, z=3, distribution="Normal", show=True, save=False):
-        x = np.linspace(self.mean_daily_returns-z*self.volatility, self.mean_daily_returns+z*self.volatility, len(self.portfolio_returns))
+    def plot_analytical_var(self,
+                            value,
+                            dof,
+                            z=3,
+                            distribution="Normal",
+                            show=True,
+                            save=False):
+
+        x = np.linspace(self.mean_returns-z*self.volatility, self.mean_returns+z*self.volatility, self.portfolio_returns.shape[0])
 
         if distribution=="Normal":
-            pdf=stats.norm(self.mean_daily_returns, self.volatility).pdf(x)
+            pdf=stats.norm(self.mean_returns, self.volatility).pdf(x)
         elif distribution=="t":
             pdf=stats.t(dof).pdf(x)
         else:
@@ -419,7 +536,7 @@ class PortfolioAnalytics():
 
         cutoff = (np.abs(x - value)).argmin()
 
-        fig=mpl.figure()
+        fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
         ax1.plot(x, pdf, linewidth=2, color="b", label="Analytical (Theoretical) Distribution of Portfolio Returns")
         ax1.fill_between(x[0:cutoff], pdf[0:cutoff], facecolor="r", label="Analytical VaR")
@@ -428,15 +545,20 @@ class PortfolioAnalytics():
         ax1.set_ylabel("Density of Daily Returns")
         ax1.set_title("Analytical (Theoretical," + distribution + ") Return Distribution and VaR Plot")
         if save is True:
-            mpl.savefig("analytical_var.png", dpi=300)
+            plt.savefig("analytical_var.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
-    def plot_historical_var(self, value, number_of_bins, show=True, save=False):
+    def plot_historical_var(self,
+                            value,
+                            number_of_bins,
+                            show=True,
+                            save=False):
+
         sorted_portfolio_returns = np.sort(self.portfolio_returns)
-        bins = np.linspace(sorted_portfolio_returns[0], sorted_portfolio_returns[-1], number_of_bins) #? stop+1
+        bins = np.linspace(sorted_portfolio_returns[0], sorted_portfolio_returns[-1]+1, number_of_bins)
 
-        fig=mpl.figure()
+        fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
         ax1.hist(sorted_portfolio_returns, bins, label="Historical Distribution of Portfolio Returns")
         ax1.axvline(x=value, ymin=0, color="r", label="Historical VaR Cutoff")
@@ -445,26 +567,23 @@ class PortfolioAnalytics():
         ax1.set_ylabel("Frequency of Daily Returns")
         ax1.set_title("Historical Return Distribution and VaR Plot")
         if save is True:
-            mpl.savefig("historical_var.png", dpi=300)
+            plt.savefig("historical_var.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
 # TODO: same analytics for each security in the portfolio separately
 # TODO: as other class: benchmarking, PMPT, MPT, etc
 # TODO: separate one for checking which weigths
 # TODO: split them into classes such as they are grouped by what they are dependant on
 # TODO: sort out using annualized threshold, but daily returns
-# TODO: change len() to .shape[0]
 # TODO: take care of ax1=fig.add_axes([0.1,0.1,0.8,0.8])
 
 #TODO: backtesting class
 
 # TODO: do portfolio metrics in one method (__init__) OR do a complete report() function
 
-# TODO: mpl to plt
 # TODO: replace threshold with MAR, in omega_analysis as well
 # __name__==__main__
-# risk_free_rate to rfr
 # make var names smaller
 # pytest
 
