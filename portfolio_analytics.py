@@ -21,6 +21,7 @@ class PortfolioAnalytics():
                  rfr=0.03):
 
         self.tickers=tickers
+        self.weights=weights
         self.start=start
         self.end=end
         self.data=data   # takes in only the data of kind GetData.save_adj_close_only()
@@ -52,30 +53,49 @@ class PortfolioAnalytics():
         # number of securities bought at t0
         self.initial_number_of_securities_bought = np.divide(self.funds_allocation, self.prices.iloc[0])
 
+        self.portfolio_returns = np.dot(self.securities_returns.to_numpy(), self.weights)
+
+    def portfolio_state(self):
         # absolute (dollar) value of each security in portfolio (i.e. state of the portfolio, not rebalanced)
-        self.portfolio_state = np.multiply(self.prices, self.initial_number_of_securities_bought)
-        self.portfolio_state = pd.DataFrame(self.portfolio_state)
-        self.portfolio_state["Whole Portfolio"] = self.portfolio_state.sum(axis=1)
+        portfolio_state = np.multiply(self.prices, self.initial_number_of_securities_bought)
+        portfolio_state = pd.DataFrame(portfolio_state)
+        portfolio_state["Whole Portfolio"] = portfolio_state.sum(axis=1)
 
-        # portfolio returns (numpy array)
-        self.portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
-        self.mean_returns = np.nanmean(self.portfolio_returns)
-        self.volatility = np.nanstd(self.portfolio_returns)
+        return portfolio_state
 
+    def portfolio_returns(self, dataframe=False):
+        if dataframe is True:
+            portfolio_returns = pd.DataFrame(portfolio_returns, columns=["Returns"], index=self.securities_returns.index)
+        else:
+            portfolio_returns = self.portfolio_returns
+
+        return portfolio_returns
+
+    def mean_returns(self):
+        mean_returns = np.nanmean(self.portfolio_returns)
+
+        return mean_returns
+
+    def volatility(self):
+        volatility = np.nanstd(self.portfolio_returns)
+
+        return volatility
+
+    def excess_returns(self):
+
+        excess_returns = self.portfolio_returns - self.mar_daily
+        return excess_returns
 
     def list_securities(self):
+        names = pd.Series(index=self.tickers)
         for ticker in self.tickers:
             security = yf.Ticker(ticker)
-            print(security.info["longName"])
+            names[ticker] = security.info["longName"]
 
-    def returns_with_dates(self):
-
-        returns_with_dates = pd.DataFrame(self.portfolio_returns, columns=["Returns"], index=self.securities_returns.index)
-
-        return returns_with_dates
+        return names
 
     def portfolio_cumulative_returns(self):
-        portfolio_returns = self.returns_with_dates()
+        portfolio_returns = self.portfolio_returns(dataframe=True)
         portfolio_cumulative_returns = (portfolio_returns["Returns"] + 1).cumprod()
         return portfolio_cumulative_returns
 
@@ -83,7 +103,7 @@ class PortfolioAnalytics():
                                show=True,
                                save=False):
 
-        portfolio_returns = self.returns_with_dates()
+        portfolio_returns = self.portfolio_returns(dataframe=True)
 
         fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
@@ -100,7 +120,7 @@ class PortfolioAnalytics():
                                             show=True,
                                             save=False):
 
-        portfolio_returns = self.returns_with_dates()
+        portfolio_returns = self.portfolio_returns(dataframe=True)
 
         fig = plt.figure()
         ax1 = fig.add_axes([0.1,0.1,0.8,0.8])
@@ -130,10 +150,26 @@ class PortfolioAnalytics():
         if show is True:
             plt.show()
 
-    def excess_return(self):
 
-        excess_return = self.portfolio_returns - self.mar_daily
-        return excess_return
+
+
+# TODO: same analytics for each security in the portfolio separately
+# TODO: rebalancing
+# TODO: __name__==__main__
+# TODO: pytest
+# TODO: piechart of the portfolio
+
+# ? annualizing ratios?
+# period=len(data) | x*np.sqrt(period)
+
+# cloud providers, chip names (SOXX), cyber security
+
+######################################################################################
+######################################################################################
+
+class MPT():
+    def __init__(self) -> None:
+        pass
 
     def benchmark(self,
                   benchmark_tickers,
@@ -205,6 +241,30 @@ class PortfolioAnalytics():
     def sharpe(self):
         sharpe_ratio = 100*(self.mean_returns - self.rfr_daily)/self.volatility
         return sharpe_ratio
+
+
+
+    def tracking_error(self,
+                       benchmark_tickers,
+                       benchmark_weights,
+                       data=None):
+
+        benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
+
+        tracking_error = np.std(self.portfolio_returns, benchmark_returns)
+
+        return tracking_error
+
+
+######################################################################################
+######################################################################################
+
+class PMPT():
+    def __init__(self) -> None:
+        pass
+
+
+
 
     def upside_volatility(self):
         positive_portfolio_returns = self.portfolio_returns - self.rfr_daily
@@ -315,63 +375,6 @@ class PortfolioAnalytics():
         maximum_drawdown_ratio = (trough-peak)/peak
         return maximum_drawdown_ratio
 
-    def ulcer(self,
-              period=14,
-              start=1):
-
-        close = np.empty(period)
-        percentage_drawdown = np.empty(period)
-
-        if start==1:
-            period_high = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
-        else:
-            period_high = np.max(self.portfolio_state.iloc[-period-start+1:-start+1]["Whole Portfolio"])
-
-        for i in range(period):
-            close[i] = self.portfolio_state.iloc[-i-start+1]["Whole Portfolio"]
-            percentage_drawdown[i] = 100*((close[i] - period_high))/period_high
-
-        ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
-        return ulcer_index
-
-    def plot_ulcer(self,
-                   period=14,
-                   show=True,
-                   save=False):
-
-        ulcer_values = pd.DataFrame(columns=["Ulcer Index"], index=self.portfolio_state.index)
-        for i in range(self.portfolio_state.shape[0]-period):
-            ulcer_values.iloc[-i]["Ulcer Index"] = self.ulcer(period, start=i)
-
-        fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        ulcer_values["Ulcer Index"].plot()
-        ax1.set_xlabel("Date")
-        ax1.set_ylabel("Ulcer Index")
-        ax1.set_title("Portfolio Ulcer Index")
-        if save is True:
-            plt.savefig("ulcer.png", dpi=300)
-        if show is True:
-            plt.show()
-
-    def martin(self,
-               period=14):
-
-        ulcer_index = self.ulcer(period)
-        sharpe_ratio = 100*(self.mean_returns - self.rfr_daily)/ulcer_index
-        return sharpe_ratio
-
-    def omega_ratio(self):
-
-        returns = self.returns_with_dates()
-
-        excess_returns = returns-self.mar_daily
-        winning = excess_returns[excess_returns>0].sum()
-        losing = -(excess_returns[excess_returns<=0].sum())
-
-        omega=winning/losing
-        return omega
-
     def jensen_alpha(self,
                      benchmark_tickers,
                      benchmark_weights,
@@ -393,6 +396,7 @@ class PortfolioAnalytics():
         treynor_ratio = 100*(self.mean_returns-self.rfr_daily)/capm[1]
 
         return treynor_ratio
+
 
     def higher_partial_moment(self,
                               moment=3):
@@ -421,6 +425,19 @@ class PortfolioAnalytics():
 
         return kappa_ratio
 
+
+    def gain_loss(self,
+                  mar=0.03,
+                  moment=1):
+
+        hpm=self.higher_partial_moment(moment)
+        lpm=self.lower_partial_moment(moment)
+
+        gain_loss_ratio = hpm/lpm
+
+        return gain_loss_ratio
+
+
     def calmar(self,
                period=1000):
         maximum_drawdown = self.maximum_drawdown_percentage(period)
@@ -439,55 +456,69 @@ class PortfolioAnalytics():
 
         return sterling_ratio
 
-    def gain_loss(self,
-                  mar=0.03,
-                  moment=1):
 
-        hpm=self.higher_partial_moment(moment)
-        lpm=self.lower_partial_moment(moment)
+######################################################################################
+######################################################################################
 
-        gain_loss_ratio = hpm/lpm
+class Ulcer():
+    def __init__(self) -> None:
+        pass
 
-        return gain_loss_ratio
 
-    def tracking_error(self,
-                       benchmark_tickers,
-                       benchmark_weights,
-                       data=None):
 
-        benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
+    def ulcer(self,
+              period=14,
+              start=1):
 
-        tracking_error = np.std(self.portfolio_returns, benchmark_returns)
+        close = np.empty(period)
+        percentage_drawdown = np.empty(period)
 
-        return tracking_error
+        if start==1:
+            period_high = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
+        else:
+            period_high = np.max(self.portfolio_state.iloc[-period-start+1:-start+1]["Whole Portfolio"])
 
-    def correlation_matrix(self,
-                           show=True,
-                           save=False):
+        for i in range(period):
+            close[i] = self.portfolio_state.iloc[-i-start+1]["Whole Portfolio"]
+            percentage_drawdown[i] = 100*((close[i] - period_high))/period_high
 
-        matrix=self.prices.corr().round(2)
+        ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
+        return ulcer_index
 
-        sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
+    def martin(self,
+               period=14):
+
+        ulcer_index = self.ulcer(period)
+        sharpe_ratio = 100*(self.mean_returns - self.rfr_daily)/ulcer_index
+        return sharpe_ratio
+
+    def plot_ulcer(self,
+                   period=14,
+                   show=True,
+                   save=False):
+
+        ulcer_values = pd.DataFrame(columns=["Ulcer Index"], index=self.portfolio_state.index)
+        for i in range(self.portfolio_state.shape[0]-period):
+            ulcer_values.iloc[-i]["Ulcer Index"] = self.ulcer(period, start=i)
+
+        fig=plt.figure()
+        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
+        ulcer_values["Ulcer Index"].plot()
+        ax1.set_xlabel("Date")
+        ax1.set_ylabel("Ulcer Index")
+        ax1.set_title("Portfolio Ulcer Index")
         if save is True:
-            plt.savefig("correlation_matrix.png", dpi=300)
+            plt.savefig("ulcer.png", dpi=300)
         if show is True:
             plt.show()
 
-        return matrix
+######################################################################################
+######################################################################################
 
-    def covariance_matrix(self,
-                          show=True,
-                          save=False):
+class ValueAtRisk():
+    def __init__(self) -> None:
+        pass
 
-        matrix=self.prices.cov().round(2)
-
-        sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
-        if save is True:
-            plt.savefig("covariance_matrix.png", dpi=300)
-        if show is True:
-            plt.show()
-
-        return matrix
 
     def analytical_var(self,
                        value,
@@ -573,21 +604,132 @@ class PortfolioAnalytics():
         if show is True:
             plt.show()
 
-# TODO: same analytics for each security in the portfolio separately
-# TODO: as other class: benchmarking, PMPT, MPT, etc
-# TODO: separate one for checking which weigths
-# TODO: split them into classes such as they are grouped by what they are dependant on
+######################################################################################
+######################################################################################
 
-#TODO: backtesting class
+class Matrices():
+    def __init__(self) -> None:
+        pass
 
-# TODO: do portfolio metrics in one method (__init__) OR do a complete report() function
+    def correlation_matrix(self,
+                           show=True,
+                           save=False):
 
-# __name__==__main__
-# make var names smaller
-# pytest
+        matrix=self.prices.corr().round(2)
+
+        sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
+        if save is True:
+            plt.savefig("correlation_matrix.png", dpi=300)
+        if show is True:
+            plt.show()
+
+        return matrix
+
+    def covariance_matrix(self,
+                          show=True,
+                          save=False):
+
+        matrix=self.prices.cov().round(2)
+
+        sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
+        if save is True:
+            plt.savefig("covariance_matrix.png", dpi=300)
+        if show is True:
+            plt.show()
+
+        return matrix
 
 
-# ? annualizing ratios?
-# period=len(data) | x*np.sqrt(period)
 
-# cloud providers, chip names (SOXX), cyber security
+
+######################################################################################
+######################################################################################
+######################################################################################
+######################################################################################
+
+
+class CheckingWeights():
+    def __init__(self, tickers, start, end) -> None:
+        pass
+
+
+class Backtesting():
+    def __init__(self) -> None:
+        pass
+
+
+class PortfolioReport():
+    def __init__(self) -> None:
+        pass
+
+
+class OmegaAnalysis():
+    def __init__(self, returns, mar_lower_bound=0, mar_upper_bound=0.2):
+        """
+        Initiates the object.
+
+        Args:
+            returns (pd.DataFrame): Dataframe with the daily returns of different portfolios.
+            mar_lower_bound (int, optional): MAR lower bound for the Omega Curve. Defaults to 0.
+            mar_upper_bound (float, optional): MAR upper bound for the Omega Curve. Defaults to 0.2.
+        """
+
+        self.returns=returns
+        self.mar_array=np.linspace(mar_lower_bound, mar_upper_bound, round(100*(mar_upper_bound-mar_lower_bound)))
+
+    def omega_ratio(self,
+                    portfolio_returns=None,
+                    mar=0.03):
+        """
+        Calculates the Omega Ratio of one or more portfolios.
+
+        Args:
+            portfolio_returns (pd.DataFrame, optional): Dataframe with the daily returns of single or more portfolios. Defaults to None.
+
+        Returns:
+            pd.Series: Series with Omega Ratios of all portfolios.
+        """
+
+        mar_daily = (mar + 1)**np.sqrt(1/252)-1
+
+        if portfolio_returns is None:
+            excess_returns = self.returns-mar_daily
+            winning = excess_returns[excess_returns>0].sum()
+            losing = -(excess_returns[excess_returns<=0].sum())
+
+            omega=winning/losing
+        else:
+            excess_returns = portfolio_returns-mar_daily
+            winning = excess_returns[excess_returns>0].sum()
+            losing = -(excess_returns[excess_returns<=0].sum())
+
+            omega=winning/losing
+
+        return omega
+
+    def omega_curve(self,
+                    show=True,
+                    save=False):
+        """
+        Plots and/or saves Omega Curve(s) of of one or more portfolios.
+
+        Args:
+            show (bool, optional): Show the plot upon the execution of the code. Defaults to True.
+            save (bool, optional): Save the plot on storage. Defaults to False.
+        """
+
+        all_values = pd.DataFrame(columns=self.returns.columns)
+
+        for portfolio in self.returns.columns:
+            omega_values = list()
+            for mar in self.mar_array:
+                value = np.round(self.omega_ratio(self.returns[portfolio], mar), 5)
+                omega_values.append(value)
+            all_values[portfolio] = omega_values
+
+        all_values.plot(title="Omega Curve", xlabel="Minimum Acceptable Return (%)", ylabel="Omega Ratio", ylim=(0, 1.5))
+        if save is True:
+            plt.savefig("omega_curves.png", dpi=300)
+        if show is True:
+            plt.show()
+
