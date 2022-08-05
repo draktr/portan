@@ -1,5 +1,5 @@
 import pandas as pd
-import matplotlib.pyplot as mpl
+import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import yfinance as yf
 import pandas_datareader as pdr
@@ -109,9 +109,9 @@ class MarketReporter():
         vix_data = yf.download("VIX")
         vix_data["Adj Close"].plot(title="CBOE Volatility Index", xlabel="Date", ylabel="VIX", legen=None)
         if save is True:
-            mpl.savefig("vix.png", dpi=300)
+            plt.savefig("vix.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
     def yield_curve_us(self, date=None, show=True, save=False):
         """
@@ -145,9 +145,9 @@ class MarketReporter():
         print(yields)
 
         if save is True:
-            mpl.savefig("yield_curve_us.png", dpi=300)
+            plt.savefig("yield_curve_us.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
         return yields
 
@@ -183,9 +183,9 @@ class MarketReporter():
         print(yields)
 
         if save is True:
-            mpl.savefig("yield_curve_euro.png", dpi=300)
+            plt.savefig("yield_curve_euro.png", dpi=300)
         if show is True:
-            mpl.show()
+            plt.show()
 
         return yields
 
