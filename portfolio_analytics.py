@@ -12,7 +12,6 @@ import yfinance as yf
 class PortfolioAnalytics():
     def __init__(self,
                  tickers,
-                 weights,
                  start="1970-01-01",
                  end=str(datetime.now())[0:10],
                  data=None,
@@ -21,7 +20,6 @@ class PortfolioAnalytics():
                  rfr=0.03):
 
         self.tickers=tickers
-        self.weights=weights
         self.start=start
         self.end=end
         self.data=data   # takes in only the data of kind GetData.save_adj_close_only()
@@ -47,15 +45,16 @@ class PortfolioAnalytics():
 
         self.securities_returns = self.securities_returns.drop(self.securities_returns.index[0])
 
+
+    def portfolio_state(self,
+                        weights):
+
         # funds allocated to each security
         self.funds_allocation = np.multiply(self.initial_aum, weights)
 
         # number of securities bought at t0
         self.initial_number_of_securities_bought = np.divide(self.funds_allocation, self.prices.iloc[0])
 
-        self.portfolio_returns = np.dot(self.securities_returns.to_numpy(), self.weights)
-
-    def portfolio_state(self):
         # absolute (dollar) value of each security in portfolio (i.e. state of the portfolio, not rebalanced)
         portfolio_state = np.multiply(self.prices, self.initial_number_of_securities_bought)
         portfolio_state = pd.DataFrame(portfolio_state)
@@ -63,27 +62,24 @@ class PortfolioAnalytics():
 
         return portfolio_state
 
-    def portfolio_returns(self, dataframe=False):
-        if dataframe is True:
+    def portfolio_returns(self,
+                          weights,
+                          return_dataframe=False):
+
+        portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
+        mean_returns = np.nanmean(portfolio_returns)
+        volatility = np.nanstd(portfolio_returns)
+
+        if return_dataframe is True:
             portfolio_returns = pd.DataFrame(portfolio_returns, columns=["Returns"], index=self.securities_returns.index)
         else:
-            portfolio_returns = self.portfolio_returns
+            pass
 
-        return portfolio_returns
+        return portfolio_returns, mean_returns, volatility # TODO: figure out how to have these as methods
 
-    def mean_returns(self):
-        mean_returns = np.nanmean(self.portfolio_returns)
+    def excess_returns(self, portfolio_returns):
 
-        return mean_returns
-
-    def volatility(self):
-        volatility = np.nanstd(self.portfolio_returns)
-
-        return volatility
-
-    def excess_returns(self):
-
-        excess_returns = self.portfolio_returns - self.mar_daily
+        excess_returns = portfolio_returns - self.mar_daily
         return excess_returns
 
     def list_securities(self):
@@ -158,6 +154,7 @@ class PortfolioAnalytics():
 # TODO: __name__==__main__
 # TODO: pytest
 # TODO: piechart of the portfolio
+# TODO: method for annualizing things and similar, meybe in different class/module
 
 # ? annualizing ratios?
 # period=len(data) | x*np.sqrt(period)
@@ -168,41 +165,42 @@ class PortfolioAnalytics():
 ######################################################################################
 
 class MPT():
-    def __init__(self) -> None:
-        pass
-
-    def benchmark(self,
+    def __init__(self,
                   benchmark_tickers,
                   benchmark_weights,
-                  data=None):
+                  data=None,
+                  start="1970-01-01",
+                  end=str(datetime.now())[0:10]) -> None:
+
+        self.benchmark_tickers=benchmark_tickers
+        self.benchmark_weights=benchmark_weights
+        self.data=data
+        self.start=start
+        self.end=end
 
         if data is None:
             benchmark_securities_prices = pd.DataFrame(columns=benchmark_tickers)
             benchmark_securities_returns = pd.DataFrame(columns=benchmark_tickers)
 
-            for ticker in benchmark_tickers:
+            for ticker in self.benchmark_tickers:
                 price_current = yf.download(ticker, start=self.start, end=self.end)
                 benchmark_securities_prices[ticker] = price_current["Adj Close"]
                 benchmark_securities_returns[ticker] = price_current["Adj Close"].pct_change()
 
-            benchmark_returns = np.dot(benchmark_securities_returns.to_numpy(), benchmark_weights)
+            self.benchmark_returns = np.dot(benchmark_securities_returns.to_numpy(), benchmark_weights)
+
         else:
             benchmark_securities_prices = pd.read_csv(data, index_col=["Date"])  # takes in only the data of kind GetData.save_adj_close_only()
-            benchmark_securities_returns = pd.DataFrame(columns=benchmark_tickers, index=benchmark_securities_prices.index)
+            benchmark_securities_returns = pd.DataFrame(columns=self.benchmark_tickers, index=benchmark_securities_prices.index)
             benchmark_securities_returns = benchmark_securities_prices.pct_change()
 
-            benchmark_returns = np.dot(benchmark_securities_returns.to_numpy(), benchmark_weights)
+            self.benchmark_returns = np.dot(benchmark_securities_returns.to_numpy(), self.benchmark_weights)
 
-        benchmark_returns = np.delete(benchmark_returns, [0], axis=0)
+        self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
 
-        return benchmark_returns
+    def capm(self, portfolio_returns, rfr_daily):
 
-    def capm(self,
-             benchmark_tickers,
-             benchmark_weights,
-             data=None):
-
-        excess_portfolio_returns = self.portfolio_returns - self.rfr_daily
+        excess_portfolio_returns = portfolio_returns - rfr_daily
         excess_benchmark_returns = self.benchmark(benchmark_tickers, benchmark_weights, data)
         excess_benchmark_returns = excess_benchmark_returns - self.rfr_daily
 
@@ -648,11 +646,6 @@ class Matrices():
 ######################################################################################
 
 
-class CheckingWeights():
-    def __init__(self, tickers, start, end) -> None:
-        pass
-
-
 class Backtesting():
     def __init__(self) -> None:
         pass
@@ -662,29 +655,42 @@ class PortfolioReport():
     def __init__(self) -> None:
         pass
 
+class Misc():
+    def __init__(self) -> None:
+        pass
+
+
+    def concatenate_portfolios(self):
+        pass
+
+
+    def daily_to_annual(self):
+        pass
+
+    def annual_to_daily(self):
+        pass
+
 
 class OmegaAnalysis():
-    def __init__(self, returns, mar_lower_bound=0, mar_upper_bound=0.2):
+    def __init__(self, mar_lower_bound=0, mar_upper_bound=0.2):
         """
         Initiates the object.
 
         Args:
-            returns (pd.DataFrame): Dataframe with the daily returns of different portfolios.
             mar_lower_bound (int, optional): MAR lower bound for the Omega Curve. Defaults to 0.
             mar_upper_bound (float, optional): MAR upper bound for the Omega Curve. Defaults to 0.2.
         """
 
-        self.returns=returns
         self.mar_array=np.linspace(mar_lower_bound, mar_upper_bound, round(100*(mar_upper_bound-mar_lower_bound)))
 
     def omega_ratio(self,
-                    portfolio_returns=None,
+                    portfolio_returns,
                     mar=0.03):
         """
         Calculates the Omega Ratio of one or more portfolios.
 
         Args:
-            portfolio_returns (pd.DataFrame, optional): Dataframe with the daily returns of single or more portfolios. Defaults to None.
+            portfolio_returns (pd.DataFrame): Dataframe with the daily returns of single or more portfolios.
 
         Returns:
             pd.Series: Series with Omega Ratios of all portfolios.
@@ -692,38 +698,33 @@ class OmegaAnalysis():
 
         mar_daily = (mar + 1)**np.sqrt(1/252)-1
 
-        if portfolio_returns is None:
-            excess_returns = self.returns-mar_daily
-            winning = excess_returns[excess_returns>0].sum()
-            losing = -(excess_returns[excess_returns<=0].sum())
+        excess_returns = portfolio_returns-mar_daily
+        winning = excess_returns[excess_returns>0].sum()
+        losing = -(excess_returns[excess_returns<=0].sum())
 
-            omega=winning/losing
-        else:
-            excess_returns = portfolio_returns-mar_daily
-            winning = excess_returns[excess_returns>0].sum()
-            losing = -(excess_returns[excess_returns<=0].sum())
-
-            omega=winning/losing
+        omega=winning/losing
 
         return omega
 
     def omega_curve(self,
+                    portfolio_returns,
                     show=True,
                     save=False):
         """
         Plots and/or saves Omega Curve(s) of of one or more portfolios.
 
         Args:
+            portfolio_returns (pd.DataFrame): Dataframe with the daily returns of single or more portfolios.
             show (bool, optional): Show the plot upon the execution of the code. Defaults to True.
             save (bool, optional): Save the plot on storage. Defaults to False.
         """
 
-        all_values = pd.DataFrame(columns=self.returns.columns)
+        all_values = pd.DataFrame(columns=portfolio_returns.columns)
 
-        for portfolio in self.returns.columns:
+        for portfolio in portfolio_returns.columns:
             omega_values = list()
             for mar in self.mar_array:
-                value = np.round(self.omega_ratio(self.returns[portfolio], mar), 5)
+                value = np.round(self.omega_ratio(portfolio_returns[portfolio], mar), 5)
                 omega_values.append(value)
             all_values[portfolio] = omega_values
 
@@ -732,4 +733,3 @@ class OmegaAnalysis():
             plt.savefig("omega_curves.png", dpi=300)
         if show is True:
             plt.show()
-
