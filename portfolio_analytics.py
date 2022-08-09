@@ -5,14 +5,16 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 from scipy import stats
 from sklearn.linear_model import LinearRegression
+from scipy import optimize
 from datetime import datetime
+from itertools import repeat
 import yfinance as yf
 
 
 class PortfolioAnalytics():
     def __init__(self,
                  tickers,
-                 start="1970-01-01",
+                 start="1970-01-02",
                  end=str(datetime.now())[0:10],
                  data=None,
                  initial_aum=10000,
@@ -25,17 +27,19 @@ class PortfolioAnalytics():
         self.data=data   # takes in only the data of kind GetData.save_adj_close_only()
         self.initial_aum = initial_aum
 
-        self.mar_daily = (mar + 1)**np.sqrt(1/252)-1
-        self.rfr_daily = (rfr + 1)**np.sqrt(1/252)-1
+        self.mar_daily = (mar + 1)**(1/252)-1
+        self.rfr_daily = (rfr + 1)**(1/252)-1
 
         if data is None:
             self.prices = pd.DataFrame(columns=self.tickers)
             self.securities_returns = pd.DataFrame(columns=self.tickers)
+            self.securities_returns_monthly = pd.DataFrame(columns=self.tickers)
 
             for ticker in self.tickers:
-                price_current = yf.download(ticker, start=self.start, end=self.end)
+                price_current = yf.download(ticker, start=self.start, end=self.end) # TODO: check if can be done without the loop (with pdr)
                 self.prices[ticker] = price_current["Adj Close"]
                 self.securities_returns[ticker] = price_current["Adj Close"].pct_change()
+                self.securities_returns_monthly[ticker] = price_current["Adj Close"].resample('M').ffill().pct_change()
         else:
             self.prices = pd.read_csv(self.data, index_col=["Date"])
             self.securities_returns = pd.DataFrame(columns=self.tickers, index=self.prices.index)
@@ -63,18 +67,29 @@ class PortfolioAnalytics():
 
     def portfolio_returns(self,
                           weights,
-                          return_dataframe=False):
+                          return_dataframe=False,
+                          portfolio_name=None):
 
         portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
-        mean_returns = np.nanmean(portfolio_returns)
-        volatility = np.nanstd(portfolio_returns)
 
         if return_dataframe is True:
-            portfolio_returns = pd.DataFrame(portfolio_returns, columns=["Returns"], index=self.securities_returns.index)
+            portfolio_returns = pd.DataFrame(portfolio_returns, columns=[portfolio_name], index=self.securities_returns.index)
         else:
             pass
 
-        return portfolio_returns, mean_returns, volatility
+        return portfolio_returns
+
+    def mean_return(self,
+                     portfolio_returns):
+        mean_return = np.nanmean(portfolio_returns)
+
+        return mean_return
+
+    def volatility(self,
+                   portfolio_returns):
+        volatility = np.nanstd(portfolio_returns)
+
+        return volatility
 
     def excess_returns(self, portfolio_returns):
 
@@ -150,21 +165,15 @@ class PortfolioAnalytics():
             plt.show()
 
 
-
-
-# TODO: same analytics for each security in the portfolio separately
 # TODO: rebalancing
 # TODO: __name__==__main__
 # TODO: pytest
 # TODO: piechart of the portfolio
+# TODO: name things as NAV
 
 # ? annualizing ratios?
 # period=len(data) | x*np.sqrt(period)
 
-# cloud providers, chip names (SOXX), cyber security
-
-######################################################################################
-######################################################################################
 
 class MPT():
     def __init__(self,
@@ -233,8 +242,8 @@ class MPT():
         if show is True:
             plt.show()
 
-    def sharpe(self, mean_returns, volatility, rfr_daily):
-        sharpe_ratio = 100*(mean_returns - rfr_daily)/volatility
+    def sharpe(self, mean_return, volatility, rfr_daily):
+        sharpe_ratio = 100*(mean_return - rfr_daily)/volatility
         return sharpe_ratio
 
     def tracking_error(self,
@@ -245,8 +254,108 @@ class MPT():
         return tracking_error
 
 
-######################################################################################
-######################################################################################
+class EfficientFrontier():
+    def __init__(self,
+                 securities_returns,
+                 rfr_daily,
+                 n=1000) -> None:
+
+        self.securities_returns = securities_returns
+        self.rfr_daily=rfr_daily
+
+        np.random.seed(88)
+        s = self.securities_returns.columns.shape[0]
+        t = self.securities_returns.shape[0]
+        securities_returns = self.securities_returns.to_numpy()
+        all_weights = np.zeros((n, s))
+        returns = np.zeros((n, t))
+        self.mean_returns = np.zeros(n)
+        self.volatilities = np.zeros(n)
+        self.sharpe_ratios = np.zeros(n)
+
+        for i in range(n):
+            weights = np.array(np.random.random(s))
+            weights = weights/np.sum(weights)
+            all_weights[i]=weights
+
+            returns[i]=np.dot(securities_returns, weights)
+            self.mean_returns[i]=np.nanmean(returns[i])
+            self.volatilities[i]=np.nanstd(returns[i])
+
+            self.sharpe_ratios[i]=(self.mean_returns[i]-self.rfr_daily)/self.volatilities[i]
+
+        max_sharpe_index=self.sharpe_ratios.argmax()
+
+        best_weights=all_weights[max_sharpe_index] # TODO: sort these out
+        best_returns=returns[max_sharpe_index]
+        self.best_mean_return=self.mean_returns[max_sharpe_index]
+        self.best_volatility=self.volatilities[max_sharpe_index]
+        best_sharpe=self.sharpe_ratios[max_sharpe_index]
+
+
+        self.frontier_y=np.linspace(self.mean_returns.min(), self.mean_returns.max(), 500)
+        self.frontier_x=[]
+
+        x0=np.full((s), 1/s)
+        bounds=tuple(repeat((0,1), s))
+
+        # TODO: check if cvxpy is better
+        for possible_return in self.frontier_y:
+            cons = ({'type':'eq', 'fun': self._check_weights},
+                    {'type':'eq', 'fun': lambda w: self._get_characteristics(w)[0] - possible_return})
+
+            result = optimize.minimize(self._minimize_volatility, x0, method='SLSQP', bounds=bounds, constraints=cons)
+            self.frontier_x.append(result['fun'])
+
+        self.frontier_x=np.array(self.frontier_x)
+
+    def plot_efficient_frontier(self,
+                                show=True,
+                                save=False):
+
+        fig=plt.figure()
+        ax1=fig.add_axes([0.1,0.1,0.8,0.8]) # TODO: figure these out
+        plot=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios, cmap='viridis', s=10)
+        fig.colorbar(plot, ax=ax1, label="Sharpe Ratio")
+        ax1.set_xlabel("Volatility")
+        ax1.set_ylabel("Mean Returns")
+        ax1.set_title("Efficient Frontier")
+        ax1.plot(self.frontier_x*0.995, self.frontier_y, 'r--', linewidth=1)    # 0.995 introduced for legibility purposes
+        ax1.scatter(self.best_volatility, self.best_mean_return, s=15)
+        if save is True:
+            plt.savefig("efficient_frontier.png", dpi=300)
+        if show is True:
+            plt.show()
+
+    def _minimize_volatility(self,
+                             weights):
+        return self._get_characteristics(weights)[1]
+
+    def _get_characteristics(self,
+                             weights):
+        #TODO: check if its possible to do without dot product
+        portfolio_returns=np.dot(self.securities_returns.to_numpy(), weights)
+        weights=np.array(weights)  #TODO: remove. seems unnecessary.
+
+        mean_return=np.nanmean(portfolio_returns)
+        volatility=np.nanstd(portfolio_returns)
+        sharpe_ratio=mean_return/volatility
+
+        return np.array([mean_return, volatility, sharpe_ratio])
+
+    def _negative_sharpe(self,
+                         weights):
+
+        negative_sharpe_ratio=self._get_characteristics(weights)
+        negative_sharpe_ratio=-1*negative_sharpe_ratio[2]
+
+        return negative_sharpe_ratio
+
+    def _check_weights(self,
+                       weights):
+
+        return np.sum(weights)-1
+
 
 class PMPT():
     def __init__(self,
@@ -509,9 +618,6 @@ class PMPT():
         return sterling_ratio
 
 
-######################################################################################
-######################################################################################
-
 class Ulcer():
     def __init__(self) -> None:
         pass
@@ -538,12 +644,12 @@ class Ulcer():
 
     def martin(self,
                portfolio_state,
-               mean_returns,
+               mean_return,
                rfr_daily, # TODO: add default here and elsewhere
                period=14):
 
         ulcer_index = self.ulcer(portfolio_state, period)
-        martin_ratio = 100*(mean_returns - rfr_daily)/ulcer_index
+        martin_ratio = 100*(mean_return - rfr_daily)/ulcer_index
         return martin_ratio
 
     def plot_ulcer(self,
@@ -567,31 +673,29 @@ class Ulcer():
         if show is True:
             plt.show()
 
-######################################################################################
-######################################################################################
 
 class ValueAtRisk():
     def __init__(self) -> None:
         pass
 
     def analytical_var(self,
-                       mean_returns,
+                       mean_return,
                        volatility,
                        value,
                        dof,
                        distribution="normal"):
 
         if distribution=="normal":
-            var=stats.norm(mean_returns, volatility).cdf(value)
-            expected_loss=(stats.norm(mean_returns, volatility). \
-                          pdf(stats.norm(mean_returns, volatility). \
-                          ppf((1 - var))) * volatility)/(1 - var) - mean_returns
+            var=stats.norm(mean_return, volatility).cdf(value)
+            expected_loss=(stats.norm(mean_return, volatility). \
+                          pdf(stats.norm(mean_return, volatility). \
+                          ppf((1 - var))) * volatility)/(1 - var) - mean_return
 
         elif distribution=="t":
             var=stats.t(dof).cdf(value)
             percent_point_function = stats.t(dof).ppf((1 - var))
             expected_loss = -1/(1 - var)*(1-dof)**(-1)*(dof-2 + percent_point_function**2) \
-                            *stats.t(dof).pdf(percent_point_function)*volatility-mean_returns
+                            *stats.t(dof).pdf(percent_point_function)*volatility-mean_return
 
         else:
             print("Distribution Unavailable.")
@@ -608,7 +712,7 @@ class ValueAtRisk():
         return var
 
     def plot_analytical_var(self,
-                            mean_returns,
+                            mean_return,
                             volatility,
                             value,
                             dof,
@@ -617,10 +721,10 @@ class ValueAtRisk():
                             show=True,
                             save=False):
 
-        x = np.linspace(mean_returns-z*volatility, mean_returns+z*volatility, 100)
+        x = np.linspace(mean_return-z*volatility, mean_return+z*volatility, 100)
 
         if distribution=="Normal":
-            pdf=stats.norm(mean_returns, volatility).pdf(x)
+            pdf=stats.norm(mean_return, volatility).pdf(x)
         elif distribution=="t":
             pdf=stats.t(dof).pdf(x)
         else:
@@ -664,8 +768,6 @@ class ValueAtRisk():
         if show is True:
             plt.show()
 
-######################################################################################
-######################################################################################
 
 class Matrices():
     def __init__(self) -> None:
@@ -702,14 +804,6 @@ class Matrices():
         return matrix
 
 
-
-
-######################################################################################
-######################################################################################
-######################################################################################
-######################################################################################
-
-
 class Backtesting():
     def __init__(self) -> None:
         pass
@@ -724,15 +818,48 @@ class Misc():
         pass
 
 
-    def concatenate_portfolios(self):
-        pass
+    def concatenate_portfolios(self,
+                               portfolio_one,
+                               portfolio_two):
+        """
+        Concatenates an array of portfolio returns to an existing array of portfolio returns.
+        Accepts array-like objects such as np.ndarray, pd.DataFrame, pd.Series, list etc.
 
+        Args:
+            portfolio_one (array-like object): Returns of first portfolio(s).
+            portfolio_two (array-like object): Returns of portfolio(s) to be concatenated to the right.
 
-    def daily_to_annual(self):
-        pass
+        Returns:
+            pd.DataFrame: DataFrame with returns of the given portfolios in respective columns.
+        """
 
-    def annual_to_daily(self):
-        pass
+        portfolios = pd.concat([pd.DataFrame(portfolio_one), pd.DataFrame(portfolio_two)],
+                                axis=1)
+
+        return portfolios
+
+    def periodization(self,
+                      given_rate,
+                      periods=1/252):
+        """
+        Changes rate given in one periodization into another periodization.
+        E.g. annual rate of return into daily rate of return etc.
+
+        Args:
+            given_rate (float): Rate of interest, return etc. Specified in decimals.
+            periods (float, optional): How many given rate periods there is in one output rate period.
+                                       Defaults to 1/252. Converts annual rate into daily rate given 252 trading days.
+                                       periods=1/365 converts annual rate into daily (calendar) rate.
+                                       periods=252 converts daily (trading) rate into annual rate.
+                                       periods=12 converts monthly rate into annual.
+
+        Returns:
+            float: Rate expressed in a specified period.
+        """
+
+        output_rate = (given_rate + 1)**(periods)-1
+
+        return output_rate
 
 
 class OmegaAnalysis():
