@@ -16,6 +16,7 @@ class PortfolioAnalytics():
                  tickers,
                  start="1970-01-02",
                  end=str(datetime.now())[0:10],
+                 portfolio_name="Investment Portfolio",
                  data=None,
                  initial_aum=10000,
                  mar=0.03,
@@ -24,8 +25,14 @@ class PortfolioAnalytics():
         self.tickers=tickers
         self.start=start
         self.end=end
-        self.data=data   # takes in only the data of kind GetData.save_adj_close_only()
+        self.portfolio_name=portfolio_name
+        self.data=data    # takes in only the data of kind GetData.save_adj_close_only()
         self.initial_aum = initial_aum
+
+        self.names = pd.Series(index=self.tickers, dtype="str")
+        for ticker in self.tickers:
+            security = yf.Ticker(ticker)
+            self.names[ticker] = security.info["longName"]
 
         self.mar_daily = (mar + 1)**(1/252)-1
         self.rfr_daily = (rfr + 1)**(1/252)-1
@@ -96,14 +103,6 @@ class PortfolioAnalytics():
         excess_returns = portfolio_returns - self.mar_daily
         return excess_returns
 
-    def list_securities(self):
-        names = pd.Series(index=self.tickers)
-        for ticker in self.tickers:
-            security = yf.Ticker(ticker)
-            names[ticker] = security.info["longName"]
-
-        return names
-
     def portfolio_cumulative_returns(self,
                                      weights):
         portfolio_returns = self.portfolio_returns(weights, return_dataframe=True)
@@ -164,12 +163,44 @@ class PortfolioAnalytics():
         if show is True:
             plt.show()
 
+    def plot_portfolio_piechart(self,
+                                weights,
+                                show=True,
+                                save=False):
+
+        #dta = self.portfolio_state(weights)
+
+        allocation_funds = np.multiply(self.initial_aum, weights)
+        wp = {'linewidth':1, 'edgecolor':"black" }
+        explode =tuple(repeat(0.05, len(self.tickers)))
+
+        fig=plt.figure()
+        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
+        pie = ax1.pie(allocation_funds,
+                      autopct=lambda pct: self._ap(pct, allocation_funds),
+                      explode=explode,
+                      labels=self.tickers,
+                      shadow=True,
+                      startangle=90,
+                      wedgeprops=wp)
+        ax1.legend(pie[0], self.names,
+                   title="Portfolio Assets",
+                   loc="upper right",
+                   bbox_to_anchor =(0.7, 0, 0.5, 1))
+        plt.setp(pie[2], size=9, weight="bold")
+        ax1.set_title(str(self.portfolio_name+" Asset Distribution"))
+        if save is True:
+            plt.savefig(str(self.portfolio_name+"_pie_chart.png"), dpi=300)
+        if show is True:
+            plt.show()
+
+    def _ap(self, pct, all_values):
+        absolute = int(pct / 100.*np.sum(all_values))
+        return "{:.1f}%\n(${:d})".format(pct, absolute)
 
 # TODO: rebalancing
 # TODO: __name__==__main__
 # TODO: pytest
-# TODO: piechart of the portfolio
-# TODO: name things as NAV
 
 # ? annualizing ratios?
 # period=len(data) | x*np.sqrt(period)
@@ -253,6 +284,15 @@ class MPT():
 
         return tracking_error
 
+
+"""
+log_ret = np.log(stocks/stocks.shift(1))
+
+ret_arr = np.zeros(num_ports)
+vol_arr = np.zeros(num_ports)
+ret_arr[i] = np.sum(log_reg.mean()*weights*252)
+vol_arr[x] = np.sqrt(np.dot(weights.T, np.dot(log_ret.cov()*252, weights)))
+"""
 
 class EfficientFrontier():
     def __init__(self,
