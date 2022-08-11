@@ -13,7 +13,7 @@ import yfinance as yf
 
 class PortfolioAnalytics():
     def __init__(self,
-                 tickers,
+                 tickers=None,
                  start="1970-01-02",
                  end=str(datetime.now())[0:10],
                  portfolio_name="Investment Portfolio",
@@ -28,33 +28,34 @@ class PortfolioAnalytics():
         self.portfolio_name=portfolio_name
         self.data=data    # takes in only the data of kind GetData.save_adj_close_only()
         self.initial_aum = initial_aum
-
+        """
         self.names = pd.Series(index=self.tickers, dtype="str")
         for ticker in self.tickers:     #TODO: fix this
             security = yf.Ticker(ticker)
             self.names[ticker] = security.info["longName"]
-
+        """
         self.mar_daily = (mar + 1)**(1/252)-1
         self.rfr_daily = (rfr + 1)**(1/252)-1
 
         if data is None:
             self.prices = pd.DataFrame(columns=self.tickers)
-            self.securities_returns = pd.DataFrame(columns=self.tickers)
-            self.securities_returns_monthly = pd.DataFrame(columns=self.tickers)
+            self.assets_returns = pd.DataFrame(columns=self.tickers)
+            self.assets_returns_monthly = pd.DataFrame(columns=self.tickers)
 
             for ticker in self.tickers:
                 price_current = yf.download(ticker, start=self.start, end=self.end) # TODO: check if can be done without the loop (with pdr)
                 self.prices[ticker] = price_current["Adj Close"]
-                self.securities_returns[ticker] = price_current["Adj Close"].pct_change()
-                self.securities_returns_monthly[ticker] = price_current["Adj Close"].resample('M').ffill().pct_change()
+                self.assets_returns[ticker] = price_current["Adj Close"].pct_change()
+                self.assets_returns_monthly[ticker] = price_current["Adj Close"].resample('M').ffill().pct_change()
         else:
             self.prices = pd.read_csv(self.data, index_col=["Date"])
-            self.securities_returns = pd.DataFrame(columns=self.tickers, index=self.prices.index)
-            self.securities_returns = self.prices.pct_change()
+            self.assets_returns = pd.DataFrame(columns=self.prices.columns, index=self.prices.index)
+            self.assets_returns = self.prices.pct_change()
+            self.tickers=self.prices.columns
             self.start = self.prices.index[0]
             self.end = self.prices.index[-1]
 
-        self.securities_returns = self.securities_returns.drop(self.securities_returns.index[0])
+        self.assets_returns = self.assets_returns.drop(self.assets_returns.index[0])
 
     def portfolio_state(self,
                         weights):
@@ -62,26 +63,26 @@ class PortfolioAnalytics():
         # funds allocated to each security
         allocation_funds = np.multiply(self.initial_aum, weights)
 
-        # number of securities bought at t0
-        allocation_securities = np.divide(allocation_funds, self.prices.iloc[0])
+        # number of assets bought at t0
+        allocation_assets = np.divide(allocation_funds, self.prices.iloc[0])
 
         # absolute (dollar) value of each security in portfolio (i.e. state of the portfolio, not rebalanced)
-        portfolio_state = np.multiply(self.prices, allocation_securities)
+        portfolio_state = np.multiply(self.prices, allocation_assets)
         portfolio_state = pd.DataFrame(portfolio_state)
         portfolio_state["Whole Portfolio"] = portfolio_state.sum(axis=1)
 
-        return allocation_funds, allocation_securities, portfolio_state
+        return allocation_funds, allocation_assets, portfolio_state
 
     def portfolio_returns(self,
                           weights,
                           return_dataframe=False):
 
-        portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
+        portfolio_returns = np.dot(self.assets_returns.to_numpy(), weights)
 
         if return_dataframe is True:
             portfolio_returns = pd.DataFrame(portfolio_returns,
                                              columns=[self.portfolio_name],
-                                             index=self.securities_returns.index)
+                                             index=self.assets_returns.index)
 
         return portfolio_returns
 
@@ -172,8 +173,8 @@ class PortfolioAnalytics():
                                 save=False):
 
         allocation_funds = np.multiply(self.initial_aum, weights)
-        wp = {'linewidth':1, 'edgecolor':"black" }
-        explode =tuple(repeat(0.05, len(self.tickers)))
+        wp={'linewidth':1, 'edgecolor':"black" }
+        explode=tuple(repeat(0.05, len(self.tickers)))
 
         fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
@@ -199,7 +200,7 @@ class PortfolioAnalytics():
         absolute = int(pct / 100.*np.sum(all_values))
         return "{:.1f}%\n(${:d})".format(pct, absolute)
 
-# TODO: rebalancing
+# TODO: rebalancing, transaction costs
 # TODO: __name__==__main__
 # TODO: pytest
 
@@ -222,20 +223,20 @@ class MPT():
         self.end=end
 
         if benchmark_data is None:
-            benchmark_securities_prices = pd.DataFrame(columns=benchmark_tickers)
-            benchmark_securities_returns = pd.DataFrame(columns=benchmark_tickers)
+            benchmark_assets_prices = pd.DataFrame(columns=benchmark_tickers)
+            benchmark_assets_returns = pd.DataFrame(columns=benchmark_tickers)
 
             for ticker in self.benchmark_tickers:
                 price_current = yf.download(ticker, start=self.start, end=self.end)
-                benchmark_securities_prices[ticker] = price_current["Adj Close"]
-                benchmark_securities_returns[ticker] = price_current["Adj Close"].pct_change()
+                benchmark_assets_prices[ticker] = price_current["Adj Close"]
+                benchmark_assets_returns[ticker] = price_current["Adj Close"].pct_change()
 
         else:
-            benchmark_securities_prices = pd.read_csv(benchmark_data, index_col=["Date"])  # takes in only the data of kind GetData.save_adj_close_only()
-            benchmark_securities_returns = pd.DataFrame(columns=self.benchmark_tickers, index=benchmark_securities_prices.index)
-            benchmark_securities_returns = benchmark_securities_prices.pct_change()
+            benchmark_assets_prices = pd.read_csv(benchmark_data, index_col=["Date"])    # takes in only the data of kind GetData.save_adj_close_only()
+            benchmark_assets_returns = pd.DataFrame(columns=self.benchmark_tickers, index=benchmark_assets_prices.index)
+            benchmark_assets_returns = benchmark_assets_prices.pct_change()
 
-        self.benchmark_returns = np.dot(benchmark_securities_returns.to_numpy(), self.benchmark_weights)
+        self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), self.benchmark_weights)
         self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
 
     def capm(self, portfolio_returns, rfr_daily):
@@ -288,19 +289,19 @@ class MPT():
 
 class EfficientFrontier():
     def __init__(self,
-                 securities_returns,
+                 assets_returns,
                  rfr_daily=0.0001173,    # 3% annual
                  n=1000,
                  portfolio_name="Investment Portfolio") -> None:
 
-        self.securities_returns = securities_returns
+        self.assets_returns = assets_returns
         self.rfr_daily=rfr_daily
         self.portfolio_name=portfolio_name
 
         np.random.seed(88)
-        s = self.securities_returns.columns.shape[0]
-        t = self.securities_returns.shape[0]
-        securities_returns = self.securities_returns.to_numpy()
+        s = self.assets_returns.columns.shape[0]
+        t = self.assets_returns.shape[0]
+        assets_returns = self.assets_returns.to_numpy()
         all_weights = np.zeros((n, s))
         returns = np.zeros((n, t))
         self.mean_returns = np.zeros(n)
@@ -312,19 +313,19 @@ class EfficientFrontier():
             weights = weights/np.sum(weights)
             all_weights[i]=weights
 
-            returns[i]=np.dot(securities_returns, weights)
+            returns[i]=np.dot(assets_returns, weights)
             self.mean_returns[i]=np.nanmean(returns[i])
             self.volatilities[i]=np.nanstd(returns[i])
 
             self.sharpe_ratios[i]=(self.mean_returns[i]-self.rfr_daily)/self.volatilities[i]
 
-        max_sharpe_index=self.sharpe_ratios.argmax()
+        self.max_sharpe_index=self.sharpe_ratios.argmax()
 
-        self.best = {"weights":all_weights[max_sharpe_index],
-                     "returns":returns[max_sharpe_index],
-                     "mean_return":self.mean_returns[max_sharpe_index],
-                     "volatility":self.volatilities[max_sharpe_index],
-                     "sharpe":self.sharpe_ratios[max_sharpe_index]}
+        self.best = {"weights":all_weights[self.max_sharpe_index],
+                     "returns":returns[self.max_sharpe_index],
+                     "mean_return":self.mean_returns[self.max_sharpe_index],
+                     "volatility":self.volatilities[self.max_sharpe_index],
+                     "sharpe":self.sharpe_ratios[self.max_sharpe_index]}
 
         self.frontier_y=np.linspace(self.mean_returns.min(),
                                     self.mean_returns.max(),
@@ -332,7 +333,7 @@ class EfficientFrontier():
         self.frontier_x=[]
 
         x0=np.full((s), 1/s)
-        bounds=tuple(repeat((0,1), s))
+        bounds=tuple(repeat((0,1), s))      #TODO: shorting, leverage
 
         # TODO: check if cvxpy is better
         for possible_return in self.frontier_y:
@@ -347,9 +348,11 @@ class EfficientFrontier():
         self.frontier_x=np.array(self.frontier_x)
 
     def plot_efficient_frontier(self,
+                                plot_all=False,
                                 plot_best=True,
-                                plot_securities=False,
+                                plot_assets=False,
                                 plot_comparables=False,
+                                plot_cal=False,
                                 comparables_mean_returns=None,
                                 comparables_volatilities=None,
                                 show=True,
@@ -357,32 +360,39 @@ class EfficientFrontier():
 
         fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        plot=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios, cmap='viridis', s=10)
-        fig.colorbar(plot, ax=ax1, label="Sharpe Ratio")
         ax1.set_xlabel("Volatility")
         ax1.set_ylabel("Mean Returns")
         ax1.set_title(str(self.portfolio_name+" Efficient Frontier"))
-        ax1.plot(self.frontier_x*0.997, self.frontier_y, 'r--', linewidth=1)    # 0.995 introduced for legibility purposes
+        ax1.plot(0.996*self.frontier_x, self.frontier_y, 'b-', linewidth=2, label="Efficient Frontier")    # 0.996 introduced for legibility purposes
 
-        if plot_comparables is True:
-            ax1.scatter(comparables_volatilities, comparables_mean_returns, s=15, c="black")
-            for i in range(comparables_mean_returns.shape[0]):
-                ax1.text(comparables_volatilities[i], comparables_mean_returns[i],
-                         comparables_mean_returns.index[i], size=12)
+        if plot_all is True:
+            plot=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios,
+                             cmap='Blues', s=8, marker=".", label="All Portfolios")
+            fig.colorbar(plot, ax=ax1, label="Sharpe Ratio")
 
         if plot_best is True:
-            ax1.scatter(self.best["volatility"], self.best["mean_return"], s=20, c="g")
-            ax1.text(self.best["volatility"], self.best["mean_return"],
-                     "Best Sharpe Ratio", size=14)
+            ax1.scatter(self.best["volatility"], self.best["mean_return"], s=50, c="g", marker="x", label="Highest Sharpe Portfolio")
 
-        if plot_securities is True:
-            securities_volatilities = np.nanstd(self.securities_returns, axis=0)
-            securities_mean_returns = np.nanmean(self.securities_returns, axis=0)
-            ax1.scatter(securities_volatilities, securities_mean_returns, s=15, c="r")
-            for i in range(securities_mean_returns.shape[0]):
-                ax1.text(securities_volatilities[i], securities_mean_returns[i],
-                         self.securities_returns.columns[i], size=12)
+        if plot_assets is True:
+            assets_volatilities = np.nanstd(self.assets_returns, axis=0)
+            assets_mean_returns = np.nanmean(self.assets_returns, axis=0)
+            ax1.scatter(assets_volatilities, assets_mean_returns, s=30, c="r", marker="d", label="Portfolio assets")
+            for i in range(assets_mean_returns.shape[0]):
+                ax1.text(1.01*assets_volatilities[i], assets_mean_returns[i],
+                         self.assets_returns.columns[i], size=12)
 
+        if plot_comparables is True:
+            ax1.scatter(comparables_volatilities, comparables_mean_returns, s=30, c="orange", marker="X", label="Comparable Portfolios")
+            for i in range(comparables_mean_returns.shape[0]):
+                ax1.text(1.01*comparables_volatilities[i], comparables_mean_returns[i],
+                         comparables_mean_returns.index[i], size=12, color="orange")
+
+        if plot_cal is True:
+            cal_x=np.linspace(0.95*self.volatilities.min(), 1.01*self.best["volatility"], 100)
+            cal_slope=(self.best["mean_return"]-self.rfr_daily)/self.best["volatility"]
+            ax1.plot(cal_x, self.rfr_daily+cal_slope*cal_x, color="black", linewidth=2, label="Capital Allocation Line")
+
+        ax1.legend()
         if save is True:
             plt.savefig(str(self.portfolio_name+"_efficient_frontier.png"), dpi=300)
         if show is True:
@@ -396,7 +406,7 @@ class EfficientFrontier():
     def _get_characteristics(self,
                              weights):
 
-        portfolio_returns=np.dot(self.securities_returns.to_numpy(), weights)
+        portfolio_returns=np.dot(self.assets_returns.to_numpy(), weights)
 
         mean_return=np.nanmean(portfolio_returns)
         volatility=np.nanstd(portfolio_returns)
@@ -417,11 +427,11 @@ class EfficientFrontier():
 
 class PMPT():
     def __init__(self,
-                  benchmark_tickers,
-                  benchmark_weights,
-                  benchmark_data=None,
-                  start="1970-01-01",
-                  end=str(datetime.now())[0:10]) -> None:
+                 benchmark_tickers,
+                 benchmark_weights,
+                 benchmark_data=None,
+                 start="1970-01-01",
+                 end=str(datetime.now())[0:10]) -> None:
 
         self.benchmark_tickers=benchmark_tickers
         self.benchmark_weights=benchmark_weights
@@ -430,26 +440,29 @@ class PMPT():
         self.end=end
 
         if benchmark_data is None:
-            benchmark_securities_prices = pd.DataFrame(columns=benchmark_tickers)
-            benchmark_securities_returns = pd.DataFrame(columns=benchmark_tickers)
+            benchmark_assets_prices = pd.DataFrame(columns=benchmark_tickers)
+            benchmark_assets_returns = pd.DataFrame(columns=benchmark_tickers)
 
             for ticker in self.benchmark_tickers:
                 price_current = yf.download(ticker, start=self.start, end=self.end)
-                benchmark_securities_prices[ticker] = price_current["Adj Close"]
-                benchmark_securities_returns[ticker] = price_current["Adj Close"].pct_change()
+                benchmark_assets_prices[ticker] = price_current["Adj Close"]
+                benchmark_assets_returns[ticker] = price_current["Adj Close"].pct_change()
 
         else:
-            benchmark_securities_prices = pd.read_csv(benchmark_data, index_col=["Date"])  # takes in only the data of kind GetData.save_adj_close_only()
-            benchmark_securities_returns = pd.DataFrame(columns=self.benchmark_tickers, index=benchmark_securities_prices.index)
-            benchmark_securities_returns = benchmark_securities_prices.pct_change()
+            benchmark_assets_prices = pd.read_csv(benchmark_data, index_col=["Date"])    # takes in only the data of kind GetData.save_adj_close_only()
+            benchmark_assets_returns = pd.DataFrame(columns=self.benchmark_tickers, index=benchmark_assets_prices.index)
+            benchmark_assets_returns = benchmark_assets_prices.pct_change()
+            self.benchmark_tickers=benchmark_assets_prices.columns
+            self.start=benchmark_assets_prices.index[0]
+            self.end=benchmark_assets_prices.index[-1]
 
-        self.benchmark_returns = np.dot(benchmark_securities_returns.to_numpy(), self.benchmark_weights)
+        self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), self.benchmark_weights)
         self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
 
 
     def upside_volatility(self,
                           portfolio_returns,
-                          mar_daily): #TODO: rfr vs mar
+                          mar_daily):
         positive_portfolio_returns = portfolio_returns - mar_daily
         positive_portfolio_returns = positive_portfolio_returns[positive_portfolio_returns>0]
         upside_volatility = np.std(positive_portfolio_returns)
@@ -457,20 +470,20 @@ class PMPT():
 
     def downside_volatility(self,
                             portfolio_returns,
-                            mar_daily): #TODO:  rfr vs mar
+                            mar_daily):
 
         negative_portfolio_returns = portfolio_returns - mar_daily
         negative_portfolio_returns = negative_portfolio_returns[negative_portfolio_returns<0]
         downside_volatility = np.std(negative_portfolio_returns)
         return downside_volatility
 
-    def volatility_skewness(self, #TODO: skew?
-                            portfolio_returns,
-                            mar_daily):
+    def volatility_skew(self,
+                        portfolio_returns,
+                        mar_daily):
         upside = self.upside_volatility(portfolio_returns, mar_daily)
         downside = self.downside_volatility(portfolio_returns, mar_daily)
-        skewness = upside/downside
-        return skewness
+        skew = upside/downside
+        return skew
 
     def omega_excess_return(self,
                             portfolio_returns,
@@ -540,11 +553,8 @@ class PMPT():
                          period=1000):
 
         if period>=portfolio_state.shape[0]:
-            period=period
-        else:
             period=portfolio_state.shape[0]
             print("Warning! Dataset too small. Period: ", period)
-
 
         peak = np.max(portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = portfolio_state["Whole Portfolio"].idxmax()
@@ -918,6 +928,10 @@ class Misc():
         output_rate = (given_rate + 1)**(periods)-1
 
         return output_rate
+
+    #TODO: fill NaNs with avg(t-1, t+1)
+    def fill_nan(self):
+        print(df.isnull().sum())
 
 
 class OmegaAnalysis():
