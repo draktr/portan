@@ -30,7 +30,7 @@ class PortfolioAnalytics():
         self.initial_aum = initial_aum
 
         self.names = pd.Series(index=self.tickers, dtype="str")
-        for ticker in self.tickers:
+        for ticker in self.tickers:     #TODO: fix this
             security = yf.Ticker(ticker)
             self.names[ticker] = security.info["longName"]
 
@@ -74,26 +74,27 @@ class PortfolioAnalytics():
 
     def portfolio_returns(self,
                           weights,
-                          return_dataframe=False,
-                          portfolio_name=None):
+                          return_dataframe=False):
 
         portfolio_returns = np.dot(self.securities_returns.to_numpy(), weights)
 
         if return_dataframe is True:
-            portfolio_returns = pd.DataFrame(portfolio_returns, columns=[portfolio_name], index=self.securities_returns.index)
-        else:
-            pass
+            portfolio_returns = pd.DataFrame(portfolio_returns,
+                                             columns=[self.portfolio_name],
+                                             index=self.securities_returns.index)
 
         return portfolio_returns
 
     def mean_return(self,
                      portfolio_returns):
+
         mean_return = np.nanmean(portfolio_returns)
 
         return mean_return
 
     def volatility(self,
                    portfolio_returns):
+
         volatility = np.nanstd(portfolio_returns)
 
         return volatility
@@ -101,12 +102,14 @@ class PortfolioAnalytics():
     def excess_returns(self, portfolio_returns):
 
         excess_returns = portfolio_returns - self.mar_daily
+
         return excess_returns
 
     def portfolio_cumulative_returns(self,
                                      weights):
         portfolio_returns = self.portfolio_returns(weights, return_dataframe=True)
         portfolio_cumulative_returns = (portfolio_returns["Returns"] + 1).cumprod()
+
         return portfolio_cumulative_returns
 
     def plot_portfolio_returns(self,
@@ -168,15 +171,13 @@ class PortfolioAnalytics():
                                 show=True,
                                 save=False):
 
-        #dta = self.portfolio_state(weights)
-
         allocation_funds = np.multiply(self.initial_aum, weights)
         wp = {'linewidth':1, 'edgecolor':"black" }
         explode =tuple(repeat(0.05, len(self.tickers)))
 
         fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        pie = ax1.pie(allocation_funds,
+        pie=ax1.pie(allocation_funds,
                       autopct=lambda pct: self._ap(pct, allocation_funds),
                       explode=explode,
                       labels=self.tickers,
@@ -186,7 +187,7 @@ class PortfolioAnalytics():
         ax1.legend(pie[0], self.names,
                    title="Portfolio Assets",
                    loc="upper right",
-                   bbox_to_anchor =(0.7, 0, 0.5, 1))
+                   bbox_to_anchor=(0.7, 0, 0.5, 1))
         plt.setp(pie[2], size=9, weight="bold")
         ax1.set_title(str(self.portfolio_name+" Asset Distribution"))
         if save is True:
@@ -285,23 +286,16 @@ class MPT():
         return tracking_error
 
 
-"""
-log_ret = np.log(stocks/stocks.shift(1))
-
-ret_arr = np.zeros(num_ports)
-vol_arr = np.zeros(num_ports)
-ret_arr[i] = np.sum(log_reg.mean()*weights*252)
-vol_arr[x] = np.sqrt(np.dot(weights.T, np.dot(log_ret.cov()*252, weights)))
-"""
-
 class EfficientFrontier():
     def __init__(self,
                  securities_returns,
-                 rfr_daily,
-                 n=1000) -> None:
+                 rfr_daily=0.0001173,    # 3% annual
+                 n=1000,
+                 portfolio_name="Investment Portfolio") -> None:
 
         self.securities_returns = securities_returns
         self.rfr_daily=rfr_daily
+        self.portfolio_name=portfolio_name
 
         np.random.seed(88)
         s = self.securities_returns.columns.shape[0]
@@ -326,14 +320,15 @@ class EfficientFrontier():
 
         max_sharpe_index=self.sharpe_ratios.argmax()
 
-        best_weights=all_weights[max_sharpe_index] # TODO: sort these out
-        best_returns=returns[max_sharpe_index]
-        self.best_mean_return=self.mean_returns[max_sharpe_index]
-        self.best_volatility=self.volatilities[max_sharpe_index]
-        best_sharpe=self.sharpe_ratios[max_sharpe_index]
+        self.best = {"weights":all_weights[max_sharpe_index],
+                     "returns":returns[max_sharpe_index],
+                     "mean_return":self.mean_returns[max_sharpe_index],
+                     "volatility":self.volatilities[max_sharpe_index],
+                     "sharpe":self.sharpe_ratios[max_sharpe_index]}
 
-
-        self.frontier_y=np.linspace(self.mean_returns.min(), self.mean_returns.max(), 500)
+        self.frontier_y=np.linspace(self.mean_returns.min(),
+                                    self.mean_returns.max(),
+                                    500)
         self.frontier_x=[]
 
         x0=np.full((s), 1/s)
@@ -344,38 +339,64 @@ class EfficientFrontier():
             cons = ({'type':'eq', 'fun': self._check_weights},
                     {'type':'eq', 'fun': lambda w: self._get_characteristics(w)[0] - possible_return})
 
-            result = optimize.minimize(self._minimize_volatility, x0, method='SLSQP', bounds=bounds, constraints=cons)
+            result = optimize.minimize(self._minimize_volatility,
+                                       x0, method='SLSQP',
+                                       bounds=bounds, constraints=cons)
             self.frontier_x.append(result['fun'])
 
         self.frontier_x=np.array(self.frontier_x)
 
     def plot_efficient_frontier(self,
+                                plot_best=True,
+                                plot_securities=False,
+                                plot_comparables=False,
+                                comparables_mean_returns=None,
+                                comparables_volatilities=None,
                                 show=True,
                                 save=False):
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8]) # TODO: figure these out
+        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
         plot=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios, cmap='viridis', s=10)
         fig.colorbar(plot, ax=ax1, label="Sharpe Ratio")
         ax1.set_xlabel("Volatility")
         ax1.set_ylabel("Mean Returns")
-        ax1.set_title("Efficient Frontier")
-        ax1.plot(self.frontier_x*0.995, self.frontier_y, 'r--', linewidth=1)    # 0.995 introduced for legibility purposes
-        ax1.scatter(self.best_volatility, self.best_mean_return, s=15)
+        ax1.set_title(str(self.portfolio_name+" Efficient Frontier"))
+        ax1.plot(self.frontier_x*0.997, self.frontier_y, 'r--', linewidth=1)    # 0.995 introduced for legibility purposes
+
+        if plot_comparables is True:
+            ax1.scatter(comparables_volatilities, comparables_mean_returns, s=15, c="black")
+            for i in range(comparables_mean_returns.shape[0]):
+                ax1.text(comparables_volatilities[i], comparables_mean_returns[i],
+                         comparables_mean_returns.index[i], size=12)
+
+        if plot_best is True:
+            ax1.scatter(self.best["volatility"], self.best["mean_return"], s=20, c="g")
+            ax1.text(self.best["volatility"], self.best["mean_return"],
+                     "Best Sharpe Ratio", size=14)
+
+        if plot_securities is True:
+            securities_volatilities = np.nanstd(self.securities_returns, axis=0)
+            securities_mean_returns = np.nanmean(self.securities_returns, axis=0)
+            ax1.scatter(securities_volatilities, securities_mean_returns, s=15, c="r")
+            for i in range(securities_mean_returns.shape[0]):
+                ax1.text(securities_volatilities[i], securities_mean_returns[i],
+                         self.securities_returns.columns[i], size=12)
+
         if save is True:
-            plt.savefig("efficient_frontier.png", dpi=300)
+            plt.savefig(str(self.portfolio_name+"_efficient_frontier.png"), dpi=300)
         if show is True:
             plt.show()
 
     def _minimize_volatility(self,
                              weights):
+
         return self._get_characteristics(weights)[1]
 
     def _get_characteristics(self,
                              weights):
-        #TODO: check if its possible to do without dot product
+
         portfolio_returns=np.dot(self.securities_returns.to_numpy(), weights)
-        weights=np.array(weights)  #TODO: remove. seems unnecessary.
 
         mean_return=np.nanmean(portfolio_returns)
         volatility=np.nanstd(portfolio_returns)
@@ -386,10 +407,7 @@ class EfficientFrontier():
     def _negative_sharpe(self,
                          weights):
 
-        negative_sharpe_ratio=self._get_characteristics(weights)
-        negative_sharpe_ratio=-1*negative_sharpe_ratio[2]
-
-        return negative_sharpe_ratio
+        return -1*self._get_characteristics(weights)[2]
 
     def _check_weights(self,
                        weights):
