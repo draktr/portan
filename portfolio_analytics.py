@@ -57,6 +57,9 @@ class PortfolioAnalytics():
 
         self.assets_returns = self.assets_returns.drop(self.assets_returns.index[0])
 
+        #TODO: correct in other places where mean was calculated inside a function
+        # TODO: checker methods
+
     def portfolio_state(self,
                         weights):
 
@@ -75,7 +78,7 @@ class PortfolioAnalytics():
 
     def portfolio_returns(self,
                           weights,
-                          return_dataframe=False):
+                          return_dataframe=True):
 
         portfolio_returns = np.dot(self.assets_returns.to_numpy(), weights)
 
@@ -87,16 +90,29 @@ class PortfolioAnalytics():
         return portfolio_returns
 
     def mean_return(self,
-                     portfolio_returns):
+                    portfolio_returns,
+                    change_period=True,
+                    compounding=True,
+                    frequency=252):
 
-        mean_return = np.nanmean(portfolio_returns)
+        if change_period is True and compounding is True:
+            mean_return = (1+portfolio_returns).prod()**(frequency/portfolio_returns.count())-1
+        elif change_period is True and compounding is False:
+            mean_return = portfolio_returns.mean()*frequency
+        else:
+            mean_return = portfolio_returns.mean()
 
         return mean_return
 
     def volatility(self,
-                   portfolio_returns):
+                   portfolio_returns,
+                   change_period=True,
+                   frequency=252):
 
-        volatility = np.nanstd(portfolio_returns)
+        if change_period is True:
+            volatility = portfolio_returns.std()*np.sqrt(frequency)
+        else:
+            volatility = portfolio_returns.std()
 
         return volatility
 
@@ -107,22 +123,21 @@ class PortfolioAnalytics():
         return excess_returns
 
     def portfolio_cumulative_returns(self,
-                                     weights):
-        portfolio_returns = self.portfolio_returns(weights, return_dataframe=True)
-        portfolio_cumulative_returns = (portfolio_returns["Returns"] + 1).cumprod()
+                                     portfolio_returns):
+
+        portfolio_cumulative_returns = (portfolio_returns + 1).cumprod()     #TODO: check if it works, i removed ["Returns"]
 
         return portfolio_cumulative_returns
 
     def plot_portfolio_returns(self,
+                               portfolio_returns,
                                weights,
                                show=True,
                                save=False):
 
-        portfolio_returns = self.portfolio_returns(weights, return_dataframe=True)
-
         fig=plt.figure()
         ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        portfolio_returns["Returns"].plot()
+        portfolio_returns.plot()
         ax1.set_xlabel("Date")
         ax1.set_ylabel("Daily Returns")
         ax1.set_title("Portfolio Daily Returns")
@@ -132,11 +147,9 @@ class PortfolioAnalytics():
             plt.show()
 
     def plot_portfolio_returns_distribution(self,
-                                            weights,
+                                            portfolio_returns,
                                             show=True,
                                             save=False):
-
-        portfolio_returns = self.portfolio_returns(weights, return_dataframe=True)
 
         fig = plt.figure()
         ax1 = fig.add_axes([0.1,0.1,0.8,0.8])
@@ -150,11 +163,11 @@ class PortfolioAnalytics():
             plt.show()
 
     def plot_portfolio_cumulative_returns(self,
-                                          weights,
+                                          portfolio_returns,
                                           show=True,
                                           save=False):
 
-        portfolio_cumulative_returns = self.portfolio_cumulative_returns(weights)
+        portfolio_cumulative_returns = self.portfolio_cumulative_returns(portfolio_returns)
 
         fig = plt.figure()
         ax1 = fig.add_axes([0.1,0.1,0.8,0.8])
@@ -203,7 +216,17 @@ class PortfolioAnalytics():
 # TODO: rebalancing, transaction costs
 # TODO: __name__==__main__
 # TODO: pytest
+# TODO: plot cumulative returns of all securities in portfolio
+# TODO: plot cumulative returns of different protfolios
+# TODO: other cov matrices (ledoit-wolf etc)
+# TODO: other methods of returns
+"""
+if not isinstance(risk_free_rate, (int, float)):
+    raise ValueError("risk_free_rate should be numeric")
+self._risk_free_rate = risk_free_rate
 
+"""
+# separate method for plotting matrices
 # ? annualizing ratios?
 # period=len(data) | x*np.sqrt(period)
 
@@ -287,6 +310,7 @@ class MPT():
         return tracking_error
 
 
+
 class EfficientFrontier():
     def __init__(self,
                  assets_returns,
@@ -334,7 +358,7 @@ class EfficientFrontier():
 
         x0=np.full((s), 1/s)
         bounds=tuple(repeat((0,1), s))      #TODO: shorting, leverage
-
+        # TODO: remainder value (make discrete allocations methods)
         # TODO: check if cvxpy is better
         for possible_return in self.frontier_y:
             cons = ({'type':'eq', 'fun': self._check_weights},
@@ -842,32 +866,38 @@ class Matrices():
         pass
 
     def correlation_matrix(self,
-                           prices,
+                           returns,
+                           frequency=252,
+                           plot=True,
                            show=True,
                            save=False):
 
-        matrix=prices.corr().round(2)
+        matrix=returns.corr().round(5)*frequency
 
-        sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
-        if save is True:
-            plt.savefig("correlation_matrix.png", dpi=300)
-        if show is True:
-            plt.show()
+        if plot is True:
+            sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
+            if save is True:
+                plt.savefig("correlation_matrix.png", dpi=300)
+            if show is True:
+                plt.show()
 
         return matrix
 
     def covariance_matrix(self,
-                          prices,
+                          returns,
+                          frequency=252,
+                          plot=True,
                           show=True,
                           save=False):
 
-        matrix=prices.cov().round(2)
+        matrix=returns.cov().round(5)*frequency
 
-        sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
-        if save is True:
-            plt.savefig("covariance_matrix.png", dpi=300)
-        if show is True:
-            plt.show()
+        if plot is True:
+            sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
+            if save is True:
+                plt.savefig("covariance_matrix.png", dpi=300)
+            if show is True:
+                plt.show()
 
         return matrix
 
@@ -881,7 +911,7 @@ class PortfolioReport():
     def __init__(self) -> None:
         pass
 
-class Misc():
+class Helper():
     def __init__(self) -> None:
         pass
 
