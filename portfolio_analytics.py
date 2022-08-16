@@ -124,7 +124,7 @@ class PortfolioAnalytics():
     def portfolio_cumulative_returns(self,
                                      portfolio_returns):
 
-        portfolio_cumulative_returns = (portfolio_returns + 1).cumprod()     #TODO: check if it works, i removed ["Returns"]
+        portfolio_cumulative_returns = (portfolio_returns + 1).cumprod()
 
         return portfolio_cumulative_returns
 
@@ -314,7 +314,7 @@ class MPT():
 class EfficientFrontier():
     def __init__(self,
                  assets_returns,
-                 rfr=0.03,    # 3% annual
+                 rfr=0.03,
                  n=1000,
                  portfolio_name="Investment Portfolio",
                  daily=False,
@@ -322,7 +322,10 @@ class EfficientFrontier():
                  frequency=252) -> None:
 
         self.assets_returns = assets_returns
-        self.rfr=rfr
+        if daily is True:
+            self.rfr=(rfr+1)**(1/252)-1
+        else:
+            self.rfr=rfr
         self.portfolio_name=portfolio_name
         self.daily=daily
         self.compounding=compounding
@@ -347,43 +350,43 @@ class EfficientFrontier():
 
             if self.daily is False and self.compounding is True:
                 self.mean_returns[i] = (1+returns[i]).prod()**(self.frequency/returns[i].shape[0])-1
-                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency) #TODO: check elsewhere
+                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency)        # TODO: check in other classes ddof
             elif self.daily is False and self.compounding is False:
                 self.mean_returns[i] = np.nanmean(returns[i])*self.frequency
-                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency) #TODO: check elsewhere
+                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency)
             else:
                 self.mean_returns[i] = np.nanmean(returns[i])
                 self.volatilities[i] = np.nanstd(returns[i], ddof=1)
 
             self.sharpe_ratios[i]=(self.mean_returns[i]-self.rfr)/self.volatilities[i]
 
-        self.max_sharpe_index=self.sharpe_ratios.argmax()
+        x0=np.full((s), 1/s)
+        bounds=tuple(repeat((0,1), s))
+        cons_max_sharpe=({"type":"eq", "fun":self._check_weights})
+        result_max_sharpe = optimize.minimize(self._negative_sharpe, x0, method="SLSQP", bounds=bounds, constraints=cons_max_sharpe)
 
-        self.best = {"weights":all_weights[self.max_sharpe_index],
-                     "returns":returns[self.max_sharpe_index],
-                     "mean_return":self.mean_returns[self.max_sharpe_index],
-                     "volatility":self.volatilities[self.max_sharpe_index],
-                     "sharpe":self.sharpe_ratios[self.max_sharpe_index]}
+        self.best = {"weights":result_max_sharpe.x,
+                     "mean_return":self._get_characteristics(result_max_sharpe.x)[0],
+                     "volatility":self._get_characteristics(result_max_sharpe.x)[1],
+                     "sharpe":-result_max_sharpe.fun}
 
         self.frontier_y=np.linspace(self.mean_returns.min(),
                                     self.mean_returns.max(),
                                     500)
         self.frontier_x=[]
 
-        x0=np.full((s), 1/s)
-        bounds=tuple(repeat((0,1), s))      #TODO: shorting, leverage
+        #TODO: shorting, leverage
         # TODO: remainder value (make discrete allocations methods)
         # TODO: check if cvxpy is better
         for possible_return in self.frontier_y:
-            cons = ({'type':'eq', 'fun': self._check_weights},
-                    {'type':'eq', 'fun': lambda w: self._get_characteristics(w)[0] - possible_return})
+            cons_ef = ({'type':'eq', 'fun': self._check_weights},
+                       {'type':'eq', 'fun': lambda w: self._get_characteristics(w)[0] - possible_return})
+            result_ef = optimize.minimize(self._minimize_volatility,
+                                          x0, method='SLSQP',
+                                          bounds=bounds, constraints=cons_ef)
+            self.frontier_x.append(result_ef['fun'])
 
-            result = optimize.minimize(self._minimize_volatility,
-                                       x0, method='SLSQP',
-                                       bounds=bounds, constraints=cons)
-            self.frontier_x.append(result['fun'])
-
-        self.frontier_x=np.array(self.frontier_x)
+        self.frontier_x=np.array(self.frontier_x) #TODO: no need prolly
 
     def plot_efficient_frontier(self,
                                 plot_all=False,
@@ -402,17 +405,17 @@ class EfficientFrontier():
         ax1.set_xlabel("Volatility")
         ax1.set_ylabel("Mean Returns")
         ax1.set_title(str(self.portfolio_name+" Efficient Frontier"))
-        ax1.plot(0.996*self.frontier_x, self.frontier_y,
-                 'b-', linewidth=2, label="Efficient Frontier")    # 0.996 introduced for legibility purposes
+        ax1.plot(self.frontier_x, self.frontier_y,
+                 'b-', linewidth=2, label="Efficient Frontier")
 
         if plot_all is True:
-            plot=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios,
+            all_portfolios=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios,
                              cmap='Blues', s=8, marker=".", label="All Portfolios")
-            fig.colorbar(plot, ax=ax1, label="Sharpe Ratio")
+            fig.colorbar(all_portfolios, ax=ax1, label="Sharpe Ratio")
 
         if plot_best is True:
-            ax1.scatter(self.best["volatility"], self.best["mean_return"],
-                        s=50, c="g", marker="x", label="Highest Sharpe Portfolio")
+            ax1.scatter(self.best["volatility"], self.best["mean_return"], s=50,
+                        c="r", marker="X", zorder=2.6, label="Highest Sharpe Portfolio")
 
         if plot_assets is True:
             if self.daily is False and self.compounding is True:
@@ -424,40 +427,34 @@ class EfficientFrontier():
             else:
                 assets_mean_returns = np.nanmean(self.assets_returns)
                 assets_volatilities = self.assets_returns.std()
-
-            ax1.scatter(assets_volatilities, assets_mean_returns, s=30,
-                        c="r", marker="d", label="Portfolio assets")
+            ax1.scatter(assets_volatilities, assets_mean_returns, s=20,
+                        c="g", marker="d", zorder=2.5, label="Portfolio assets")
             for i in range(assets_mean_returns.shape[0]):
-                ax1.text(1.01*assets_volatilities[i], assets_mean_returns[i],
-                         self.assets_returns.columns[i], size=12)
+                ax1.text(assets_volatilities[i]+0.02*(np.nanmean(assets_volatilities)),
+                         assets_mean_returns[i], self.assets_returns.columns[i], size=10)
 
         if plot_comparables is True:
             if self.daily!=comparables_object.daily or \
                self.compounding!=comparables_object.compounding or \
                self.frequency!=comparables_object.frequency:
-                print("Warning: Cannot plot comparables! Comparables' options (daily, compounding, frequency) don't match efficient frontier options.")
+                print("Warning: Cannot plot comparables! \n")
+                print("Comparables' options (daily, compounding, frequency) don't match efficient frontier options.")
             else:
-                ax1.scatter(comparables_volatilities, comparables_mean_returns, s=30,
-                            c="orange", marker="X", label="Comparable Portfolios")
+                ax1.scatter(comparables_volatilities, comparables_mean_returns, s=20,
+                            c="orange", marker="x", zorder=2.4, label="Comparable Portfolios")
                 for i in range(comparables_mean_returns.shape[0]):
                     ax1.text(1.01*comparables_volatilities[i], comparables_mean_returns[i],
-                            comparables_mean_returns.index[i], size=12, color="orange")
+                             comparables_mean_returns.index[i], size=10, color="orange")
 
         if plot_cal is True:
-            cal_x=np.linspace(0.95*self.volatilities.min(), 1.01*self.best["volatility"], 100)
-            cal_slope=(self.best["mean_return"]-self.rfr)/self.best["volatility"]
-            ax1.plot(cal_x, self.rfr+cal_slope*cal_x, color="black", linewidth=2, label="Capital Allocation Line")
+            ax1.plot(self.frontier_x, self.rfr+self.best["sharpe"]*self.frontier_x,
+                     color="black", linewidth=2, label="Capital Allocation Line")
 
         ax1.legend()
         if save is True:
             plt.savefig(str(self.portfolio_name+"_efficient_frontier.png"), dpi=300)
         if show is True:
             plt.show()
-
-    def _minimize_volatility(self,
-                             weights):
-
-        return self._get_characteristics(weights)[1]
 
     def _get_characteristics(self,
                              weights):
@@ -474,9 +471,14 @@ class EfficientFrontier():
             mean_return = np.nanmean(portfolio_returns)
             volatility = np.nanstd(portfolio_returns, ddof=1)
 
-        sharpe_ratio=mean_return/volatility
+        sharpe_ratio=(mean_return-self.rfr)/volatility
 
-        return np.array([mean_return, volatility, sharpe_ratio])   #TODO: not sure if array is neccesary
+        return mean_return, volatility, sharpe_ratio
+
+    def _minimize_volatility(self,
+                             weights):
+
+        return self._get_characteristics(weights)[1]
 
     def _negative_sharpe(self,
                          weights):
