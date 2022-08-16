@@ -34,7 +34,7 @@ class PortfolioAnalytics():
             security = yf.Ticker(ticker)
             self.names[ticker] = security.info["longName"]
         """
-        self.mar_daily = (mar + 1)**(1/252)-1
+        self.mar_daily = (mar + 1)**(1/252)-1 # TODO: dont miss this
         self.rfr_daily = (rfr + 1)**(1/252)-1
 
         if data is None:
@@ -58,7 +58,6 @@ class PortfolioAnalytics():
         self.assets_returns = self.assets_returns.drop(self.assets_returns.index[0])
 
         #TODO: correct in other places where mean was calculated inside a function
-        # TODO: checker methods
 
     def portfolio_state(self,
                         weights):
@@ -91,13 +90,13 @@ class PortfolioAnalytics():
 
     def mean_return(self,
                     portfolio_returns,
-                    change_period=True,
+                    daily=False,
                     compounding=True,
                     frequency=252):
 
-        if change_period is True and compounding is True:
-            mean_return = (1+portfolio_returns).prod()**(frequency/portfolio_returns.count())-1
-        elif change_period is True and compounding is False:
+        if daily is False and compounding is True:
+            mean_return = (1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
+        elif daily is False and compounding is False:
             mean_return = portfolio_returns.mean()*frequency
         else:
             mean_return = portfolio_returns.mean()
@@ -106,10 +105,10 @@ class PortfolioAnalytics():
 
     def volatility(self,
                    portfolio_returns,
-                   change_period=True,
+                   daily=False,
                    frequency=252):
 
-        if change_period is True:
+        if daily is False:
             volatility = portfolio_returns.std()*np.sqrt(frequency)
         else:
             volatility = portfolio_returns.std()
@@ -220,6 +219,9 @@ class PortfolioAnalytics():
 # TODO: plot cumulative returns of different protfolios
 # TODO: other cov matrices (ledoit-wolf etc)
 # TODO: other methods of returns
+# TODO: annualise mean returns and volatility elsewhere
+# TODO: checker methods
+
 """
 if not isinstance(risk_free_rate, (int, float)):
     raise ValueError("risk_free_rate should be numeric")
@@ -228,7 +230,6 @@ self._risk_free_rate = risk_free_rate
 """
 # separate method for plotting matrices
 # ? annualizing ratios?
-# period=len(data) | x*np.sqrt(period)
 
 
 class MPT():
@@ -310,17 +311,22 @@ class MPT():
         return tracking_error
 
 
-
 class EfficientFrontier():
     def __init__(self,
                  assets_returns,
-                 rfr_daily=0.0001173,    # 3% annual
+                 rfr=0.03,    # 3% annual
                  n=1000,
-                 portfolio_name="Investment Portfolio") -> None:
+                 portfolio_name="Investment Portfolio",
+                 daily=False,
+                 compounding=True,
+                 frequency=252) -> None:
 
         self.assets_returns = assets_returns
-        self.rfr_daily=rfr_daily
+        self.rfr=rfr
         self.portfolio_name=portfolio_name
+        self.daily=daily
+        self.compounding=compounding
+        self.frequency=frequency
 
         np.random.seed(88)
         s = self.assets_returns.columns.shape[0]
@@ -338,10 +344,18 @@ class EfficientFrontier():
             all_weights[i]=weights
 
             returns[i]=np.dot(assets_returns, weights)
-            self.mean_returns[i]=np.nanmean(returns[i])
-            self.volatilities[i]=np.nanstd(returns[i])
 
-            self.sharpe_ratios[i]=(self.mean_returns[i]-self.rfr_daily)/self.volatilities[i]
+            if self.daily is False and self.compounding is True:
+                self.mean_returns[i] = (1+returns[i]).prod()**(self.frequency/returns[i].shape[0])-1
+                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency) #TODO: check elsewhere
+            elif self.daily is False and self.compounding is False:
+                self.mean_returns[i] = np.nanmean(returns[i])*self.frequency
+                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency) #TODO: check elsewhere
+            else:
+                self.mean_returns[i] = np.nanmean(returns[i])
+                self.volatilities[i] = np.nanstd(returns[i], ddof=1)
+
+            self.sharpe_ratios[i]=(self.mean_returns[i]-self.rfr)/self.volatilities[i]
 
         self.max_sharpe_index=self.sharpe_ratios.argmax()
 
@@ -377,6 +391,7 @@ class EfficientFrontier():
                                 plot_assets=False,
                                 plot_comparables=False,
                                 plot_cal=False,
+                                comparables_object=None,
                                 comparables_mean_returns=None,
                                 comparables_volatilities=None,
                                 show=True,
@@ -387,7 +402,8 @@ class EfficientFrontier():
         ax1.set_xlabel("Volatility")
         ax1.set_ylabel("Mean Returns")
         ax1.set_title(str(self.portfolio_name+" Efficient Frontier"))
-        ax1.plot(0.996*self.frontier_x, self.frontier_y, 'b-', linewidth=2, label="Efficient Frontier")    # 0.996 introduced for legibility purposes
+        ax1.plot(0.996*self.frontier_x, self.frontier_y,
+                 'b-', linewidth=2, label="Efficient Frontier")    # 0.996 introduced for legibility purposes
 
         if plot_all is True:
             plot=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios,
@@ -395,26 +411,42 @@ class EfficientFrontier():
             fig.colorbar(plot, ax=ax1, label="Sharpe Ratio")
 
         if plot_best is True:
-            ax1.scatter(self.best["volatility"], self.best["mean_return"], s=50, c="g", marker="x", label="Highest Sharpe Portfolio")
+            ax1.scatter(self.best["volatility"], self.best["mean_return"],
+                        s=50, c="g", marker="x", label="Highest Sharpe Portfolio")
 
         if plot_assets is True:
-            assets_volatilities = np.nanstd(self.assets_returns, axis=0)
-            assets_mean_returns = np.nanmean(self.assets_returns, axis=0)
-            ax1.scatter(assets_volatilities, assets_mean_returns, s=30, c="r", marker="d", label="Portfolio assets")
+            if self.daily is False and self.compounding is True:
+                assets_mean_returns = (1+self.assets_returns).prod()**(self.frequency/self.assets_returns.shape[0])-1
+                assets_volatilities = self.assets_returns.std()*np.sqrt(self.frequency)
+            elif self.daily is False and self.compounding is False:
+                assets_mean_returns = np.nanmean(self.assets_returns)*self.frequency
+                assets_volatilities = self.assets_returns.std()*np.sqrt(self.frequency)
+            else:
+                assets_mean_returns = np.nanmean(self.assets_returns)
+                assets_volatilities = self.assets_returns.std()
+
+            ax1.scatter(assets_volatilities, assets_mean_returns, s=30,
+                        c="r", marker="d", label="Portfolio assets")
             for i in range(assets_mean_returns.shape[0]):
                 ax1.text(1.01*assets_volatilities[i], assets_mean_returns[i],
                          self.assets_returns.columns[i], size=12)
 
         if plot_comparables is True:
-            ax1.scatter(comparables_volatilities, comparables_mean_returns, s=30, c="orange", marker="X", label="Comparable Portfolios")
-            for i in range(comparables_mean_returns.shape[0]):
-                ax1.text(1.01*comparables_volatilities[i], comparables_mean_returns[i],
-                         comparables_mean_returns.index[i], size=12, color="orange")
+            if self.daily!=comparables_object.daily or \
+               self.compounding!=comparables_object.compounding or \
+               self.frequency!=comparables_object.frequency:
+                print("Warning: Cannot plot comparables! Comparables' options (daily, compounding, frequency) don't match efficient frontier options.")
+            else:
+                ax1.scatter(comparables_volatilities, comparables_mean_returns, s=30,
+                            c="orange", marker="X", label="Comparable Portfolios")
+                for i in range(comparables_mean_returns.shape[0]):
+                    ax1.text(1.01*comparables_volatilities[i], comparables_mean_returns[i],
+                            comparables_mean_returns.index[i], size=12, color="orange")
 
         if plot_cal is True:
             cal_x=np.linspace(0.95*self.volatilities.min(), 1.01*self.best["volatility"], 100)
-            cal_slope=(self.best["mean_return"]-self.rfr_daily)/self.best["volatility"]
-            ax1.plot(cal_x, self.rfr_daily+cal_slope*cal_x, color="black", linewidth=2, label="Capital Allocation Line")
+            cal_slope=(self.best["mean_return"]-self.rfr)/self.best["volatility"]
+            ax1.plot(cal_x, self.rfr+cal_slope*cal_x, color="black", linewidth=2, label="Capital Allocation Line")
 
         ax1.legend()
         if save is True:
@@ -432,11 +464,19 @@ class EfficientFrontier():
 
         portfolio_returns=np.dot(self.assets_returns.to_numpy(), weights)
 
-        mean_return=np.nanmean(portfolio_returns)
-        volatility=np.nanstd(portfolio_returns)
+        if self.daily is False and self.compounding is True:
+            mean_return = (1+portfolio_returns).prod()**(self.frequency/portfolio_returns.shape[0])-1
+            volatility = np.nanstd(portfolio_returns, ddof=1)*np.sqrt(self.frequency)
+        elif self.daily is False and self.compounding is False:
+            mean_return = np.nanmean(portfolio_returns)*self.frequency
+            volatility = np.nanstd(portfolio_returns, ddof=1)*np.sqrt(self.frequency)
+        else:
+            mean_return = np.nanmean(portfolio_returns)
+            volatility = np.nanstd(portfolio_returns, ddof=1)
+
         sharpe_ratio=mean_return/volatility
 
-        return np.array([mean_return, volatility, sharpe_ratio])
+        return np.array([mean_return, volatility, sharpe_ratio])   #TODO: not sure if array is neccesary
 
     def _negative_sharpe(self,
                          weights):

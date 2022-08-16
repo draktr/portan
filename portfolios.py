@@ -6,8 +6,14 @@ import yfinance as yf
 
 class Portfolios():
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self,
+                 daily=False,
+                 compounding=True,
+                 frequency=252):
+
+        self.daily=daily
+        self.compounding=compounding
+        self.frequency=frequency
 
     def get_singlife(self):
         # Singlife Sure Invest Dynamic Portfolio as of June 30th 2022
@@ -118,7 +124,16 @@ class Portfolios():
                                                                         end=str(datetime.now())[0:10],
                                                                         data=None,
                                                                         portfolio_name=portfolio)
-            mean_returns[portfolio] = np.nanmean(portfolios_returns[portfolio])
-            volatilities[portfolio] = np.nanstd(portfolios_returns[portfolio])
+
+            if self.daily is False and self.compounding is True:
+                mean_returns[portfolio] = (1+portfolios_returns[portfolio]).prod()**(self.frequency/portfolios_returns[portfolio].shape[0])-1
+                volatilities[portfolio] = portfolios_returns[portfolio].std()*np.sqrt(self.frequency)
+
+            elif self.daily is False and self.compounding is False:
+                mean_returns[portfolio] = portfolios_returns[portfolio].mean()*self.frequency
+                volatilities[portfolio] = portfolios_returns[portfolio].std()*np.sqrt(self.frequency)
+            else:
+                mean_returns[portfolio] = portfolios_returns[portfolio].mean()
+                volatilities[portfolio] = portfolios_returns[portfolio].std()
 
         return mean_returns, volatilities
