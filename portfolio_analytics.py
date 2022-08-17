@@ -299,14 +299,14 @@ class MPT():
         if show is True:
             plt.show()
 
-    def sharpe(self, mean_return, volatility, rfr_daily):
-        sharpe_ratio = 100*(mean_return - rfr_daily)/volatility
+    def sharpe(self, mean_return, volatility, rfr):
+        sharpe_ratio = 100*(mean_return - rfr)/volatility
         return sharpe_ratio
 
     def tracking_error(self,
                        portfolio_returns):
 
-        tracking_error = np.std(portfolio_returns - self.benchmark_returns)
+        tracking_error = np.std(portfolio_returns - self.benchmark_returns, ddof=1)
 
         return tracking_error
 
@@ -350,7 +350,7 @@ class EfficientFrontier():
 
             if self.daily is False and self.compounding is True:
                 self.mean_returns[i] = (1+returns[i]).prod()**(self.frequency/returns[i].shape[0])-1
-                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency)        # TODO: check in other classes ddof
+                self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency)
             elif self.daily is False and self.compounding is False:
                 self.mean_returns[i] = np.nanmean(returns[i])*self.frequency
                 self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency)
@@ -377,7 +377,6 @@ class EfficientFrontier():
 
         #TODO: shorting, leverage
         # TODO: remainder value (make discrete allocations methods)
-        # TODO: check if cvxpy is better
         for possible_return in self.frontier_y:
             cons_ef = ({'type':'eq', 'fun': self._check_weights},
                        {'type':'eq', 'fun': lambda w: self._get_characteristics(w)[0] - possible_return})
@@ -386,7 +385,7 @@ class EfficientFrontier():
                                           bounds=bounds, constraints=cons_ef)
             self.frontier_x.append(result_ef['fun'])
 
-        self.frontier_x=np.array(self.frontier_x) #TODO: no need prolly
+        self.frontier_x=np.array(self.frontier_x)
 
     def plot_efficient_frontier(self,
                                 plot_all=False,
@@ -531,7 +530,7 @@ class PMPT():
                           mar_daily):
         positive_portfolio_returns = portfolio_returns - mar_daily
         positive_portfolio_returns = positive_portfolio_returns[positive_portfolio_returns>0]
-        upside_volatility = np.std(positive_portfolio_returns)
+        upside_volatility = np.std(positive_portfolio_returns,ddof=1)
         return upside_volatility
 
     def downside_volatility(self,
@@ -540,7 +539,7 @@ class PMPT():
 
         negative_portfolio_returns = portfolio_returns - mar_daily
         negative_portfolio_returns = negative_portfolio_returns[negative_portfolio_returns<0]
-        downside_volatility = np.std(negative_portfolio_returns)
+        downside_volatility = np.std(negative_portfolio_returns, ddof=1)
         return downside_volatility
 
     def volatility_skew(self,
@@ -914,7 +913,7 @@ class Matrices():
                            show=True,
                            save=False):
 
-        matrix=returns.corr().round(5)*frequency
+        matrix=returns.corr().round(5)
 
         if plot is True:
             sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
@@ -956,7 +955,6 @@ class PortfolioReport():
 class Helper():
     def __init__(self) -> None:
         pass
-
 
     def concatenate_portfolios(self,
                                portfolio_one,
@@ -1001,9 +999,20 @@ class Helper():
 
         return output_rate
 
-    #TODO: fill NaNs with avg(t-1, t+1)
-    def fill_nan(self):
-        print(df.isnull().sum())
+    def fill_nan(self,
+                 portfolio_returns,
+                 method="adjacent",
+                 data_object="pandas"):
+
+        if data_object=="numpy":
+            portfolio_returns=pd.DataFrame(portfolio_returns)
+
+        if method=="adjacent":
+            portfolio_returns.interpolate(method="linear", inplace=True)
+        elif method=="column":
+            portfolio_returns.fillna(portfolio_returns.mean(), inplace=True)
+        else:
+            print("Method unsupported.")
 
 
 class OmegaAnalysis():
