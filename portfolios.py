@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
+import pandas_datareader as pdr
 from datetime import datetime
-import yfinance as yf
 
 
 class Portfolios():
@@ -87,19 +87,11 @@ class Portfolios():
                                  portfolio_name="Investment Portfolio"):
 
         if data is None:
-            prices = pd.DataFrame(columns=assets_tickers)
-            assets_returns = pd.DataFrame(columns=assets_tickers)
-
-            for tick in assets_tickers:
-                price_current = yf.download(tick, start=start, end=end) # TODO: check if can be done without the loop (with pdr)
-                prices[tick] = price_current["Adj Close"]
-                assets_returns[tick] = price_current["Adj Close"].pct_change()
+            prices=pdr.DataReader(assets_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
+            assets_returns=prices.pct_change()
         else:
             prices = pd.read_csv(data, index_col=["Date"])
-            assets_returns = pd.DataFrame(columns=prices.columns, index=prices.index)
             assets_returns = prices.pct_change()
-            start = prices.index[0]
-            end = prices.index[-1]
 
         assets_returns = assets_returns.drop(assets_returns.index[0])
         portfolio_returns = np.dot(assets_returns.to_numpy(), assets_weights)

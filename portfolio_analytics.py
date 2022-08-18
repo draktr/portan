@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pandas_datareader as pdr
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
@@ -8,7 +9,6 @@ from sklearn.linear_model import LinearRegression
 from scipy import optimize
 from datetime import datetime
 from itertools import repeat
-import yfinance as yf
 
 
 class PortfolioAnalytics():
@@ -23,8 +23,6 @@ class PortfolioAnalytics():
                  rfr=0.03):
 
         self.tickers=tickers
-        self.start=start
-        self.end=end
         self.portfolio_name=portfolio_name
         self.data=data    # takes in only the data of kind GetData.save_adj_close_only()
         self.initial_aum = initial_aum
@@ -38,22 +36,12 @@ class PortfolioAnalytics():
         self.rfr_daily = (rfr + 1)**(1/252)-1
 
         if data is None:
-            self.prices = pd.DataFrame(columns=self.tickers)
-            self.assets_returns = pd.DataFrame(columns=self.tickers)
-            self.assets_returns_monthly = pd.DataFrame(columns=self.tickers)
-
-            for ticker in self.tickers:
-                price_current = yf.download(ticker, start=self.start, end=self.end) # TODO: check if can be done without the loop (with pdr)
-                self.prices[ticker] = price_current["Adj Close"]
-                self.assets_returns[ticker] = price_current["Adj Close"].pct_change()
-                self.assets_returns_monthly[ticker] = price_current["Adj Close"].resample('M').ffill().pct_change()
+            self.prices=pdr.DataReader(self.tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
+            self.assets_returns=self.prices.pct_change()
         else:
             self.prices = pd.read_csv(self.data, index_col=["Date"])
-            self.assets_returns = pd.DataFrame(columns=self.prices.columns, index=self.prices.index)
             self.assets_returns = self.prices.pct_change()
             self.tickers=self.prices.columns
-            self.start = self.prices.index[0]
-            self.end = self.prices.index[-1]
 
         self.assets_returns = self.assets_returns.drop(self.assets_returns.index[0])
 
@@ -70,7 +58,6 @@ class PortfolioAnalytics():
 
         # absolute (dollar) value of each security in portfolio (i.e. state of the portfolio, not rebalanced)
         portfolio_state = np.multiply(self.prices, allocation_assets)
-        portfolio_state = pd.DataFrame(portfolio_state)
         portfolio_state["Whole Portfolio"] = portfolio_state.sum(axis=1)
 
         return allocation_funds, allocation_assets, portfolio_state
@@ -243,21 +230,12 @@ class MPT():
         self.benchmark_tickers=benchmark_tickers
         self.benchmark_weights=benchmark_weights
         self.benchmark_data=benchmark_data
-        self.start=start
-        self.end=end
 
         if benchmark_data is None:
-            benchmark_assets_prices = pd.DataFrame(columns=benchmark_tickers)
-            benchmark_assets_returns = pd.DataFrame(columns=benchmark_tickers)
-
-            for ticker in self.benchmark_tickers:
-                price_current = yf.download(ticker, start=self.start, end=self.end)
-                benchmark_assets_prices[ticker] = price_current["Adj Close"]
-                benchmark_assets_returns[ticker] = price_current["Adj Close"].pct_change()
-
+            benchmark_assets_prices=pdr.DataReader(self.benchmark_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
+            benchmark_assets_returns=benchmark_assets_prices.pct_change()
         else:
             benchmark_assets_prices = pd.read_csv(benchmark_data, index_col=["Date"])    # takes in only the data of kind GetData.save_adj_close_only()
-            benchmark_assets_returns = pd.DataFrame(columns=self.benchmark_tickers, index=benchmark_assets_prices.index)
             benchmark_assets_returns = benchmark_assets_prices.pct_change()
 
         self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), self.benchmark_weights)
@@ -501,25 +479,15 @@ class PMPT():
         self.benchmark_tickers=benchmark_tickers
         self.benchmark_weights=benchmark_weights
         self.benchmark_data=benchmark_data
-        self.start=start
-        self.end=end
 
         if benchmark_data is None:
-            benchmark_assets_prices = pd.DataFrame(columns=benchmark_tickers)
-            benchmark_assets_returns = pd.DataFrame(columns=benchmark_tickers)
-
-            for ticker in self.benchmark_tickers:
-                price_current = yf.download(ticker, start=self.start, end=self.end)
-                benchmark_assets_prices[ticker] = price_current["Adj Close"]
-                benchmark_assets_returns[ticker] = price_current["Adj Close"].pct_change()
+            benchmark_assets_prices=pdr.DataReader(self.benchmark_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
+            benchmark_assets_returns=benchmark_assets_prices.pct_change()
 
         else:
             benchmark_assets_prices = pd.read_csv(benchmark_data, index_col=["Date"])    # takes in only the data of kind GetData.save_adj_close_only()
-            benchmark_assets_returns = pd.DataFrame(columns=self.benchmark_tickers, index=benchmark_assets_prices.index)
             benchmark_assets_returns = benchmark_assets_prices.pct_change()
             self.benchmark_tickers=benchmark_assets_prices.columns
-            self.start=benchmark_assets_prices.index[0]
-            self.end=benchmark_assets_prices.index[-1]
 
         self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), self.benchmark_weights)
         self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)

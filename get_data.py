@@ -1,44 +1,34 @@
 import os
-import pandas as pd
-import yfinance as yf
+import pandas_datareader as pdr
+from datetime import datetime
+
 
 class GetData():
-    def __init__(self, ticker, begin, end, period=None):
-        self.ticker=ticker
-        self.begin=begin
-        self.end=end
-        self.period=period
-        self.df_list=list()
+    def __init__(self,
+                 tickers,
+                 start="1970-01-02",
+                 end=str(datetime.now())[0:10]):
 
-        if self.period==None:
-            for ticker in self.ticker:
-                time_series = yf.download(ticker, begin=self.begin, end=self.end)
-                time_series["ticker"] = ticker
-                self.df_list.append(time_series)
-        else:
-            for ticker in self.ticker:
-                time_series = yf.download(ticker, period=self.period)
-                time_series["ticker"] = ticker
-                self.df_list.append(time_series)
+        self.tickers=tickers
+
+        self.data=pdr.DataReader(self.tickers, start=start, end=end, data_source="yahoo")
 
     def save_all_long(self):
-        data_long = pd.concat(self.df_list, axis=0)
+        data_long=self.data.stack(level=1).reset_index(1).rename(columns={"Symbols": "Ticker"}).sort_values("Ticker")
         data_long.to_csv("all_tickers_data_long.csv")
 
     def save_all_wide(self):
-        data_wide = pd.concat(self.df_list, axis=1)
-        data_wide.to_csv("all_tickers_data_wide.csv")
+        self.data.to_csv("all_tickers_data_wide.csv")
 
     def save_adj_close_only(self):
-        adj_close_only = pd.DataFrame(columns=self.ticker)
-        for ticker, i in zip(self.ticker, range(len(self.df_list))):
-            adj_close_only[ticker] = self.df_list[i]["Adj Close"]
+        adj_close_only=self.data["Adj Close"]
         adj_close_only.to_csv("adj_close_only.csv")
 
     def save_separately(self):
         os.mkdir("tickers_data")
         os.chdir("tickers_data")
-        for i in range(len(self.ticker)):
-            data = self.df_list[i]
-            ticker = data["ticker"][0]
-            data.to_csv("%s_data.csv"%ticker)
+        current_data=self.data
+        current_data.columns=self.data.columns.swaplevel("Symbols", "Attributes")
+        for ticker in self.tickers:
+            time_series=current_data[ticker]
+            time_series.to_csv("%s_data.csv"%ticker)
