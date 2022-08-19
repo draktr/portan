@@ -17,14 +17,13 @@ class PortfolioAnalytics():
                  start="1970-01-02",
                  end=str(datetime.now())[0:10],
                  portfolio_name="Investment Portfolio",
-                 data=None,
+                 data=None,     # takes in only the data of kind GetData.save_adj_close_only()
                  initial_aum=10000,
                  mar=0.03,
                  rfr=0.03):
 
         self.tickers=tickers
         self.portfolio_name=portfolio_name
-        self.data=data    # takes in only the data of kind GetData.save_adj_close_only()
         self.initial_aum = initial_aum
         """
         self.names = pd.Series(index=self.tickers, dtype="str")
@@ -39,7 +38,7 @@ class PortfolioAnalytics():
             self.prices=pdr.DataReader(self.tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
             self.assets_returns=self.prices.pct_change()
         else:
-            self.prices = pd.read_csv(self.data, index_col=["Date"])
+            self.prices = pd.read_csv(data, index_col=["Date"])
             self.assets_returns = self.prices.pct_change()
             self.tickers=self.prices.columns
 
@@ -227,18 +226,14 @@ class MPT():
                   start="1970-01-01",
                   end=str(datetime.now())[0:10]) -> None:
 
-        self.benchmark_tickers=benchmark_tickers
-        self.benchmark_weights=benchmark_weights
-        self.benchmark_data=benchmark_data
-
         if benchmark_data is None:
-            benchmark_assets_prices=pdr.DataReader(self.benchmark_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
+            benchmark_assets_prices=pdr.DataReader(benchmark_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
             benchmark_assets_returns=benchmark_assets_prices.pct_change()
         else:
             benchmark_assets_prices = pd.read_csv(benchmark_data, index_col=["Date"])    # takes in only the data of kind GetData.save_adj_close_only()
             benchmark_assets_returns = benchmark_assets_prices.pct_change()
 
-        self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), self.benchmark_weights)
+        self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), benchmark_weights)
         self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
 
     def capm(self, portfolio_returns, rfr_daily):
@@ -271,7 +266,7 @@ class MPT():
                            r"$\beta$"+" = "+str(np.round(capm[1], 3))])
         ax1.set_xlabel("Benchmark Excess Returns")
         ax1.set_ylabel("Portfolio Excess Returns")
-        ax1.set_title("Portfolio Excess Returns Against Benchmark")
+        ax1.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
         if save is True:
             plt.savefig("capm.png", dpi=300)
         if show is True:
@@ -476,22 +471,16 @@ class PMPT():
                  start="1970-01-01",
                  end=str(datetime.now())[0:10]) -> None:
 
-        self.benchmark_tickers=benchmark_tickers
-        self.benchmark_weights=benchmark_weights
-        self.benchmark_data=benchmark_data
-
         if benchmark_data is None:
-            benchmark_assets_prices=pdr.DataReader(self.benchmark_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
+            benchmark_assets_prices=pdr.DataReader(benchmark_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
             benchmark_assets_returns=benchmark_assets_prices.pct_change()
 
         else:
             benchmark_assets_prices = pd.read_csv(benchmark_data, index_col=["Date"])    # takes in only the data of kind GetData.save_adj_close_only()
             benchmark_assets_returns = benchmark_assets_prices.pct_change()
-            self.benchmark_tickers=benchmark_assets_prices.columns
 
-        self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), self.benchmark_weights)
+        self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), benchmark_weights)
         self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
-
 
     def upside_volatility(self,
                           portfolio_returns,
@@ -876,7 +865,6 @@ class Matrices():
 
     def correlation_matrix(self,
                            returns,
-                           frequency=252,
                            plot=True,
                            show=True,
                            save=False):
@@ -894,12 +882,16 @@ class Matrices():
 
     def covariance_matrix(self,
                           returns,
+                          daily=True,
                           frequency=252,
                           plot=True,
                           show=True,
                           save=False):
 
-        matrix=returns.cov().round(5)*frequency
+        if daily is False:
+            matrix=returns.cov().round(5)*frequency
+        else:
+            matrix=returns.cov().round(5)
 
         if plot is True:
             sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
@@ -919,6 +911,7 @@ class Backtesting():
 class PortfolioReport():
     def __init__(self) -> None:
         pass
+
 
 class Helper():
     def __init__(self) -> None:

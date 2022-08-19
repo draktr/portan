@@ -9,7 +9,6 @@ class MarketReporter():
     def __init__(self) -> None:
         self.today=datetime.today()
         self.week_ago=self.today-timedelta(weeks=1)
-        self.month_ago=self.today-timedelta(days=30)
 
     def majors(self):
         """

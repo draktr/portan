@@ -7,11 +7,10 @@ class GetData():
     def __init__(self,
                  tickers,
                  start="1970-01-02",
-                 end=str(datetime.now())[0:10]):
+                 end=str(datetime.now())[0:10],
+                 data_source="yahoo"):
 
-        self.tickers=tickers
-
-        self.data=pdr.DataReader(self.tickers, start=start, end=end, data_source="yahoo")
+        self.data=pdr.DataReader(tickers, start=start, end=end, data_source=data_source)
 
     def save_all_long(self):
         data_long=self.data.stack(level=1).reset_index(1).rename(columns={"Symbols": "Ticker"}).sort_values("Ticker")
