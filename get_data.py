@@ -28,6 +28,6 @@ class GetData():
         os.chdir("tickers_data")
         current_data=self.data
         current_data.columns=self.data.columns.swaplevel("Symbols", "Attributes")
-        for ticker in self.tickers:
+        for ticker in current_data.columns:
             time_series=current_data[ticker]
             time_series.to_csv("%s_data.csv"%ticker)
