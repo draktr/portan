@@ -40,8 +40,6 @@ class PortfolioAnalytics():
 
         self.assets_returns = self.assets_returns.drop(self.assets_returns.index[0])
 
-        # TODO: correct in other places where mean was calculated inside a function
-
     def portfolio_state(self,
                         weights):
 
@@ -80,8 +78,10 @@ class PortfolioAnalytics():
             mean_return = (1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
         elif daily is False and compounding is False:
             mean_return = portfolio_returns.mean()*frequency
-        else:
+        elif daily is True:
             mean_return = portfolio_returns.mean()
+        else:
+            print("Error: mean returns cannot be compounded if daily")
 
         return mean_return
 
@@ -203,7 +203,6 @@ class PortfolioAnalytics():
 # TODO: plot cumulative returns of different protfolios
 # TODO: other cov matrices (ledoit-wolf etc)
 # TODO: other methods of returns
-# TODO: annualise mean returns and volatility elsewhere
 # TODO: checker methods
 
 """
@@ -218,8 +217,8 @@ self._risk_free_rate = risk_free_rate
 
 class MPT():
     def __init__(self,
-                  benchmark_tickers,
                   benchmark_weights,
+                  benchmark_tickers=None,
                   benchmark_data=None,
                   start="1970-01-01",
                   end=str(datetime.now())[0:10]) -> None:
@@ -234,7 +233,9 @@ class MPT():
         self.benchmark_returns = np.dot(benchmark_assets_returns.to_numpy(), benchmark_weights)
         self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
 
-    def capm(self, portfolio_returns, rfr):
+    def capm(self,
+             portfolio_returns,
+             rfr=0.02):
 
         rfr_daily = (rfr + 1)**(1/252)-1
 
@@ -272,8 +273,13 @@ class MPT():
         if show is True:
             plt.show()
 
-    def sharpe(self, mean_return, volatility, rfr):
+    def sharpe(self,
+               mean_return,
+               volatility,
+               rfr=0.02):
+
         sharpe_ratio = 100*(mean_return - rfr)/volatility
+
         return sharpe_ratio
 
     def tracking_error(self,
@@ -327,9 +333,11 @@ class EfficientFrontier():
             elif self.daily is False and self.compounding is False:
                 self.mean_returns[i] = np.nanmean(returns[i])*self.frequency
                 self.volatilities[i] = np.nanstd(returns[i], ddof=1)*np.sqrt(self.frequency)
-            else:
+            elif self.daily is True:
                 self.mean_returns[i] = np.nanmean(returns[i])
                 self.volatilities[i] = np.nanstd(returns[i], ddof=1)
+            else:
+                print("Error: mean returns cannot be compounded if daily")
 
             self.sharpe_ratios[i]=(self.mean_returns[i]-self.rfr)/self.volatilities[i]
 
@@ -396,9 +404,11 @@ class EfficientFrontier():
             elif self.daily is False and self.compounding is False:
                 assets_mean_returns = np.nanmean(self.assets_returns)*self.frequency
                 assets_volatilities = self.assets_returns.std()*np.sqrt(self.frequency)
-            else:
+            elif self.daily is True:
                 assets_mean_returns = np.nanmean(self.assets_returns)
                 assets_volatilities = self.assets_returns.std()
+            else:
+                print("Error: mean returns cannot be compounded if daily")
             ax1.scatter(assets_volatilities, assets_mean_returns, s=20,
                         c="g", marker="d", zorder=2.5, label="Portfolio assets")
             for i in range(assets_mean_returns.shape[0]):
@@ -439,9 +449,11 @@ class EfficientFrontier():
         elif self.daily is False and self.compounding is False:
             mean_return = np.nanmean(portfolio_returns)*self.frequency
             volatility = np.nanstd(portfolio_returns, ddof=1)*np.sqrt(self.frequency)
-        else:
+        elif self.daily is True:
             mean_return = np.nanmean(portfolio_returns)
             volatility = np.nanstd(portfolio_returns, ddof=1)
+        else:
+            print("Error: mean returns cannot be compounded if daily")
 
         sharpe_ratio=(mean_return-self.rfr)/volatility
 
@@ -465,8 +477,8 @@ class EfficientFrontier():
 
 class PMPT():
     def __init__(self,
-                 benchmark_tickers,
                  benchmark_weights,
+                 benchmark_tickers=None,
                  benchmark_data=None,
                  start="1970-01-01",
                  end=str(datetime.now())[0:10]) -> None:
@@ -474,7 +486,6 @@ class PMPT():
         if benchmark_data is None:
             benchmark_assets_prices=pdr.DataReader(benchmark_tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
             benchmark_assets_returns=benchmark_assets_prices.pct_change()
-
         else:
             benchmark_assets_prices = pd.read_csv(benchmark_data, index_col=["Date"])    # takes in only the data of kind GetData.save_adj_close_only()
             benchmark_assets_returns = benchmark_assets_prices.pct_change()
@@ -525,6 +536,7 @@ class PMPT():
         upside = self.upside_volatility(portfolio_returns, mar, daily, frequency)
         downside = self.downside_volatility(portfolio_returns, mar, daily, frequency)
         skew = upside/downside
+
         return skew
 
     def omega_excess_return(self,
@@ -537,6 +549,7 @@ class PMPT():
         benchmark_downside_volatility = self.downside_volatility(self.benchmark_returns, mar, daily, frequency)
 
         omega_excess_return = portfolio_returns - 3*portfolio_downside_volatility*benchmark_downside_volatility
+
         return omega_excess_return
 
     def upside_potential_ratio(self,
@@ -551,6 +564,7 @@ class PMPT():
         upside = portfolio_returns - mar_daily
         upside = upside[upside>0].sum()
         upside_potential_ratio = upside/downside_volatility
+
         return upside_potential_ratio
 
     def downside_capm(self,
@@ -593,8 +607,6 @@ class PMPT():
                 compounding=True,
                 frequency=252):
 
-        # TODO: if else empty spaces
-
         downside_volatility = self.downside_volatility(portfolio_returns, mar, daily, frequency)
 
         if daily is False and compounding is True:
@@ -603,9 +615,11 @@ class PMPT():
         elif daily is False and compounding is False:
             mean_return=portfolio_returns.mean()*frequency
             sortino_ratio = 100*(mean_return - rfr)/downside_volatility
-        else: # TODO: elif daily is True, else print("error")
+        elif daily is True:
             rfr_daily = (rfr + 1)**(1/252)-1
             sortino_ratio = 100*(np.nanmean(portfolio_returns) - rfr_daily)/downside_volatility
+        else:
+            print("Error: mean returns cannot be compounded if daily")
 
         return sortino_ratio
 
@@ -630,6 +644,7 @@ class PMPT():
         trough = np.min(portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
 
         maximum_drawdown = trough-peak
+
         return maximum_drawdown
 
     def maximum_drawdown_percentage(self,
@@ -646,6 +661,7 @@ class PMPT():
         trough = np.min(portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
 
         maximum_drawdown_ratio = (trough-peak)/peak
+
         return maximum_drawdown_ratio
 
     def jensen_alpha(self,
@@ -671,10 +687,12 @@ class PMPT():
             mean_return=portfolio_returns.mean()*frequency
             mean_benchmark_return=excess_benchmark_returns.mean()*frequency
             jensen_alpha = mean_return - rfr - beta*(mean_benchmark_return - rfr)
-        else:
+        elif daily is True:
             mean_return=portfolio_returns.mean()
             mean_benchmark_return=excess_benchmark_returns.mean()
             jensen_alpha = mean_return - rfr_daily - beta*(mean_benchmark_return - rfr_daily)
+        else:
+            print("Error: mean returns cannot be compounded if daily")
 
         return jensen_alpha
 
@@ -699,9 +717,11 @@ class PMPT():
         if daily is False and compounding is False:
             mean_return=portfolio_returns.mean()*frequency
             treynor_ratio = 100*(mean_return-rfr)/beta
-        else:
+        elif daily is True:
             mean_return=portfolio_returns.mean()
             treynor_ratio = 100*(mean_return-rfr_daily)/beta
+        else:
+            print("Error: mean returns cannot be compounded if daily")
 
         return treynor_ratio
 
@@ -733,11 +753,24 @@ class PMPT():
     def kappa(self,
               portfolio_returns,
               mar=0.03,
-              moment=3):
+              moment=3,
+              daily=False,
+              compounding=True,
+              frequency=252):
 
         lower_partial_moment = self.lower_partial_moment(portfolio_returns, mar, moment)
-        #TODO: compound this
-        kappa_ratio = 100*(np.nanmean(portfolio_returns) - mar)/np.power(lower_partial_moment, (1/moment))
+
+        if daily is False and compounding is True:
+            mean_return=(1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
+            kappa_ratio = 100*(mean_return - mar)/np.power(lower_partial_moment, (1/moment))
+        elif daily is False and compounding is False:
+            mean_return=portfolio_returns.mean()*frequency
+            kappa_ratio = 100*(mean_return - mar)/np.power(lower_partial_moment, (1/moment))
+        elif daily is True:
+            mean_return=portfolio_returns.mean()
+            kappa_ratio = 100*(mean_return - mar)/np.power(lower_partial_moment, (1/moment))
+        else:
+            print("Error: mean returns cannot be compounded if daily")
 
         return kappa_ratio
 
@@ -752,6 +785,7 @@ class PMPT():
         gain_loss_ratio = hpm/lpm
 
         return gain_loss_ratio
+# TODO: the concerned part is until here
 
     def calmar(self,
                portfolio_returns,
@@ -761,8 +795,6 @@ class PMPT():
                daily=False,
                compounding=True,
                frequency=252):
-
-        rfr_daily = (rfr + 1)**(1/252)-1
 
         if period>=portfolio_state.shape[0]:
             period=portfolio_state.shape[0]
@@ -776,8 +808,9 @@ class PMPT():
         if daily is False and compounding is False:
             mean_return=portfolio_returns.mean()*frequency
             calmar_ratio = 100*(mean_return-rfr)/maximum_drawdown
-        else:
+        elif daily is True:
             mean_return=portfolio_returns.mean()
+            rfr_daily = (rfr + 1)**(1/252)-1
             calmar_ratio = 100*(mean_return-rfr_daily)/maximum_drawdown
 
         return calmar_ratio
@@ -790,7 +823,6 @@ class PMPT():
                  compounding=True,
                  frequency=252):
 
-        rfr_daily = (rfr + 1)**(1/252)-1
 
         portfolio_drawdowns = self.drawdowns(portfolio_returns)
         sorted_drawdowns = np.sort(portfolio_drawdowns)
@@ -802,9 +834,12 @@ class PMPT():
         if daily is False and compounding is False:
             mean_return=portfolio_returns.mean()*frequency
             sterling_ratio = 100*(mean_return - rfr)/np.abs(d_average_drawdown)
-        else:
+        elif daily is True:
             mean_return=portfolio_returns.mean()
+            rfr_daily = (rfr + 1)**(1/252)-1
             sterling_ratio = 100*(mean_return - rfr_daily)/np.abs(d_average_drawdown)
+        else:
+            print("Error: mean returns cannot be compounded if daily")
 
         return sterling_ratio
 
@@ -831,6 +866,7 @@ class Ulcer():
             percentage_drawdown[i] = 100*((close[i] - period_high))/period_high
 
         ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
+
         return ulcer_index
 
     def martin(self,
@@ -841,6 +877,7 @@ class Ulcer():
 
         ulcer_index = self.ulcer(portfolio_state, period)
         martin_ratio = 100*(mean_return - rfr)/ulcer_index
+
         return martin_ratio
 
     def plot_ulcer(self,
@@ -881,13 +918,11 @@ class ValueAtRisk():
             expected_loss=(stats.norm(mean_return, volatility). \
                           pdf(stats.norm(mean_return, volatility). \
                           ppf((1 - var))) * volatility)/(1 - var) - mean_return
-
         elif distribution=="t":
             var=stats.t(dof).cdf(value)
             percent_point_function = stats.t(dof).ppf((1 - var))
             expected_loss = -1/(1 - var)*(1-dof)**(-1)*(dof-2 + percent_point_function**2) \
                             *stats.t(dof).pdf(percent_point_function)*volatility-mean_return
-
         else:
             print("Distribution Unavailable.")
 
