@@ -8,6 +8,7 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from datetime import datetime
 from itertools import repeat
+import warnings
 
 
 class PortfolioAnalytics():
@@ -22,12 +23,8 @@ class PortfolioAnalytics():
         self.tickers=tickers
         self.portfolio_name=portfolio_name
         self.initial_aum = initial_aum
-        """
-        self.names = pd.Series(index=self.tickers, dtype="str")
-        for ticker in self.tickers:     # TODO: fix this
-            security = yf.Ticker(ticker)
-            self.names[ticker] = security.info["longName"]
-        """
+
+        self.names=pdr.get_quote_yahoo(self.tickers)["longName"]
 
         if data is None:
             self.prices=pdr.DataReader(self.tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
@@ -73,14 +70,14 @@ class PortfolioAnalytics():
                     compounding=True,
                     frequency=252):
 
-        if daily is False and compounding is True:
+        if daily is True and compounding is True:
+            raise ValueError("Mean returns cannot be compounded if daily.")
+        elif daily is False and compounding is True:
             mean_return = (1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
         elif daily is False and compounding is False:
             mean_return = portfolio_returns.mean()*frequency
         elif daily is True:
             mean_return = portfolio_returns.mean()
-        else:
-            print("Error: mean returns cannot be compounded if daily")
 
         return mean_return
 
@@ -118,11 +115,11 @@ class PortfolioAnalytics():
                                save=False):
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        portfolio_returns.plot()
-        ax1.set_xlabel("Date")
-        ax1.set_ylabel("Daily Returns")
-        ax1.set_title("Portfolio Daily Returns")
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        portfolio_returns.plot(ax=ax)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Daily Returns")
+        ax.set_title("Portfolio Daily Returns")
         if save is True:
             plt.savefig("portfolio_returns.png", dpi=300)
         if show is True:
@@ -134,11 +131,11 @@ class PortfolioAnalytics():
                                             save=False):
 
         fig = plt.figure()
-        ax1 = fig.add_axes([0.1,0.1,0.8,0.8])
+        ax = fig.add_axes([0.1,0.1,0.8,0.8])
         portfolio_returns.plot.hist(bins = 90)
-        ax1.set_xlabel("Daily Returns")
-        ax1.set_ylabel("Frequency")
-        ax1.set_title("Portfolio Returns Distribution")
+        ax.set_xlabel("Daily Returns")
+        ax.set_ylabel("Frequency")
+        ax.set_title("Portfolio Returns Distribution")
         if save is True:
             plt.savefig("portfolio_returns_distribution.png", dpi=300)
         if show is True:
@@ -152,11 +149,11 @@ class PortfolioAnalytics():
         portfolio_cumulative_returns = self.portfolio_cumulative_returns(portfolio_returns)
 
         fig = plt.figure()
-        ax1 = fig.add_axes([0.1,0.1,0.8,0.8])
-        portfolio_cumulative_returns.plot()
-        ax1.set_xlabel("Date")
-        ax1.set_ylabel("Cumulative Returns")
-        ax1.set_title("Portfolio Cumulative Returns")
+        ax = fig.add_axes([0.1,0.1,0.8,0.8])
+        portfolio_cumulative_returns.plot(ax=ax)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Cumulative Returns")
+        ax.set_title("Portfolio Cumulative Returns")
         if save is True:
             plt.savefig("portfolio_cumulative_returns.png", dpi=300)
         if show is True:
@@ -172,22 +169,40 @@ class PortfolioAnalytics():
         explode=tuple(repeat(0.05, len(self.tickers)))
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        pie=ax1.pie(allocation_funds,
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        pie=ax.pie(allocation_funds,
                       autopct=lambda pct: self._ap(pct, allocation_funds),
                       explode=explode,
                       labels=self.tickers,
                       shadow=True,
                       startangle=90,
                       wedgeprops=wp)
-        ax1.legend(pie[0], self.names,
+        ax.legend(pie[0], self.names,
                    title="Portfolio Assets",
                    loc="upper right",
                    bbox_to_anchor=(0.7, 0, 0.5, 1))
         plt.setp(pie[2], size=9, weight="bold")
-        ax1.set_title(str(self.portfolio_name+" Asset Distribution"))
+        ax.set_title(str(self.portfolio_name+" Asset Distribution"))
         if save is True:
             plt.savefig(str(self.portfolio_name+"_pie_chart.png"), dpi=300)
+        if show is True:
+            plt.show()
+
+    def plot_assets_cumulative_returns(self,
+                                       show=True,
+                                       save=False):
+
+        portfolio_cumulative_returns = self.portfolio_cumulative_returns(self.assets_returns)
+
+        fig = plt.figure()
+        ax = fig.add_axes([0.1,0.1,0.8,0.8])
+        portfolio_cumulative_returns.plot(ax=ax)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Cumulative Returns")
+        ax.set_title("Assets Cumulative Returns")
+        ax.legend(labels=self.names)
+        if save is True:
+            plt.savefig("assets_cumulative_returns.png", dpi=300)
         if show is True:
             plt.show()
 
@@ -197,19 +212,10 @@ class PortfolioAnalytics():
 
 # TODO: rebalancing, transaction costs
 # TODO: __name__==__main__
-# TODO: pytest
-# TODO: plot cumulative returns of all securities in portfolio
-# TODO: plot cumulative returns of different protfolios
 # TODO: other cov matrices (ledoit-wolf etc)
 # TODO: other methods of returns
 # TODO: checker methods
 
-"""
-if not isinstance(risk_free_rate, (int, float)):
-    raise ValueError("risk_free_rate should be numeric")
-self._risk_free_rate = risk_free_rate
-
-"""
 # separate method for plotting matrices
 # ? annualizing ratios?
 
@@ -257,16 +263,16 @@ class MPT():
         capm = self.capm(portfolio_returns, rfr)
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        ax1.scatter(capm[4], capm[3], color="b")
-        ax1.plot(capm[4], capm[0]+capm[1]*capm[4], color="r")
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        ax.scatter(capm[4], capm[3], color="b")
+        ax.plot(capm[4], capm[0]+capm[1]*capm[4], color="r")
         empty_patch=mpatches.Patch(color='none', visible=False)
-        ax1.legend(handles=[empty_patch, empty_patch],
+        ax.legend(handles=[empty_patch, empty_patch],
                    labels=[r"$\alpha$"+" = "+str(np.round(capm[0], 3)),
                            r"$\beta$"+" = "+str(np.round(capm[1], 3))])
-        ax1.set_xlabel("Benchmark Excess Returns")
-        ax1.set_ylabel("Portfolio Excess Returns")
-        ax1.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
+        ax.set_xlabel("Benchmark Excess Returns")
+        ax.set_ylabel("Portfolio Excess Returns")
+        ax.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
         if save is True:
             plt.savefig("capm.png", dpi=300)
         if show is True:
@@ -423,7 +429,9 @@ class PMPT():
 
         downside_volatility = self.downside_volatility(portfolio_returns, mar, daily, frequency)
 
-        if daily is False and compounding is True:
+        if daily is True and compounding is True:
+            raise ValueError("Mean returns cannot be compounded if daily.")
+        elif daily is False and compounding is True:
             mean_return=(1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
             sortino_ratio = 100*(mean_return - rfr)/downside_volatility
         elif daily is False and compounding is False:
@@ -432,8 +440,6 @@ class PMPT():
         elif daily is True:
             rfr_daily = (rfr + 1)**(1/252)-1
             sortino_ratio = 100*(np.nanmean(portfolio_returns) - rfr_daily)/downside_volatility
-        else:
-            print("Error: mean returns cannot be compounded if daily")
 
         return sortino_ratio
 
@@ -450,7 +456,7 @@ class PMPT():
 
         if period>=portfolio_state.shape[0]:
             period=portfolio_state.shape[0]
-            print("Warning! Dataset too small. Period: ", period)
+            warnings.warn("Dataset too small. Period taken as {}.".format(period))
 
         peak = np.max(portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = portfolio_state["Whole Portfolio"].idxmax()
@@ -467,7 +473,7 @@ class PMPT():
 
         if period>portfolio_state.shape[0]:
             period=portfolio_state.shape[0]
-            print("Warning! Dataset too small. Period: ", period)
+            warnings.warn("Dataset too small. Period taken as {}.".format(period))
 
         peak = np.max(portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = portfolio_state["Whole Portfolio"].idxmax()
@@ -493,7 +499,9 @@ class PMPT():
         model = LinearRegression().fit(excess_benchmark_returns, excess_portfolio_returns)
         beta = model.coef_[0]
 
-        if daily is False and compounding is True:
+        if daily is True and compounding is True:
+            raise ValueError("Mean returns cannot be compounded if daily.")
+        elif daily is False and compounding is True:
             mean_return=(1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
             mean_benchmark_return=(1+excess_benchmark_returns).prod()**(frequency/excess_benchmark_returns.shape[0])-1
             jensen_alpha = mean_return - rfr - beta*(mean_benchmark_return - rfr)
@@ -505,8 +513,6 @@ class PMPT():
             mean_return=portfolio_returns.mean()
             mean_benchmark_return=excess_benchmark_returns.mean()
             jensen_alpha = mean_return - rfr_daily - beta*(mean_benchmark_return - rfr_daily)
-        else:
-            print("Error: mean returns cannot be compounded if daily")
 
         return jensen_alpha
 
@@ -525,7 +531,9 @@ class PMPT():
         model = LinearRegression().fit(excess_benchmark_returns, excess_portfolio_returns)
         beta = model.coef_[0]
 
-        if daily is False and compounding is True:
+        if daily is True and compounding is True:
+            raise ValueError("Mean returns cannot be compounded if daily.")
+        elif daily is False and compounding is True:
             mean_return=(1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
             treynor_ratio = 100*(mean_return-rfr)/beta
         if daily is False and compounding is False:
@@ -534,8 +542,6 @@ class PMPT():
         elif daily is True:
             mean_return=portfolio_returns.mean()
             treynor_ratio = 100*(mean_return-rfr_daily)/beta
-        else:
-            print("Error: mean returns cannot be compounded if daily")
 
         return treynor_ratio
 
@@ -573,7 +579,9 @@ class PMPT():
 
         lower_partial_moment = self.lower_partial_moment(portfolio_returns, mar, moment)
 
-        if daily is False and compounding is True:
+        if daily is True and compounding is True:
+            raise ValueError("Mean returns cannot be compounded if daily.")
+        elif daily is False and compounding is True:
             mean_return=(1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
             kappa_ratio = 100*(mean_return - mar)/np.power(lower_partial_moment, (1/moment))
         elif daily is False and compounding is False:
@@ -582,8 +590,6 @@ class PMPT():
         elif daily is True:
             mean_return=portfolio_returns.mean()
             kappa_ratio = 100*(mean_return - mar)/np.power(lower_partial_moment, (1/moment))
-        else:
-            print("Error: mean returns cannot be compounded if daily")
 
         return kappa_ratio
 
@@ -610,7 +616,7 @@ class PMPT():
 
         if period>=portfolio_state.shape[0]:
             period=portfolio_state.shape[0]
-            print("Warning! Dataset too small. Period: ", period)
+            warnings.warn("Dataset too small. Period taken as {}.".format(period))
 
         maximum_drawdown = self.maximum_drawdown_percentage(portfolio_state, period)
 
@@ -640,7 +646,9 @@ class PMPT():
         sorted_drawdowns = np.sort(portfolio_drawdowns)
         d_average_drawdown = np.mean(sorted_drawdowns[-drawdowns:])
 
-        if daily is False and compounding is True:
+        if daily is True and compounding is True:
+            raise ValueError("Mean returns cannot be compounded if daily.")
+        elif daily is False and compounding is True:
             mean_return=(1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
             sterling_ratio = 100*(mean_return - rfr)/np.abs(d_average_drawdown)
         if daily is False and compounding is False:
@@ -650,8 +658,6 @@ class PMPT():
             mean_return=portfolio_returns.mean()
             rfr_daily = (rfr + 1)**(1/252)-1
             sterling_ratio = 100*(mean_return - rfr_daily)/np.abs(d_average_drawdown)
-        else:
-            print("Error: mean returns cannot be compounded if daily")
 
         return sterling_ratio
 
@@ -703,11 +709,11 @@ class Ulcer():
             ulcer_values.iloc[-i]["Ulcer Index"] = self.ulcer(portfolio_state, period, start=i)
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        ulcer_values["Ulcer Index"].plot()
-        ax1.set_xlabel("Date")
-        ax1.set_ylabel("Ulcer Index")
-        ax1.set_title("Portfolio Ulcer Index")
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        ulcer_values["Ulcer Index"].plot(ax=ax)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Ulcer Index")
+        ax.set_title("Portfolio Ulcer Index")
         if save is True:
             plt.savefig("ulcer.png", dpi=300)
         if show is True:
@@ -736,7 +742,7 @@ class ValueAtRisk():
             expected_loss = -1/(1 - var)*(1-dof)**(-1)*(dof-2 + percent_point_function**2) \
                             *stats.t(dof).pdf(percent_point_function)*volatility-mean_return
         else:
-            print("Distribution Unavailable.")
+            raise ValueError("Probability distribution unavailable.")
 
         return var, expected_loss
 
@@ -766,18 +772,18 @@ class ValueAtRisk():
         elif distribution=="t":
             pdf=stats.t(dof).pdf(x)
         else:
-            print("Distribution Unavailable")
+            raise ValueError("Probability distribution unavailable.")
 
         cutoff = (np.abs(x - value)).argmin()
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        ax1.plot(x, pdf, linewidth=2, color="b", label="Analytical (Theoretical) Distribution of Portfolio Returns")
-        ax1.fill_between(x[0:cutoff], pdf[0:cutoff], facecolor="r", label="Analytical VaR")
-        ax1.legend()
-        ax1.set_xlabel("Daily Returns")
-        ax1.set_ylabel("Density of Daily Returns")
-        ax1.set_title("Analytical (Theoretical," + distribution + ") Return Distribution and VaR Plot")
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        ax.plot(x, pdf, linewidth=2, color="b", label="Analytical (Theoretical) Distribution of Portfolio Returns")
+        ax.fill_between(x[0:cutoff], pdf[0:cutoff], facecolor="r", label="Analytical VaR")
+        ax.legend()
+        ax.set_xlabel("Daily Returns")
+        ax.set_ylabel("Density of Daily Returns")
+        ax.set_title("Analytical (Theoretical," + distribution + ") Return Distribution and VaR Plot")
         if save is True:
             plt.savefig("analytical_var.png", dpi=300)
         if show is True:
@@ -794,13 +800,13 @@ class ValueAtRisk():
         bins = np.linspace(sorted_portfolio_returns[0], sorted_portfolio_returns[-1]+1, number_of_bins)
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        ax1.hist(sorted_portfolio_returns, bins, label="Historical Distribution of Portfolio Returns")
-        ax1.axvline(x=value, ymin=0, color="r", label="Historical VaR Cutoff")
-        ax1.legend()
-        ax1.set_xlabel("Daily Returns")
-        ax1.set_ylabel("Frequency of Daily Returns")
-        ax1.set_title("Historical Return Distribution and VaR Plot")
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        ax.hist(sorted_portfolio_returns, bins, label="Historical Distribution of Portfolio Returns")
+        ax.axvline(x=value, ymin=0, color="r", label="Historical VaR Cutoff")
+        ax.legend()
+        ax.set_xlabel("Daily Returns")
+        ax.set_ylabel("Frequency of Daily Returns")
+        ax.set_title("Historical Return Distribution and VaR Plot")
         if save is True:
             plt.savefig("historical_var.png", dpi=300)
         if show is True:
@@ -921,8 +927,7 @@ class Helper():
         elif method=="column":
             portfolio_returns.fillna(portfolio_returns.mean(), inplace=True)
         else:
-            print("Method unsupported.")
-
+            raise ValueError("Method unsupported.")
 
 class OmegaAnalysis():
     def __init__(self, mar_lower_bound=0, mar_upper_bound=0.2):
@@ -981,7 +986,10 @@ class OmegaAnalysis():
                 omega_values.append(value)
             all_values[portfolio] = omega_values
 
-        all_values.plot(title="Omega Curve", xlabel="Minimum Acceptable Return (%)", ylabel="Omega Ratio", ylim=(0, 1.5))
+        all_values.plot(title="Omega Curve",
+                        xlabel="Minimum Acceptable Return (%)",
+                        ylabel="Omega Ratio",
+                        ylim=(0, 1.5))
         if save is True:
             plt.savefig("omega_curves.png", dpi=300)
         if show is True:
