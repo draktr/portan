@@ -1,10 +1,13 @@
 import numpy as np
 import pandas as pd
+import pandas_datareader as pdr
 import matplotlib.pyplot as plt
 from scipy import optimize
 from itertools import repeat
 import pypfopt as ppo
 
+#? how acceptable is it to update object properties (self.) with methods
+# ? post-processing
 
 class AssetAllocation():
     def __init__(self) -> None:
@@ -78,6 +81,9 @@ class EfficientFrontier():
         self.frontier_x=[]
 
         # TODO: shorting, leverage
+        # TODO: add minimum volatility
+        # TODO: efficeint return, risk
+        # TODO: add max weightsed sharpe ratio
         # TODO: remainder value (make discrete allocations methods)
         for possible_return in self.frontier_y:
             cons_ef = ({'type':'eq', 'fun': self._check_weights},
@@ -102,20 +108,20 @@ class EfficientFrontier():
                                 save=False):
 
         fig=plt.figure()
-        ax1=fig.add_axes([0.1,0.1,0.8,0.8])
-        ax1.set_xlabel("Volatility")
-        ax1.set_ylabel("Mean Returns")
-        ax1.set_title(str(self.portfolio_name+" Efficient Frontier"))
-        ax1.plot(self.frontier_x, self.frontier_y,
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        ax.set_xlabel("Volatility")
+        ax.set_ylabel("Mean Returns")
+        ax.set_title(str(self.portfolio_name+" Efficient Frontier"))
+        ax.plot(self.frontier_x, self.frontier_y,
                  'b-', linewidth=2, label="Efficient Frontier")
 
         if plot_all is True:
-            all_portfolios=ax1.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios,
+            all_portfolios=ax.scatter(self.volatilities, self.mean_returns, c=self.sharpe_ratios,
                              cmap='Blues', s=8, marker=".", label="All Portfolios")
-            fig.colorbar(all_portfolios, ax=ax1, label="Sharpe Ratio")
+            fig.colorbar(all_portfolios, ax=ax, label="Sharpe Ratio")
 
         if plot_best is True:
-            ax1.scatter(self.best["volatility"], self.best["mean_return"], s=50,
+            ax.scatter(self.best["volatility"], self.best["mean_return"], s=50,
                         c="r", marker="X", zorder=2.6, label="Highest Sharpe Portfolio")
 
         if plot_assets is True:
@@ -130,10 +136,10 @@ class EfficientFrontier():
                 assets_volatilities = self.assets_returns.std()
             else:
                 print("Error: mean returns cannot be compounded if daily")
-            ax1.scatter(assets_volatilities, assets_mean_returns, s=20,
+            ax.scatter(assets_volatilities, assets_mean_returns, s=20,
                         c="g", marker="d", zorder=2.5, label="Portfolio assets")
             for i in range(assets_mean_returns.shape[0]):
-                ax1.text(assets_volatilities[i]+0.02*(np.nanmean(assets_volatilities)),
+                ax.text(assets_volatilities[i]+0.02*(np.nanmean(assets_volatilities)),
                          assets_mean_returns[i], self.assets_returns.columns[i], size=10)
 
         if plot_comparables is True:
@@ -143,17 +149,17 @@ class EfficientFrontier():
                 print("Warning: Cannot plot comparables! \n")
                 print("Comparables' options (daily, compounding, frequency) don't match efficient frontier options.")
             else:
-                ax1.scatter(comparables_volatilities, comparables_mean_returns, s=20,
+                ax.scatter(comparables_volatilities, comparables_mean_returns, s=20,
                             c="orange", marker="x", zorder=2.4, label="Comparable Portfolios")
                 for i in range(comparables_mean_returns.shape[0]):
-                    ax1.text(1.01*comparables_volatilities[i], comparables_mean_returns[i],
+                    ax.text(1.01*comparables_volatilities[i], comparables_mean_returns[i],
                              comparables_mean_returns.index[i], size=10, color="orange")
 
         if plot_cal is True:
-            ax1.plot(self.frontier_x, self.rfr+self.best["sharpe"]*self.frontier_x,
+            ax.plot(self.frontier_x, self.rfr+self.best["sharpe"]*self.frontier_x,
                      color="black", linewidth=2, label="Capital Allocation Line")
 
-        ax1.legend()
+        ax.legend()
         if save is True:
             plt.savefig(str(self.portfolio_name+"_efficient_frontier.png"), dpi=300)
         if show is True:
@@ -194,3 +200,117 @@ class EfficientFrontier():
                        weights):
 
         return np.sum(weights)-1
+
+#TODO: difference in risk models between using cov matrix and volatilities
+
+class PyPortfolioOptAllocators():
+    def __init__(self,
+                 prices,
+                 weight_bounds=(0, 1)) -> None:
+        self.prices=prices
+        self.weight_bounds=weight_bounds
+
+        self.returns=ppo.expected_returns.returns_from_prices(self.prices)
+        self.mean_returns = ppo.expected_returns.mean_historical_return(self.prices)
+        self.cov_matrix = ppo.risk_models.sample_cov(self.prices)
+
+
+    def sharpe_maximizer(self,
+                         target_return,
+                         market_neutral,
+                         gamma,
+                         efficient_return=False,
+                         use_objective=False):
+        mu = ppo.expected_returns.mean_historical_return(self.prices)
+        S = ppo.risk_models.sample_cov(self.prices)
+
+        ef = ppo.EfficientFrontier(mu, S, self.weight_bounds)
+        cleaned_weights = ef.clean_weights()
+
+        if efficient_return is True:    #TODO: split efficient return and others
+                                        #TODO: into other methods
+            ef.efficient_return(target_return, market_neutral)
+
+        if use_objective is True:
+            ef.add_objective(ppo.objective_functions.L2_reg, gamma)
+
+        expected_performance = ef.portfolio_performance(verbose=True)
+
+        return cleaned_weights, expected_performance
+
+    def discrete_allocation(self,
+                            weights,
+                            aum):
+        latest_prices = pdr.get_quote_yahoo(self.prices.columns)["regularMarketPrice"]
+        da = ppo.DiscreteAllocation(weights, latest_prices, total_portfolio_value=aum)
+        allocation, leftover = da.greedy_portfolio()
+
+        return allocation, leftover
+
+#TODO: do this procedural way or all in one function so that i gett all the possible allocations
+
+    def black_litterman(self):
+        S = ppo.risk_models.sample_cov(self.prices)
+        viewdict = {"AAPL": 0.20, "BBY": -0.30, "BAC": 0, "SBUX": -0.2, "T": 0.131321}
+        bl = ppo.BlackLittermanModel(S, pi="equal", absolute_views=viewdict, omega="default")
+        rets = bl.bl_returns()
+
+        ef = EfficientFrontier(rets, S, self.weight_bounds)
+        ef.max_sharpe()
+        cleaned_weights = ef.clean_weights()
+        expected_performance = ef.portfolio_performance(verbose=True)
+
+        return cleaned_weights, expected_performance
+
+    def mean_semivariance(self):
+        es = ppo.EfficientSemivariance(self.mean_returns, self.returns)
+        es.efficient_return(target_return=0.20)
+        weights = es.clean_weights()
+        expected_performance = es.portfolio_performance(verbose=True)
+
+        return weights, expected_performance
+
+    def efficient_cvar(self):
+        ecvar = ppo.EfficientCVaR(self.mean_returns, self.returns)
+        ecvar.min_cvar(target_return=0.20)
+        weights = ecvar.clean_weights()
+        expected_performance = ecvar.portfolio_performance(verbose=True)
+
+        return weights, expected_performance
+
+    def efficient_cdar(self):
+        ecdar = ppo.EfficientCDaR(self.mean_returns, self.returns)
+        ecdar.min_cdar()
+        weights = ecdar.clean_weights()
+        expected_performance = ecdar.portfolio_performance(verbose=True)
+
+
+    def hrp(self):
+
+        hrp = ppo.HRPOpt(self.mean_returns, self.cov_matrix)
+        hrp.optimize()
+        weights=hrp.clean_weights()
+        expected_performance = hrp.portfolio_performance(verbose=True)
+
+        return weights, expected_performance
+
+    def cla(self):
+
+        cla = ppo.CLA(self.mean_returns, self.cov_matrix)
+        cla.efficient_frontier()
+
+        weights = cla.clean_weights()
+        expected_performance = cla.portfolio_performance(verbose=True)
+
+        return weights, expected_performance
+
+
+
+
+#TODO: pytest, black, BiBTex, inheritance, polimorphism
+#TODO: why cov matrix?
+#TODO: explore base optimizer
+#TODO: full packages suite
+
+
+
