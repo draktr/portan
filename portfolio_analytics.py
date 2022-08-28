@@ -10,6 +10,7 @@ from datetime import datetime
 from itertools import repeat
 import warnings
 
+#TODO: inheritance here for some methods
 
 class PortfolioAnalytics():
     def __init__(self,
@@ -210,17 +211,16 @@ class PortfolioAnalytics():
         absolute = int(pct / 100.*np.sum(all_values))
         return "{:.1f}%\n(${:d})".format(pct, absolute)
 
-# TODO: rebalancing, transaction costs
+# TODO: rebalancing, transaction, tax costs
 # TODO: __name__==__main__
 # TODO: other cov matrices (ledoit-wolf etc)
 # TODO: other methods of returns
 # TODO: checker methods
 
 # separate method for plotting matrices
-# ? annualizing ratios?
 
 
-class MPT():
+class MPT(PortfolioAnalytics):
     def __init__(self,
                   benchmark_weights,
                   benchmark_tickers=None,
@@ -295,7 +295,7 @@ class MPT():
         return tracking_error
 
 
-class PMPT():
+class PMPT(PortfolioAnalytics):
     def __init__(self,
                  benchmark_weights,
                  benchmark_tickers=None,
@@ -662,7 +662,7 @@ class PMPT():
         return sterling_ratio
 
 
-class Ulcer():
+class Ulcer(PortfolioAnalytics):
     def __init__(self) -> None:
         pass
 
@@ -720,7 +720,7 @@ class Ulcer():
             plt.show()
 
 
-class ValueAtRisk():
+class ValueAtRisk(PortfolioAnalytics):
     def __init__(self) -> None:
         pass
 
@@ -813,7 +813,7 @@ class ValueAtRisk():
             plt.show()
 
 
-class Matrices():
+class Matrices(PortfolioAnalytics):
     def __init__(self) -> None:
         pass
 
@@ -857,17 +857,17 @@ class Matrices():
         return matrix
 
 
-class Backtesting():
+class Backtesting(PortfolioAnalytics):
     def __init__(self) -> None:
         pass
 
 
-class PortfolioReport():
+class PortfolioReport(PortfolioAnalytics):
     def __init__(self) -> None:
         pass
 
 
-class Helper():
+class Helper(PortfolioAnalytics):
     def __init__(self) -> None:
         pass
 
@@ -929,7 +929,7 @@ class Helper():
         else:
             raise ValueError("Method unsupported.")
 
-class OmegaAnalysis():
+class OmegaAnalysis(PortfolioAnalytics):
     def __init__(self, mar_lower_bound=0, mar_upper_bound=0.2):
         """
         Initiates the object.
