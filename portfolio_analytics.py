@@ -10,63 +10,52 @@ from datetime import datetime
 from itertools import repeat
 import warnings
 
-#TODO: inheritance here for some methods
+# TODO: inheritance here for some methods
+# TODO: separate class for plotting
+# TODO: black
+# TODO: rebalancing, transaction, tax costs
+# TODO: __name__==__main__
+# TODO: other cov matrices (ledoit-wolf etc)
+# TODO: other methods of returns
+# TODO: checker methods
+# TODO: separate method for plotting matrices
+# TODO: PnL and similar assessments in parent class
+
 
 class PortfolioAnalytics():
     def __init__(self,
-                 tickers=None,
-                 start="1970-01-02",
-                 end=str(datetime.now())[0:10],
+                 data,
+                 weights,
                  portfolio_name="Investment Portfolio",
-                 data=None,     # takes in only the data of kind GetData.save_adj_close_only()
                  initial_aum=10000):
 
-        self.tickers=tickers
+        self.prices=data
+        self.assets_returns=self.prices.pct_change().drop(self.assets_returns.index[0])
+        self.tickers=self.prices.columns
+        self.weights=weights
+        self.assets_names=pdr.get_quote_yahoo(self.tickers)["longName"]
         self.portfolio_name=portfolio_name
         self.initial_aum = initial_aum
 
-        self.names=pdr.get_quote_yahoo(self.tickers)["longName"]
-
-        if data is None:
-            self.prices=pdr.DataReader(self.tickers, start=start, end=end, data_source="yahoo")["Adj Close"]
-            self.assets_returns=self.prices.pct_change()
-        else:
-            self.prices = pd.read_csv(data, index_col=["Date"])
-            self.assets_returns = self.prices.pct_change()
-            self.tickers=self.prices.columns
-
-        self.assets_returns = self.assets_returns.drop(self.assets_returns.index[0])
-
-    def portfolio_state(self,
-                        weights):
-
         # funds allocated to each security
-        allocation_funds = np.multiply(self.initial_aum, weights)
+        self.allocation_funds = np.multiply(self.initial_aum, self.weights)
+        #TODO: make it a df?
 
         # number of assets bought at t0
-        allocation_assets = np.divide(allocation_funds, self.prices.iloc[0])
+        self.allocation_assets = np.divide(self.allocation_funds, self.prices.iloc[0])
+        #TODO: make it a df?
 
         # absolute (dollar) value of each security in portfolio (i.e. state of the portfolio, not rebalanced)
-        portfolio_state = np.multiply(self.prices, allocation_assets)
-        portfolio_state["Whole Portfolio"] = portfolio_state.sum(axis=1)
+        self.portfolio_state = np.multiply(self.prices, self.allocation_assets)
+        self.portfolio_state["Whole Portfolio"] = self.portfolio_state.sum(axis=1)
+        #TODO: make it a df?
 
-        return allocation_funds, allocation_assets, portfolio_state
-
-    def portfolio_returns(self,
-                          weights,
-                          return_dataframe=True):
-
-        portfolio_returns = np.dot(self.assets_returns.to_numpy(), weights)
-
-        if return_dataframe is True:
-            portfolio_returns = pd.DataFrame(portfolio_returns,
-                                             columns=[self.portfolio_name],
-                                             index=self.assets_returns.index)
-
-        return portfolio_returns
+        self.portfolio_returns = np.dot(self.assets_returns.to_numpy(), self.weights)
+        self.portfolio_returns = pd.DataFrame(self.portfolio_returns,
+                                              columns=[self.portfolio_name],
+                                              index=self.assets_returns.index)
 
     def mean_return(self,
-                    portfolio_returns,
                     daily=False,
                     compounding=True,
                     frequency=252):
@@ -74,50 +63,46 @@ class PortfolioAnalytics():
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
-            mean_return = (1+portfolio_returns).prod()**(frequency/portfolio_returns.shape[0])-1
+            mean_return = (1+self.portfolio_returns).prod()**(frequency/self.portfolio_returns.shape[0])-1
         elif daily is False and compounding is False:
-            mean_return = portfolio_returns.mean()*frequency
+            mean_return = self.portfolio_returns.mean()*frequency
         elif daily is True:
-            mean_return = portfolio_returns.mean()
+            mean_return = self.portfolio_returns.mean()
 
         return mean_return
 
     def volatility(self,
-                   portfolio_returns,
                    daily=False,
                    frequency=252):
 
         if daily is False:
-            volatility = portfolio_returns.std()*np.sqrt(frequency)
+            volatility = self.portfolio_returns.std()*np.sqrt(frequency)
         else:
-            volatility = portfolio_returns.std()
+            volatility = self.portfolio_returns.std()
 
         return volatility
 
     def excess_returns(self,
-                       portfolio_returns,
                        mar=0.03):
 
         mar_daily = (mar + 1)**(1/252)-1
-        excess_returns = portfolio_returns - mar_daily
+        excess_returns = self.portfolio_returns - mar_daily
 
         return excess_returns
 
-    def portfolio_cumulative_returns(self,
-                                     portfolio_returns):
+    def portfolio_cumulative_returns(self):
 
-        portfolio_cumulative_returns = (portfolio_returns + 1).cumprod()
+        portfolio_cumulative_returns = (self.portfolio_returns + 1).cumprod()
 
         return portfolio_cumulative_returns
 
     def plot_portfolio_returns(self,
-                               portfolio_returns,
                                show=True,
                                save=False):
 
         fig=plt.figure()
         ax=fig.add_axes([0.1,0.1,0.8,0.8])
-        portfolio_returns.plot(ax=ax)
+        self.portfolio_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Daily Returns")
         ax.set_title("Portfolio Daily Returns")
@@ -127,13 +112,12 @@ class PortfolioAnalytics():
             plt.show()
 
     def plot_portfolio_returns_distribution(self,
-                                            portfolio_returns,
                                             show=True,
                                             save=False):
 
         fig = plt.figure()
         ax = fig.add_axes([0.1,0.1,0.8,0.8])
-        portfolio_returns.plot.hist(bins = 90)
+        self.portfolio_returns.plot.hist(bins = 90)
         ax.set_xlabel("Daily Returns")
         ax.set_ylabel("Frequency")
         ax.set_title("Portfolio Returns Distribution")
@@ -143,11 +127,10 @@ class PortfolioAnalytics():
             plt.show()
 
     def plot_portfolio_cumulative_returns(self,
-                                          portfolio_returns,
                                           show=True,
                                           save=False):
 
-        portfolio_cumulative_returns = self.portfolio_cumulative_returns(portfolio_returns)
+        portfolio_cumulative_returns = self.portfolio_cumulative_returns()
 
         fig = plt.figure()
         ax = fig.add_axes([0.1,0.1,0.8,0.8])
@@ -178,7 +161,7 @@ class PortfolioAnalytics():
                       shadow=True,
                       startangle=90,
                       wedgeprops=wp)
-        ax.legend(pie[0], self.names,
+        ax.legend(pie[0], self.assets_names,
                    title="Portfolio Assets",
                    loc="upper right",
                    bbox_to_anchor=(0.7, 0, 0.5, 1))
@@ -201,7 +184,7 @@ class PortfolioAnalytics():
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
         ax.set_title("Assets Cumulative Returns")
-        ax.legend(labels=self.names)
+        ax.legend(labels=self.assets_names)
         if save is True:
             plt.savefig("assets_cumulative_returns.png", dpi=300)
         if show is True:
@@ -210,14 +193,6 @@ class PortfolioAnalytics():
     def _ap(self, pct, all_values):
         absolute = int(pct / 100.*np.sum(all_values))
         return "{:.1f}%\n(${:d})".format(pct, absolute)
-
-# TODO: rebalancing, transaction, tax costs
-# TODO: __name__==__main__
-# TODO: other cov matrices (ledoit-wolf etc)
-# TODO: other methods of returns
-# TODO: checker methods
-
-# separate method for plotting matrices
 
 
 class MPT(PortfolioAnalytics):

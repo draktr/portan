@@ -12,6 +12,9 @@ class GetData():
 
         self.data=pdr.DataReader(tickers, start=start, end=end, data_source=data_source)
 
+    def get_dataframe(self):
+        return self.data
+
     def save_all_long(self):
         data_long=self.data.stack(level=1).reset_index(1).rename(columns={"Symbols": "Ticker"}).sort_values("Ticker")
         data_long.to_csv("all_tickers_data_long.csv")
