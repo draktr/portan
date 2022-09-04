@@ -1,19 +1,42 @@
 import numpy as np
 import pandas as pd
+import pandas_datareader as pdr
 
+# basic object is a transaction (that may involve multiple sales/buys)
+def main():
+    tickers = []
+    markets = []
+    bought = []
+    sold = []
+    costs = CostsModel(tickers, markets, bought, sold)
 
 class CostsModel():
-    def __init__(self, asset_price, asset_number) -> None:
-        self.asset_price = asset_price
-        self.asset_number = asset_number
-        self.trade_value = np.dot(self.asset_price, self.asset_number)
+
+    def __init__(self,
+                 tickers,
+                 markets,
+                 bought,
+                 sold) -> None:
+
+        data = pdr.get_quote_yahoo(tickers)
+        current_prices = data["regularMarketPrice"]
+
+        self.trades = pd.DataFrame(index=tickers, columns=["Bought", "Sold", "Exchange"])
+        self.trades["Bought"] = np.multiply(bought, current_prices)
+        self.trades["Sold"] = np.multiply(sold, current_prices)
+        self.trades["Exchange"] = data["fullExchangeName"]
+
+        self.total_bought = self.trades["Bought"].sum()
+        self.total_sold = self.trades["Sold"].sum()
+        self.total = self.total_bought+self.total_sold
+
         #?taxation on trade value vs net profit
 
         # pass the list of security pdr objects, use get_quote to get details such as
         # exchanges, markets, individual trade sizes etc
         # pass those to the functions themselves
 
-    def fees(self, market):
+    def fees(self):
         """
         Fees (comission, fees and duties) for Interactive Brokers for Stocks and ETFs.
         Tiered pricing.
@@ -27,6 +50,8 @@ class CostsModel():
         Returns:
             float: Total fee
         """
+
+        #! this method is yet to be updated to work with new __init__()
 
         if market=="us": # currency is USD
             comission = np.min(1*self.trade_value, np.max(0.35, self.asset_number*0.0035))
