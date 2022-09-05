@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import numpy as np
 import pandas as pd
 import pandas_datareader as pdr
@@ -9,25 +10,15 @@ from sklearn.linear_model import LinearRegression
 from itertools import repeat
 import warnings
 
-# TODO: inheritance here for some methods
 # TODO: separate class for plotting
 # TODO: black
-# TODO: rebalancing, transaction, tax costs
 # TODO: __name__==__main__
 # TODO: other cov matrices (ledoit-wolf etc)
 # TODO: other methods of returns
 # TODO: checker methods
 # TODO: separate method for plotting matrices
-# TODO: PnL and similar assessments in parent class
 # TODO: handling of series of different lengths
-
-"""
-Advantages:
--comprehensive
--can use both internally as methods and externally as functions, while minimizing performance penalty
-
-
-"""
+# TODO: split basic analytics from parent class
 
 
 class PortfolioAnalytics():
@@ -42,12 +33,13 @@ class PortfolioAnalytics():
         self.assets_returns=self.prices.pct_change().drop(self.prices.index[0])
         self.tickers=self.prices.columns
         self.weights=weights
-        self.assets_names=pdr.get_quote_yahoo(self.tickers)["longName"]
+        self.assets_info=pdr.get_quote_yahoo(self.tickers)
+        self.assets_names=self.assets_info["longName"]
         self.portfolio_name=portfolio_name
         self.initial_aum = initial_aum
         self.frequency=frequency
 
-        # funds allocated to each security
+        # funds allocated to each asset
         self.allocation_funds = np.multiply(self.initial_aum, self.weights)
         self.allocation_funds = pd.DataFrame(self.allocation_funds, index=self.tickers)
 
@@ -55,7 +47,7 @@ class PortfolioAnalytics():
         self.allocation_assets = np.divide(self.allocation_funds, self.prices.iloc[0])
         self.allocation_assets = pd.DataFrame(self.allocation_assets, index=self.tickers)
 
-        # absolute (dollar) value of each security in portfolio (i.e. state of the portfolio, not rebalanced)
+        # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
         self.portfolio_state = np.multiply(self.prices, self.allocation_assets)
         self.portfolio_state["Whole Portfolio"] = self.portfolio_state.sum(axis=1)
 
@@ -78,6 +70,51 @@ class PortfolioAnalytics():
         excess_returns = self.portfolio_returns - mar_daily
 
         return excess_returns
+
+    def net_return(self,
+                   percentage=False):
+
+        final_aum = self.final_aum()
+
+        if percentage is False:
+            net_return = final_aum-self.initial_aum
+        elif percentage is True:
+            net_return = (final_aum-self.initial_aum)/self.initial_aum
+        else:
+            raise ValueError("Argument 'percentage' has to be boolean.")
+
+        return net_return
+
+    def min_aum(self):
+
+        return self.portfolio_state["Whole Portfolio"].min()
+
+    def max_aum(self):
+
+        return self.portfolio_state["Whole Portfolio"].max()
+
+    def mean_aum(self):
+
+        return self.portfolio_state["Whole Portfolio"].mean()
+
+    def final_aum(self):
+
+        return self.allocation_assets*self.assets_info["regularMarketPrice"]
+
+    def plot_aum(self,
+                 show=True,
+                 save=False):
+
+        fig=plt.figure()
+        ax=fig.add_axes([0.1,0.1,0.8,0.8])
+        self.portfolio_state["Whole Portfolio"].plot(ax=ax)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("AUM ($)")
+        ax.set_title("Assets Under Management")
+        if save is True:
+            plt.savefig("aum.png", dpi=300)
+        if show is True:
+            plt.show()
 
     def portfolio_cumulative_returns(self):
 
