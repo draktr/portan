@@ -1,4 +1,4 @@
-from multiprocessing.sharedctypes import Value
+from sys import ps1
 import numpy as np
 import pandas as pd
 import pandas_datareader as pdr
@@ -7,10 +7,12 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 from scipy import stats
 from sklearn.linear_model import LinearRegression
+from statsmodels.stats.diagnostic import lilliefors
 from itertools import repeat
 import warnings
 
 # TODO: separate class for plotting
+# TODO: split basic analytics from parent class
 # TODO: black
 # TODO: __name__==__main__
 # TODO: other cov matrices (ledoit-wolf etc)
@@ -18,7 +20,6 @@ import warnings
 # TODO: checker methods
 # TODO: separate method for plotting matrices
 # TODO: handling of series of different lengths
-# TODO: split basic analytics from parent class
 
 
 class PortfolioAnalytics():
@@ -220,6 +221,25 @@ class PortfolioAnalytics():
         absolute = int(pct / 100.*np.sum(all_values))
         return "{:.1f}%\n(${:d})".format(pct, absolute)
 
+    def distribution_test(self, test="dagostino-pearson", distribution="norm"):
+
+        if test=="kolomogorov-smirnov":
+            result = stats.kstest(self.portfolio_returns, distribution)
+        elif test=="lilliefors":
+            result = lilliefors(self.portfolio_returns)
+        elif test=="shapiro-wilk":
+            result = stats.shapiro(self.portfolio_returns)
+        elif test=="jarque-barre":
+            result = stats.jarque_bera(self.portfolio_returns)
+        elif test=="dagostino-pearson":
+            result = stats.normaltest(self.portfolio_returns)
+        elif test=="anderson-darling":
+            result = stats.anderson(self.portfolio_returns, distribution)
+        else:
+            raise ValueError("Statistical test is unavailable.")
+
+        return result
+
 
 class MPT(PortfolioAnalytics):
     def __init__(self,
@@ -325,7 +345,6 @@ class MPT(PortfolioAnalytics):
     def tracking_error(self):
 
         tracking_error = np.std(self.portfolio_returns - self.benchmark_returns, ddof=1)
-        # TODO: check is numpy is neccesary for protolio returns
 
         return tracking_error
 
