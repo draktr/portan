@@ -12,7 +12,7 @@ class CostsModel():
                  sold) -> None:
 
         if np.dot(bought, sold) != 0:
-            raise ValueError("Ensure that every security is either only bought or only sold.")
+            raise ValueError("Securities can either be only bought or only sold.")
 
         data = pdr.get_quote_yahoo(tickers)
         current_prices = data["regularMarketPrice"]
@@ -29,7 +29,7 @@ class CostsModel():
 
         if brokerage == "ib_fixed":
             for transaction in range(len(self.trades)):
-                self.trades.loc[transaction, "total_fees"] = self._fees_fixed(self.trades.loc[transaction])
+                self.trades.loc[transaction, "total_fees"] = self._fees_ib_fixed(self.trades.loc[transaction])
         else:
             raise ValueError("Brokerage unavailable.")
 
@@ -54,26 +54,6 @@ class CostsModel():
 
         return total_fee
 
-    def tax(self, residence, accumulating, domiciled):
-
-        if residence=="sg":
-            if accumulating is True:
-                total_tax=0
-            else:
-                if domiciled=="ireland":
-                    total_tax=self.trade_value*0.15
-                elif domiciled=="us"
-                    total_tax=self.trade_value*0.3
-        elif residence=="us":
-            total_tax=self._us_capital_gains()
-        else:
-            raise ValueError("Costs for the given tax residence unavailable.")
-
-        return total_tax
-
-        def _us_capital_gains(self):
-            pass
-
 
 def main():
     tickers = ["AAPL", "XOM", "META"]
@@ -84,6 +64,7 @@ def main():
     costs = CostsModel(tickers, asset_number, bought, sold)
     costs.total_fees()
 
+    return costs.trades
+
 if __name__=="__main__":
     main()
-
