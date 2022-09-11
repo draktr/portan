@@ -1,4 +1,3 @@
-from sys import ps1
 import numpy as np
 import pandas as pd
 import pandas_datareader as pdr
@@ -14,12 +13,12 @@ import warnings
 # TODO: separate class for plotting
 # TODO: split basic analytics from parent class
 # TODO: black
-# TODO: __name__==__main__
 # TODO: other cov matrices (ledoit-wolf etc)
 # TODO: other methods of returns
 # TODO: checker methods
 # TODO: separate method for plotting matrices
-# TODO: handling of series of different lengths
+# TODO: handling of missing data and series of different lengths
+#TODO: implement for every method that it can take returns outside the object
 
 
 class PortfolioAnalytics():
@@ -635,6 +634,7 @@ class PMPT(PortfolioAnalytics):
             arithmetic_mean = daily_mean*self.frequency
             geometric_mean = (1+portfolio_returns).prod()**(self.frequency/portfolio_returns.shape[0])-1
 
+        rfr_daily = (rfr + 1)**(1/252)-1
         excess_portfolio_returns = portfolio_returns - rfr_daily
         excess_benchmark_returns = self.benchmark_returns - rfr_daily
 
@@ -648,7 +648,6 @@ class PMPT(PortfolioAnalytics):
         if daily is False and compounding is False:
             treynor_ratio = 100*(arithmetic_mean-rfr)/beta
         elif daily is True:
-            rfr_daily = (rfr + 1)**(1/252)-1
             treynor_ratio = 100*(daily_mean-rfr_daily)/beta
 
         return treynor_ratio
@@ -815,19 +814,23 @@ class Ulcer(PortfolioAnalytics):
                        frequency)
 
     def ulcer(self,
+              portfolio_state=None,
               period=14,
               start=1):
 
         close = np.empty(period)
         percentage_drawdown = np.empty(period)
 
+        if portfolio_state is None:
+            portfolio_state=self.portfolio_state
+
         if start==1:
-            period_high = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
+            period_high = np.max(portfolio_state.iloc[-period:]["Whole Portfolio"])
         else:
-            period_high = np.max(self.portfolio_state.iloc[-period-start+1:-start+1]["Whole Portfolio"])
+            period_high = np.max(portfolio_state.iloc[-period-start+1:-start+1]["Whole Portfolio"])
 
         for i in range(period):
-            close[i] = self.portfolio_state.iloc[-i-start+1]["Whole Portfolio"]
+            close[i] = portfolio_state.iloc[-i-start+1]["Whole Portfolio"]
             percentage_drawdown[i] = 100*((close[i] - period_high))/period_high
 
         ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
@@ -835,22 +838,47 @@ class Ulcer(PortfolioAnalytics):
         return ulcer_index
 
     def martin(self,
-               mean_return,
+               portfolio_returns=None,
+               daily=False,
+               compounding=True,
                rfr=0.02,
                period=14):
 
+        if portfolio_returns is None:
+            portfolio_returns = self.portfolio_returns
+            geometric_mean = self.geometric_mean
+            arithmetic_mean = self.arithmetic_mean
+            daily_mean = self.daily_mean
+        else:
+            daily_mean = portfolio_returns.mean()
+            arithmetic_mean = daily_mean*self.frequency
+            geometric_mean = (1+portfolio_returns).prod()**(self.frequency/portfolio_returns.shape[0])-1
+
         ulcer_index = self.ulcer(period)
-        martin_ratio = 100*(mean_return - rfr)/ulcer_index
+
+        if daily is True and compounding is True:
+            raise ValueError("Mean returns cannot be compounded if daily.")
+        elif daily is False and compounding is True:
+            martin_ratio = 100*(geometric_mean - rfr)/ulcer_index
+        if daily is False and compounding is False:
+            martin_ratio = 100*(arithmetic_mean - rfr)/ulcer_index
+        elif daily is True:
+            rfr_daily = (rfr + 1)**(1/252)-1
+            martin_ratio = 100*(daily_mean - rfr_daily)/ulcer_index
 
         return martin_ratio
 
     def plot_ulcer(self,
+                   portfolio_state=None,
                    period=14,
                    show=True,
                    save=False):
 
-        ulcer_values = pd.DataFrame(columns=["Ulcer Index"], index=self.portfolio_state.index)
-        for i in range(self.portfolio_state.shape[0]-period):
+        if portfolio_state is None:
+            portfolio_state=self.portfolio_state
+
+        ulcer_values = pd.DataFrame(columns=["Ulcer Index"], index=portfolio_state.index)
+        for i in range(portfolio_state.shape[0]-period):
             ulcer_values.iloc[-i]["Ulcer Index"] = self.ulcer(period, start=i)
 
         fig=plt.figure()
@@ -864,6 +892,7 @@ class Ulcer(PortfolioAnalytics):
         if show is True:
             plt.show()
 
+        return ulcer_values
 
 class ValueAtRisk(PortfolioAnalytics):
     def __init__(self,
@@ -1027,7 +1056,7 @@ class Matrices(PortfolioAnalytics):
         return matrix
 
 
-class Helper(PortfolioAnalytics):
+class Utils(PortfolioAnalytics):
     def __init__(self,
                  data,
                  weights,
@@ -1097,7 +1126,7 @@ class Helper(PortfolioAnalytics):
         elif method=="column":
             portfolio_returns.fillna(portfolio_returns.mean(), inplace=True)
         else:
-            raise ValueError("Method unsupported.")
+            raise ValueError("Fill method unsupported.")
 
 class OmegaAnalysis(PortfolioAnalytics):
     def __init__(self,
