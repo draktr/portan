@@ -67,46 +67,87 @@ class PortfolioAnalytics():
 
 class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
-    def __init__(self, data, weights, portfolio_name="Investment Portfolio", initial_aum=10000, frequency=252):
-        super().__init__(data, weights, portfolio_name, initial_aum, frequency)
+    def __init__(self,
+                 data,
+                 weights,
+                 portfolio_name="Investment Portfolio",
+                 initial_aum=10000,
+                 frequency=252):
+
+        super().__init__(data,
+                         weights,
+                         portfolio_name,
+                         initial_aum,
+                         frequency)
 
     def excess_returns(self,
+                       portfolio_returns=None,
                        mar=0.03):
 
+        if portfolio_returns is None:
+            portfolio_returns=self.portfolio_returns
+
         mar_daily = (mar + 1)**(1/252)-1
-        excess_returns = self.portfolio_returns - mar_daily
+        excess_returns = portfolio_returns - mar_daily
 
         return excess_returns
 
     def net_return(self,
+                   allocation_assets=None,
+                   assets_info=None,
+                   initial_aum=None,
                    percentage=False):
 
-        final_aum = self.final_aum()
+        if initial_aum is None:
+            initial_aum=self.initial_aum
+
+        final_aum = self.final_aum(allocation_assets,
+                                   assets_info)
 
         if percentage is False:
-            net_return = final_aum-self.initial_aum
+            net_return = final_aum-initial_aum
         elif percentage is True:
-            net_return = (final_aum-self.initial_aum)/self.initial_aum
+            net_return = (final_aum-initial_aum)/initial_aum
         else:
             raise ValueError("Argument 'percentage' has to be boolean.")
 
         return net_return
 
-    def min_aum(self):
+    def min_aum(self,
+                portfolio_state=None):
 
-        return self.portfolio_state["Whole Portfolio"].min()
+        if portfolio_state is None:
+            portfolio_state=self.portfolio_state
 
-    def max_aum(self):
+        return portfolio_state["Whole Portfolio"].min()
 
-        return self.portfolio_state["Whole Portfolio"].max()
+    def max_aum(self,
+                portfolio_state=None):
 
-    def mean_aum(self):
+        if portfolio_state is None:
+            portfolio_state=self.portfolio_state
 
-        return self.portfolio_state["Whole Portfolio"].mean()
+        return portfolio_state["Whole Portfolio"].max()
 
-    def final_aum(self):
+    def mean_aum(self,
+                portfolio_state=None):
 
-        return self.allocation_assets*self.assets_info["regularMarketPrice"]
+        if portfolio_state is None:
+            portfolio_state=self.portfolio_state
+
+        return portfolio_state["Whole Portfolio"].mean()
+
+    def final_aum(self,
+                  allocation_assets=None,
+                  assets_info=None):
+
+        if allocation_assets is None:
+            allocation_assets=self.allocation_assets
+
+        if assets_info is None:
+            assets_info=self.assets_info
+
+        return allocation_assets*assets_info["regularMarketPrice"]
 
     def distribution_test(self, test="dagostino-pearson", distribution="norm"):
 
@@ -130,8 +171,18 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
 class ExploratoryVisualAnalytics(PortfolioAnalytics):
 
-    def __init__(self, data, weights, portfolio_name="Investment Portfolio", initial_aum=10000, frequency=252):
-        super().__init__(data, weights, portfolio_name, initial_aum, frequency)
+    def __init__(self,
+                 data,
+                 weights,
+                 portfolio_name="Investment Portfolio",
+                 initial_aum=10000,
+                 frequency=252):
+
+        super().__init__(data,
+                         weights,
+                         portfolio_name,
+                         initial_aum,
+                         frequency)
 
     def plot_aum(self,
                  show=True,
