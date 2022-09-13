@@ -19,7 +19,8 @@ import warnings
 # TODO: separate method for plotting matrices
 # TODO: handling of missing data and series of different lengths
 #TODO: implement for every method that it can take returns outside the object
-
+#TODO: new class: exploratory portfolio analysis (basic plots)
+#TODO: new class: exploratory analytics (basic stuff)
 
 class PortfolioAnalytics():
     def __init__(self,
@@ -63,6 +64,12 @@ class PortfolioAnalytics():
         self.daily_volatility = self.portfolio_returns.std()
         self.volatility = self.daily_volatility*np.sqrt(self.frequency)
 
+
+class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
+
+    def __init__(self, data, weights, portfolio_name="Investment Portfolio", initial_aum=10000, frequency=252):
+        super().__init__(data, weights, portfolio_name, initial_aum, frequency)
+
     def excess_returns(self,
                        mar=0.03):
 
@@ -100,6 +107,31 @@ class PortfolioAnalytics():
     def final_aum(self):
 
         return self.allocation_assets*self.assets_info["regularMarketPrice"]
+
+    def distribution_test(self, test="dagostino-pearson", distribution="norm"):
+
+        if test=="kolomogorov-smirnov":
+            result = stats.kstest(self.portfolio_returns, distribution)
+        elif test=="lilliefors":
+            result = lilliefors(self.portfolio_returns)
+        elif test=="shapiro-wilk":
+            result = stats.shapiro(self.portfolio_returns)
+        elif test=="jarque-barre":
+            result = stats.jarque_bera(self.portfolio_returns)
+        elif test=="dagostino-pearson":
+            result = stats.normaltest(self.portfolio_returns)
+        elif test=="anderson-darling":
+            result = stats.anderson(self.portfolio_returns, distribution)
+        else:
+            raise ValueError("Statistical test is unavailable.")
+
+        return result
+
+
+class ExploratoryVisualAnalytics(PortfolioAnalytics):
+
+    def __init__(self, data, weights, portfolio_name="Investment Portfolio", initial_aum=10000, frequency=252):
+        super().__init__(data, weights, portfolio_name, initial_aum, frequency)
 
     def plot_aum(self,
                  show=True,
@@ -219,25 +251,6 @@ class PortfolioAnalytics():
     def _ap(self, pct, all_values):
         absolute = int(pct / 100.*np.sum(all_values))
         return "{:.1f}%\n(${:d})".format(pct, absolute)
-
-    def distribution_test(self, test="dagostino-pearson", distribution="norm"):
-
-        if test=="kolomogorov-smirnov":
-            result = stats.kstest(self.portfolio_returns, distribution)
-        elif test=="lilliefors":
-            result = lilliefors(self.portfolio_returns)
-        elif test=="shapiro-wilk":
-            result = stats.shapiro(self.portfolio_returns)
-        elif test=="jarque-barre":
-            result = stats.jarque_bera(self.portfolio_returns)
-        elif test=="dagostino-pearson":
-            result = stats.normaltest(self.portfolio_returns)
-        elif test=="anderson-darling":
-            result = stats.anderson(self.portfolio_returns, distribution)
-        else:
-            raise ValueError("Statistical test is unavailable.")
-
-        return result
 
 
 class MPT(PortfolioAnalytics):
