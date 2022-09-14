@@ -10,17 +10,13 @@ from statsmodels.stats.diagnostic import lilliefors
 from itertools import repeat
 import warnings
 
-# TODO: separate class for plotting
-# TODO: split basic analytics from parent class
-# TODO: black
-# TODO: other cov matrices (ledoit-wolf etc)
-# TODO: other methods of returns
-# TODO: checker methods
-# TODO: separate method for plotting matrices
-# TODO: handling of missing data and series of different lengths
+#TODO: black
+#TODO: other cov matrices (ledoit-wolf etc)
+#TODO: other methods of returns
+#TODO: checker methods
+#TODO: separate method for plotting matrices
+#TODO: handling of missing data and series of different lengths
 #TODO: implement for every method that it can take returns outside the object
-#TODO: new class: exploratory portfolio analysis (basic plots)
-#TODO: new class: exploratory analytics (basic stuff)
 
 class PortfolioAnalytics():
     def __init__(self,
@@ -42,20 +38,23 @@ class PortfolioAnalytics():
 
         # funds allocated to each asset
         self.allocation_funds = np.multiply(self.initial_aum, self.weights)
-        self.allocation_funds = pd.DataFrame(self.allocation_funds, index=self.tickers)
+        self.allocation_funds = pd.Series(self.allocation_funds, index=self.tickers)
 
         # number of assets bought at t0
-        self.allocation_assets = np.divide(self.allocation_funds, self.prices.iloc[0])
-        self.allocation_assets = pd.DataFrame(self.allocation_assets, index=self.tickers)
+        self.allocation_assets = np.divide(self.allocation_funds,
+                                           self.prices.iloc[0].T)
+        self.allocation_assets = pd.Series(self.allocation_assets, index=self.tickers)
 
         # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
         self.portfolio_state = np.multiply(self.prices, self.allocation_assets)
         self.portfolio_state["Whole Portfolio"] = self.portfolio_state.sum(axis=1)
 
         self.portfolio_returns = np.dot(self.assets_returns.to_numpy(), self.weights)
-        self.portfolio_returns = pd.DataFrame(self.portfolio_returns,
-                                              index=self.assets_returns.index,
-                                              columns=[self.portfolio_name])
+        self.portfolio_returns = pd.Series(self.portfolio_returns,
+                                           index=self.assets_returns.index,
+                                           name=self.portfolio_name)
+
+        self.portfolio_cumulative_returns = (self.portfolio_returns + 1).cumprod()
 
         self.daily_mean = self.portfolio_returns.mean()
         self.arithmetic_mean = self.daily_mean*self.frequency
@@ -143,7 +142,6 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
         if allocation_assets is None:
             allocation_assets=self.allocation_assets
-
         if assets_info is None:
             assets_info=self.assets_info
 
@@ -185,12 +183,16 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
                          frequency)
 
     def plot_aum(self,
+                 portfolio_state=None,
                  show=True,
                  save=False):
 
+        if portfolio_state is None:
+            portfolio_state=self.portfolio_state
+
         fig=plt.figure()
         ax=fig.add_axes([0.1,0.1,0.8,0.8])
-        self.portfolio_state["Whole Portfolio"].plot(ax=ax)
+        portfolio_state["Whole Portfolio"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM ($)")
         ax.set_title("Assets Under Management")
@@ -199,19 +201,17 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def portfolio_cumulative_returns(self):
-
-        portfolio_cumulative_returns = (self.portfolio_returns + 1).cumprod()
-
-        return portfolio_cumulative_returns
-
     def plot_portfolio_returns(self,
+                               portfolio_returns=None,
                                show=True,
                                save=False):
 
+        if portfolio_returns is None:
+            portfolio_returns=self.portfolio_returns
+
         fig=plt.figure()
         ax=fig.add_axes([0.1,0.1,0.8,0.8])
-        self.portfolio_returns.plot(ax=ax)
+        portfolio_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Daily Returns")
         ax.set_title("Portfolio Daily Returns")
@@ -221,12 +221,16 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_returns_distribution(self,
+                                            portfolio_returns=None,
                                             show=True,
                                             save=False):
 
+        if portfolio_returns is None:
+            portfolio_returns=self.portfolio_returns
+
         fig = plt.figure()
         ax = fig.add_axes([0.1,0.1,0.8,0.8])
-        self.portfolio_returns.plot.hist(bins = 90)
+        portfolio_returns.plot.hist(bins = 90)
         ax.set_xlabel("Daily Returns")
         ax.set_ylabel("Frequency")
         ax.set_title("Portfolio Returns Distribution")
@@ -236,10 +240,12 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_cumulative_returns(self,
+                                          portfolio_cumulative_returns=None,
                                           show=True,
                                           save=False):
 
-        portfolio_cumulative_returns = self.portfolio_cumulative_returns()
+        if portfolio_cumulative_returns is None:
+            portfolio_cumulative_returns=self.portfolio_cumulative_returns
 
         fig = plt.figure()
         ax = fig.add_axes([0.1,0.1,0.8,0.8])
@@ -254,53 +260,77 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
 
     def plot_portfolio_piechart(self,
                                 weights,
+                                initial_aum=None,
+                                tickers=None,
+                                assets_names=None,
+                                portfolio_name=None,
                                 show=True,
                                 save=False):
+        if initial_aum is None:
+            initial_aum=self.initial_aum
+        if tickers is None:
+            tickers=self.tickers
+        if assets_names is None:
+            assets_names=self.assets_names
+        if portfolio_name is None:
+            portfolio_name=self.portfolio_name
 
-        allocation_funds = np.multiply(self.initial_aum, weights)
+        allocation_funds = np.multiply(initial_aum, weights)
         wp={'linewidth':1, 'edgecolor':"black" }
-        explode=tuple(repeat(0.05, len(self.tickers)))
+        explode=tuple(repeat(0.05, len(tickers)))
 
         fig=plt.figure()
         ax=fig.add_axes([0.1,0.1,0.8,0.8])
         pie=ax.pie(allocation_funds,
-                      autopct=lambda pct: self._ap(pct, allocation_funds),
-                      explode=explode,
-                      labels=self.tickers,
-                      shadow=True,
-                      startangle=90,
-                      wedgeprops=wp)
-        ax.legend(pie[0], self.assets_names,
-                   title="Portfolio Assets",
-                   loc="upper right",
-                   bbox_to_anchor=(0.7, 0, 0.5, 1))
+                   autopct=lambda pct: self._ap(pct,
+                                                allocation_funds),
+                   explode=explode,
+                   labels=tickers,
+                   shadow=True,
+                   startangle=90,
+                   wedgeprops=wp)
+        ax.legend(pie[0], assets_names,
+                  title="Portfolio Assets",
+                  loc="upper right",
+                  bbox_to_anchor=(0.7, 0, 0.5, 1))
         plt.setp(pie[2], size=9, weight="bold")
-        ax.set_title(str(self.portfolio_name+" Asset Distribution"))
+        ax.set_title(str(portfolio_name+" Asset Distribution"))
         if save is True:
-            plt.savefig(str(self.portfolio_name+"_pie_chart.png"), dpi=300)
+            plt.savefig(str(portfolio_name+"_pie_chart.png"), dpi=300)
         if show is True:
             plt.show()
 
     def plot_assets_cumulative_returns(self,
+                                       assets_returns=None,
+                                       assets_names=None,
                                        show=True,
                                        save=False):
 
-        portfolio_cumulative_returns = self.portfolio_cumulative_returns()
+        if assets_returns is None:
+            assets_returns=self.assets_returns
+        if assets_names is None:
+            assets_names=self.assets_names
+
+        assets_cumulative_returns = (assets_returns + 1).cumprod()
 
         fig = plt.figure()
         ax = fig.add_axes([0.1,0.1,0.8,0.8])
-        portfolio_cumulative_returns.plot(ax=ax)
+        assets_cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
         ax.set_title("Assets Cumulative Returns")
-        ax.legend(labels=self.assets_names)
+        ax.legend(labels=assets_names)
         if save is True:
             plt.savefig("assets_cumulative_returns.png", dpi=300)
         if show is True:
             plt.show()
 
-    def _ap(self, pct, all_values):
+    def _ap(self,
+            pct,
+            all_values):
+
         absolute = int(pct / 100.*np.sum(all_values))
+
         return "{:.1f}%\n(${:d})".format(pct, absolute)
 
 
