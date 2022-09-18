@@ -14,9 +14,9 @@ import warnings
 #TODO: other cov matrices (ledoit-wolf etc)
 #TODO: other methods of returns
 #TODO: checker methods
-#TODO: separate method for plotting matrices
+#TODO: separate method for plotting matrices and ulcer
 #TODO: handling of missing data and series of different lengths
-#TODO: implement for every method that it can take returns outside the object
+#TODO: analytics get saved in the object as they get executed
 
 class PortfolioAnalytics():
     def __init__(self,
@@ -62,6 +62,13 @@ class PortfolioAnalytics():
 
         self.daily_volatility = self.portfolio_returns.std()
         self.volatility = self.daily_volatility*np.sqrt(self.frequency)
+
+        self.analytics = {}
+
+    def save_analytics():
+        analytics = pd.DataFrame(list(self.analytics.values()),
+                                 index=self.analytics.keys())
+        analytics.transpose().to_csv("analytics.csv")
 
 
 class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
