@@ -14,7 +14,6 @@ import warnings
 #TODO: other cov matrices (ledoit-wolf etc)
 #TODO: other methods of returns
 #TODO: checker methods
-#TODO: separate method for plotting matrices and ulcer
 #TODO: handling of missing data and series of different lengths
 #TODO: analytics get saved in the object as they get executed
 
@@ -1003,22 +1002,30 @@ class Ulcer(PortfolioAnalytics):
 
         return martin_ratio
 
+    def ulcer_series(self,
+                     portfolio_state=None,
+                     period=14):
+
+        if portfolio_state is None:
+            portfolio_state=self.portfolio_state
+
+        ulcer_series = pd.DataFrame(columns=["Ulcer Index"], index=portfolio_state.index)
+        for i in range(portfolio_state.shape[0]-period):
+            ulcer_series.iloc[-i]["Ulcer Index"] = self.ulcer(period, start=i)
+
+        return ulcer_series
+
     def plot_ulcer(self,
                    portfolio_state=None,
                    period=14,
                    show=True,
                    save=False):
 
-        if portfolio_state is None:
-            portfolio_state=self.portfolio_state
-
-        ulcer_values = pd.DataFrame(columns=["Ulcer Index"], index=portfolio_state.index)
-        for i in range(portfolio_state.shape[0]-period):
-            ulcer_values.iloc[-i]["Ulcer Index"] = self.ulcer(period, start=i)
+        ulcer_series = self.ulcer_series(portfolio_state, period)
 
         fig=plt.figure()
         ax=fig.add_axes([0.1,0.1,0.8,0.8])
-        ulcer_values["Ulcer Index"].plot(ax=ax)
+        ulcer_series["Ulcer Index"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Ulcer Index")
         ax.set_title("Portfolio Ulcer Index")
@@ -1027,7 +1034,6 @@ class Ulcer(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-        return ulcer_values
 
 class ValueAtRisk(PortfolioAnalytics):
     def __init__(self,
@@ -1147,32 +1153,32 @@ class Matrices(PortfolioAnalytics):
                        frequency)
 
     def correlation_matrix(self,
-                           returns=None,
-                           plot=False,
-                           show=True,
-                           save=False):
+                           returns=None):
 
         if returns is None:
             returns=self.portfolio_returns
 
-        matrix=returns.corr().round(5)
-
-        if plot is True:
-            sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
-            if save is True:
-                plt.savefig("correlation_matrix.png", dpi=300)
-            if show is True:
-                plt.show()
+        matrix = returns.corr().round(5)
 
         return matrix
+
+    def plot_correlation_matrix(self,
+                                returns=None,
+                                show=True,
+                                save=False):
+
+        matrix = self.correlation_matrix(returns)
+
+        sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
+        if save is True:
+            plt.savefig("correlation_matrix.png", dpi=300)
+        if show is True:
+            plt.show()
 
     def covariance_matrix(self,
                           returns=None,
                           daily=True,
-                          frequency=252,
-                          plot=False,
-                          show=True,
-                          save=False):
+                          frequency=252):
 
         if returns is None:
             returns=self.portfolio_returns
@@ -1183,14 +1189,22 @@ class Matrices(PortfolioAnalytics):
         else:
             matrix=returns.cov().round(5)
 
-        if plot is True:
-            sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
-            if save is True:
-                plt.savefig("covariance_matrix.png", dpi=300)
-            if show is True:
-                plt.show()
-
         return matrix
+
+    def plot_covariance_matrix(self,
+                               returns=None,
+                               daily=True,
+                               frequency=252,
+                               show=True,
+                               save=False):
+
+        matrix = self.covariance_matrix(returns, daily, frequency)
+
+        sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
+        if save is True:
+            plt.savefig("covariance_matrix.png", dpi=300)
+        if show is True:
+            plt.show()
 
 
 class Utils(PortfolioAnalytics):
