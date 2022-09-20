@@ -64,9 +64,19 @@ class PortfolioAnalytics():
 
         self.analytics = {}
 
-    def save_analytics():
+    def save_executed(self):
+
         analytics = pd.DataFrame(list(self.analytics.values()),
                                  index=self.analytics.keys())
+        analytics.transpose().to_csv("analytics.csv")
+
+    def save_listed(self, methods):
+
+        analytics = {}
+        for method in methods:
+            analytics.update = getattr(self, method)()
+        analytics = pd.DataFrame(list(analytics.values()),
+                                 index=analytics.keys())
         analytics.transpose().to_csv("analytics.csv")
 
 
