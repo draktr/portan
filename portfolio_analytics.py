@@ -9,6 +9,7 @@ from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
 from itertools import repeat
 import warnings
+import inspect
 
 #TODO: black
 #TODO: other cov matrices (ledoit-wolf etc)
@@ -74,7 +75,7 @@ class PortfolioAnalytics():
 
         analytics = {}
         for method in methods:
-            analytics.update = getattr(self, method)()
+            analytics.update(method = getattr(self, method)())
         analytics = pd.DataFrame(list(analytics.values()),
                                  index=analytics.keys())
         analytics.transpose().to_csv("analytics.csv")
@@ -105,6 +106,9 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         mar_daily = (mar + 1)**(1/252)-1
         excess_returns = portfolio_returns - mar_daily
 
+        if portfolio_returns is None:
+            self.analytics.update({str(inspect.stack()[0][3]) : excess_returns})
+
         return excess_returns
 
     def net_return(self,
@@ -126,6 +130,9 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         else:
             raise ValueError("Argument 'percentage' has to be boolean.")
 
+        if allocation_assets is None:
+            self.analytics.update({str(inspect.stack()[0][3]) : net_return})
+
         return net_return
 
     def min_aum(self,
@@ -134,7 +141,12 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         if portfolio_state is None:
             portfolio_state=self.portfolio_state
 
-        return portfolio_state["Whole Portfolio"].min()
+        min_aum = portfolio_state["Whole Portfolio"].min()
+
+        if portfolio_state is None:
+            self.analytics.update({str(inspect.stack()[0][3]) : min_aum})
+
+        return min_aum
 
     def max_aum(self,
                 portfolio_state=None):
@@ -142,7 +154,12 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         if portfolio_state is None:
             portfolio_state=self.portfolio_state
 
-        return portfolio_state["Whole Portfolio"].max()
+        max_aum = portfolio_state["Whole Portfolio"].max()
+
+        if portfolio_state is None:
+            self.analytics.update({str(inspect.stack()[0][3]) : max_aum})
+
+        return max_aum
 
     def mean_aum(self,
                 portfolio_state=None):
@@ -150,7 +167,12 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         if portfolio_state is None:
             portfolio_state=self.portfolio_state
 
-        return portfolio_state["Whole Portfolio"].mean()
+        mean_aum = portfolio_state["Whole Portfolio"].mean()
+
+        if portfolio_state is None:
+            self.analytics.update({str(inspect.stack()[0][3]) : mean_aum})
+
+        return mean_aum
 
     def final_aum(self,
                   allocation_assets=None,
@@ -161,24 +183,38 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         if assets_info is None:
             assets_info=self.assets_info
 
-        return allocation_assets*assets_info["regularMarketPrice"]
+        final_aum = allocation_assets*assets_info["regularMarketPrice"]
 
-    def distribution_test(self, test="dagostino-pearson", distribution="norm"):
+        if allocation_assets is None:
+            self.analytics.update({str(inspect.stack()[0][3]) : final_aum})
+
+        return final_aum
+
+    def distribution_test(self,
+                          portfolio_returns=None,
+                          test="dagostino-pearson",
+                          distribution="norm"):
+
+        if portfolio_returns is None:
+            portfolio_returns = self.portfolio_returns
 
         if test=="kolomogorov-smirnov":
-            result = stats.kstest(self.portfolio_returns, distribution)
+            result = stats.kstest(portfolio_returns, distribution)
         elif test=="lilliefors":
-            result = lilliefors(self.portfolio_returns)
+            result = lilliefors(portfolio_returns)
         elif test=="shapiro-wilk":
-            result = stats.shapiro(self.portfolio_returns)
+            result = stats.shapiro(portfolio_returns)
         elif test=="jarque-barre":
-            result = stats.jarque_bera(self.portfolio_returns)
+            result = stats.jarque_bera(portfolio_returns)
         elif test=="dagostino-pearson":
-            result = stats.normaltest(self.portfolio_returns)
+            result = stats.normaltest(portfolio_returns)
         elif test=="anderson-darling":
-            result = stats.anderson(self.portfolio_returns, distribution)
+            result = stats.anderson(portfolio_returns, distribution)
         else:
             raise ValueError("Statistical test is unavailable.")
+
+        if portfolio_returns is None:
+            self.analytics.update({str(inspect.stack()[0][3]) : result})
 
         return result
 
