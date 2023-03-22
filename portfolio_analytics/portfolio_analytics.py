@@ -186,7 +186,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         final_aum = allocation_assets*assets_info["regularMarketPrice"]
 
         if allocation_assets is None:
-            self.analytics.update({str(inspect.stack()[0][3]) : final_aum})
+            setattr(self, self.analytics, self.analytics.update({"final_aum" : final_aum}))
 
         return final_aum
 
