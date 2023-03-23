@@ -11,13 +11,6 @@ from itertools import repeat
 import warnings
 import inspect
 
-# TODO: black
-# TODO: other cov matrices (ledoit-wolf etc)
-# TODO: other methods of returns
-# TODO: checker methods
-# TODO: handling of missing data and series of different lengths
-# TODO: analytics get saved in the object as they get executed
-
 
 class PortfolioAnalytics:
     def __init__(
@@ -99,120 +92,80 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
         super().__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def excess_returns(self, portfolio_returns=None, mar=0.03):
-
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
+    def excess_returns(self, mar=0.03):
 
         mar_daily = (mar + 1) ** (1 / 252) - 1
-        excess_returns = portfolio_returns - mar_daily
+        excess_returns = self.portfolio_returns - mar_daily
 
-        if portfolio_returns is None:
-            self.analytics.update({str(inspect.stack()[0][3]): excess_returns})
+        self.analytics.update({str(inspect.stack()[0][3]): excess_returns})
 
         return excess_returns
 
-    def net_return(
-        self,
-        allocation_assets=None,
-        assets_info=None,
-        initial_aum=None,
-        percentage=False,
-    ):
+    def net_return(self, percentage=False):
 
-        if initial_aum is None:
-            initial_aum = self.initial_aum
-
-        final_aum = self.final_aum(allocation_assets, assets_info)
+        final_aum = self.final_aum()
 
         if percentage is False:
-            net_return = final_aum - initial_aum
+            net_return = final_aum - self.initial_aum
         elif percentage is True:
-            net_return = (final_aum - initial_aum) / initial_aum
+            net_return = (final_aum - self.initial_aum) / self.initial_aum
         else:
             raise ValueError("Argument 'percentage' has to be boolean.")
 
-        if allocation_assets is None:
-            self.analytics.update({str(inspect.stack()[0][3]): net_return})
+        self.analytics.update({str(inspect.stack()[0][3]): net_return})
 
         return net_return
 
-    def min_aum(self, portfolio_state=None):
+    def min_aum(self):
 
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        min_aum = self.portfolio_state["Whole Portfolio"].min()
 
-        min_aum = portfolio_state["Whole Portfolio"].min()
-
-        if portfolio_state is None:
-            self.analytics.update({str(inspect.stack()[0][3]): min_aum})
+        self.analytics.update({str(inspect.stack()[0][3]): min_aum})
 
         return min_aum
 
-    def max_aum(self, portfolio_state=None):
+    def max_aum(self):
 
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        max_aum = self.portfolio_state["Whole Portfolio"].max()
 
-        max_aum = portfolio_state["Whole Portfolio"].max()
-
-        if portfolio_state is None:
-            self.analytics.update({str(inspect.stack()[0][3]): max_aum})
+        self.analytics.update({str(inspect.stack()[0][3]): max_aum})
 
         return max_aum
 
-    def mean_aum(self, portfolio_state=None):
+    def mean_aum(self):
 
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        mean_aum = self.portfolio_state["Whole Portfolio"].mean()
 
-        mean_aum = portfolio_state["Whole Portfolio"].mean()
-
-        if portfolio_state is None:
-            self.analytics.update({str(inspect.stack()[0][3]): mean_aum})
+        self.analytics.update({str(inspect.stack()[0][3]): mean_aum})
 
         return mean_aum
 
-    def final_aum(self, allocation_assets=None, assets_info=None):
+    def final_aum(self):
 
-        if allocation_assets is None:
-            allocation_assets = self.allocation_assets
-        if assets_info is None:
-            assets_info = self.assets_info
+        final_aum = self.allocation_assets * self.assets_info["regularMarketPrice"]
 
-        final_aum = allocation_assets * assets_info["regularMarketPrice"]
-
-        if allocation_assets is None:
-            setattr(
-                self, self.analytics, self.analytics.update({"final_aum": final_aum})
-            )
+        setattr(self, self.analytics, self.analytics.update({"final_aum": final_aum}))
 
         return final_aum
 
-    def distribution_test(
-        self, portfolio_returns=None, test="dagostino-pearson", distribution="norm"
-    ):
-
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
+    def distribution_test(self, test="dagostino-pearson", distribution="norm"):
 
         if test == "kolomogorov-smirnov":
-            result = stats.kstest(portfolio_returns, distribution)
+            result = stats.kstest(self.portfolio_returns, distribution)
         elif test == "lilliefors":
-            result = lilliefors(portfolio_returns)
+            result = lilliefors(self.portfolio_returns)
         elif test == "shapiro-wilk":
-            result = stats.shapiro(portfolio_returns)
+            result = stats.shapiro(self.portfolio_returns)
         elif test == "jarque-barre":
-            result = stats.jarque_bera(portfolio_returns)
+            result = stats.jarque_bera(self.portfolio_returns)
         elif test == "dagostino-pearson":
-            result = stats.normaltest(portfolio_returns)
+            result = stats.normaltest(self.portfolio_returns)
         elif test == "anderson-darling":
-            result = stats.anderson(portfolio_returns, distribution)
+            result = stats.anderson(self.portfolio_returns, distribution)
         else:
             raise ValueError("Statistical test is unavailable.")
 
-        if portfolio_returns is None:
-            self.analytics.update({str(inspect.stack()[0][3]): result})
+        self.analytics.update({str(inspect.stack()[0][3]): result})
 
         return result
 
