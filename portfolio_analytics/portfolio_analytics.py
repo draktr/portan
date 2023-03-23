@@ -41,8 +41,8 @@ class PortfolioAnalytics:
         self.allocation_assets = pd.Series(self.allocation_assets, index=self.tickers)
 
         # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
-        self.portfolio_state = np.multiply(self.prices, self.allocation_assets)
-        self.portfolio_state["Whole Portfolio"] = self.portfolio_state.sum(axis=1)
+        self.self.portfolio_state = np.multiply(self.prices, self.allocation_assets)
+        self.self.portfolio_state["Whole Portfolio"] = self.self.portfolio_state.sum(axis=1)
 
         self.portfolio_returns = np.dot(self.assets_returns.to_numpy(), self.weights)
         self.portfolio_returns = pd.Series(
@@ -118,7 +118,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def min_aum(self):
 
-        min_aum = self.portfolio_state["Whole Portfolio"].min()
+        min_aum = self.self.portfolio_state["Whole Portfolio"].min()
 
         self.analytics.update({str(inspect.stack()[0][3]): min_aum})
 
@@ -126,7 +126,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def max_aum(self):
 
-        max_aum = self.portfolio_state["Whole Portfolio"].max()
+        max_aum = self.self.portfolio_state["Whole Portfolio"].max()
 
         self.analytics.update({str(inspect.stack()[0][3]): max_aum})
 
@@ -134,7 +134,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def mean_aum(self):
 
-        mean_aum = self.portfolio_state["Whole Portfolio"].mean()
+        mean_aum = self.self.portfolio_state["Whole Portfolio"].mean()
 
         self.analytics.update({str(inspect.stack()[0][3]): mean_aum})
 
@@ -182,14 +182,11 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
 
         super().__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def plot_aum(self, portfolio_state=None, show=True, save=False):
-
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+    def plot_aum(self, show=True, save=False):
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        portfolio_state["Whole Portfolio"].plot(ax=ax)
+        self.portfolio_state["Whole Portfolio"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM ($)")
         ax.set_title("Assets Under Management")
@@ -198,14 +195,11 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def plot_portfolio_returns(self, portfolio_returns=None, show=True, save=False):
-
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
+    def plot_portfolio_returns(self, show=True, save=False):
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        portfolio_returns.plot(ax=ax)
+        self.portfolio_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Daily Returns")
         ax.set_title("Portfolio Daily Returns")
@@ -215,15 +209,12 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_returns_distribution(
-        self, portfolio_returns=None, show=True, save=False
+        self, show=True, save=False
     ):
-
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        portfolio_returns.plot.hist(bins=90)
+        self.portfolio_returns.plot.hist(bins=90)
         ax.set_xlabel("Daily Returns")
         ax.set_ylabel("Frequency")
         ax.set_title("Portfolio Returns Distribution")
@@ -233,15 +224,12 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_cumulative_returns(
-        self, portfolio_cumulative_returns=None, show=True, save=False
+        self, show=True, save=False
     ):
-
-        if portfolio_cumulative_returns is None:
-            portfolio_cumulative_returns = self.portfolio_cumulative_returns
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        portfolio_cumulative_returns.plot(ax=ax)
+        self.portfolio_cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
         ax.set_title("Portfolio Cumulative Returns")
@@ -253,25 +241,13 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
     def plot_portfolio_piechart(
         self,
         weights,
-        initial_aum=None,
-        tickers=None,
-        assets_names=None,
-        portfolio_name=None,
         show=True,
         save=False,
     ):
-        if initial_aum is None:
-            initial_aum = self.initial_aum
-        if tickers is None:
-            tickers = self.tickers
-        if assets_names is None:
-            assets_names = self.assets_names
-        if portfolio_name is None:
-            portfolio_name = self.portfolio_name
 
-        allocation_funds = np.multiply(initial_aum, weights)
+        allocation_funds = np.multiply(self.initial_aum, weights)
         wp = {"linewidth": 1, "edgecolor": "black"}
-        explode = tuple(repeat(0.05, len(tickers)))
+        explode = tuple(repeat(0.05, len(self.tickers)))
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -279,35 +255,30 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             allocation_funds,
             autopct=lambda pct: self._ap(pct, allocation_funds),
             explode=explode,
-            labels=tickers,
+            labels=self.tickers,
             shadow=True,
             startangle=90,
             wedgeprops=wp,
         )
         ax.legend(
             pie[0],
-            assets_names,
+            self.assets_names,
             title="Portfolio Assets",
             loc="upper right",
             bbox_to_anchor=(0.7, 0, 0.5, 1),
         )
         plt.setp(pie[2], size=9, weight="bold")
-        ax.set_title(str(portfolio_name + " Asset Distribution"))
+        ax.set_title(str(self.portfolio_name + " Asset Distribution"))
         if save is True:
-            plt.savefig(str(portfolio_name + "_pie_chart.png"), dpi=300)
+            plt.savefig(str(self.portfolio_name + "_pie_chart.png"), dpi=300)
         if show is True:
             plt.show()
 
     def plot_assets_cumulative_returns(
-        self, assets_returns=None, assets_names=None, show=True, save=False
+        self, show=True, save=False
     ):
 
-        if assets_returns is None:
-            assets_returns = self.assets_returns
-        if assets_names is None:
-            assets_names = self.assets_names
-
-        assets_cumulative_returns = (assets_returns + 1).cumprod()
+        assets_cumulative_returns = (self.assets_returns + 1).cumprod()
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -315,7 +286,7 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
         ax.set_title("Assets Cumulative Returns")
-        ax.legend(labels=assets_names)
+        ax.legend(labels=self.assets_names)
         if save is True:
             plt.savefig("assets_cumulative_returns.png", dpi=300)
         if show is True:
@@ -703,37 +674,37 @@ class PMPT(PortfolioAnalytics):
 
         return drawdowns
 
-    def maximum_drawdown(self, portfolio_state=None, period=1000):
+    def maximum_drawdown(self, self.portfolio_state=None, period=1000):
 
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        if self.portfolio_state is None:
+            self.portfolio_state = self.self.portfolio_state
 
-        if period >= portfolio_state.shape[0]:
-            period = portfolio_state.shape[0]
+        if period >= self.portfolio_state.shape[0]:
+            period = self.portfolio_state.shape[0]
             warnings.warn("Dataset too small. Period taken as {}.".format(period))
 
-        peak = np.max(portfolio_state.iloc[-period:]["Whole Portfolio"])
-        peak_index = portfolio_state["Whole Portfolio"].idxmax()
-        peak_index_int = portfolio_state.index.get_loc(peak_index)
-        trough = np.min(portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
+        peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
+        peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
+        peak_index_int = self.portfolio_state.index.get_loc(peak_index)
+        trough = np.min(self.portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
 
         maximum_drawdown = trough - peak
 
         return maximum_drawdown
 
-    def maximum_drawdown_percentage(self, portfolio_state=None, period=1000):
+    def maximum_drawdown_percentage(self, self.portfolio_state=None, period=1000):
 
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        if self.portfolio_state is None:
+            self.portfolio_state = self.self.portfolio_state
 
-        if period > portfolio_state.shape[0]:
-            period = portfolio_state.shape[0]
+        if period > self.portfolio_state.shape[0]:
+            period = self.portfolio_state.shape[0]
             warnings.warn("Dataset too small. Period taken as {}.".format(period))
 
-        peak = np.max(portfolio_state.iloc[-period:]["Whole Portfolio"])
-        peak_index = portfolio_state["Whole Portfolio"].idxmax()
-        peak_index_int = portfolio_state.index.get_loc(peak_index)
-        trough = np.min(portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
+        peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
+        peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
+        peak_index_int = self.portfolio_state.index.get_loc(peak_index)
+        trough = np.min(self.portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
 
         maximum_drawdown_ratio = (trough - peak) / peak
 
@@ -919,7 +890,7 @@ class PMPT(PortfolioAnalytics):
     def calmar(
         self,
         portfolio_returns=None,
-        portfolio_state=None,
+        self.portfolio_state=None,
         period=1000,
         rfr=0.02,
         daily=False,
@@ -927,13 +898,13 @@ class PMPT(PortfolioAnalytics):
         frequency=252,
     ):
 
-        if portfolio_returns is None and portfolio_state is not None:
+        if portfolio_returns is None and self.portfolio_state is not None:
             raise ValueError(
                 "Argument portfolio_returns not provided. \
                               Portfolio returns need to be provided for the calculation of mean return."
             )
-        elif portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        elif self.portfolio_state is None:
+            self.portfolio_state = self.self.portfolio_state
             geometric_mean = self.geometric_mean
             arithmetic_mean = self.arithmetic_mean
             daily_mean = self.daily_mean
@@ -944,11 +915,11 @@ class PMPT(PortfolioAnalytics):
                 frequency / portfolio_returns.shape[0]
             ) - 1
 
-        if period >= portfolio_state.shape[0]:
-            period = portfolio_state.shape[0]
+        if period >= self.portfolio_state.shape[0]:
+            period = self.portfolio_state.shape[0]
             warnings.warn("Dataset too small. Period taken as {}.".format(period))
 
-        maximum_drawdown = self.maximum_drawdown_percentage(portfolio_state, period)
+        maximum_drawdown = self.maximum_drawdown_percentage(self.portfolio_state, period)
 
         if daily is False and compounding is True:
             calmar_ratio = 100 * (geometric_mean - rfr) / maximum_drawdown
@@ -1011,25 +982,25 @@ class Ulcer(PortfolioAnalytics):
 
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def ulcer(self, portfolio_state=None, period=14, start=1):
+    def ulcer(self, self.portfolio_state=None, period=14, start=1):
 
         close = np.empty(period)
         percentage_drawdown = np.empty(period)
 
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        if self.portfolio_state is None:
+            self.portfolio_state = self.self.portfolio_state
 
         if start == 1:
-            period_high = np.max(portfolio_state.iloc[-period:]["Whole Portfolio"])
+            period_high = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
         else:
             period_high = np.max(
-                portfolio_state.iloc[-period - start + 1 : -start + 1][
+                self.portfolio_state.iloc[-period - start + 1 : -start + 1][
                     "Whole Portfolio"
                 ]
             )
 
         for i in range(period):
-            close[i] = portfolio_state.iloc[-i - start + 1]["Whole Portfolio"]
+            close[i] = self.portfolio_state.iloc[-i - start + 1]["Whole Portfolio"]
             percentage_drawdown[i] = 100 * ((close[i] - period_high)) / period_high
 
         ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
@@ -1072,22 +1043,22 @@ class Ulcer(PortfolioAnalytics):
 
         return martin_ratio
 
-    def ulcer_series(self, portfolio_state=None, period=14):
+    def ulcer_series(self, self.portfolio_state=None, period=14):
 
-        if portfolio_state is None:
-            portfolio_state = self.portfolio_state
+        if self.portfolio_state is None:
+            self.portfolio_state = self.self.portfolio_state
 
         ulcer_series = pd.DataFrame(
-            columns=["Ulcer Index"], index=portfolio_state.index
+            columns=["Ulcer Index"], index=self.portfolio_state.index
         )
-        for i in range(portfolio_state.shape[0] - period):
+        for i in range(self.portfolio_state.shape[0] - period):
             ulcer_series.iloc[-i]["Ulcer Index"] = self.ulcer(period, start=i)
 
         return ulcer_series
 
-    def plot_ulcer(self, portfolio_state=None, period=14, show=True, save=False):
+    def plot_ulcer(self, self.portfolio_state=None, period=14, show=True, save=False):
 
-        ulcer_series = self.ulcer_series(portfolio_state, period)
+        ulcer_series = self.ulcer_series(self.portfolio_state, period)
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
