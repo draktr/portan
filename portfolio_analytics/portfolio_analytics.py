@@ -336,14 +336,12 @@ class MPT(PortfolioAnalytics):
         self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
         self.benchmark_daily_mean = self.benchmark_assets_returns.mean()
 
-    def capm(self, portfolio_returns=None, rfr=0.02):
+    def capm(self, rfr=0.02):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
 
         rfr_daily = (rfr + 1) ** (1 / 252) - 1
 
-        excess_portfolio_returns = portfolio_returns - rfr_daily
+        excess_portfolio_returns = self.portfolio_returns - rfr_daily
         excess_benchmark_returns = self.benchmark_returns - rfr_daily
 
         model = LinearRegression().fit(
@@ -361,12 +359,9 @@ class MPT(PortfolioAnalytics):
             excess_benchmark_returns,
         )
 
-    def plot_capm(self, portfolio_returns=None, rfr=0.02, show=True, save=False):
+    def plot_capm(self, rfr=0.02, show=True, save=False):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-
-        capm = self.capm(portfolio_returns, rfr)
+        capm = self.capm(rfr)
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -390,47 +385,27 @@ class MPT(PortfolioAnalytics):
 
     def sharpe(
         self,
-        portfolio_returns=None,
         daily=False,
         compounding=True,
         rfr=0.02,
         frequency=252,
     ):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-            volatility = self.volatility
-            daily_volatility = self.daily_volatility
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
-            daily_volatility = portfolio_returns.std()
-            volatility = daily_volatility * np.sqrt(frequency)
-
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
-            sharpe_ratio = 100 * (geometric_mean - rfr) / volatility
+            sharpe_ratio = 100 * (self.geometric_mean - rfr) / self.volatility
         if daily is False and compounding is False:
-            sharpe_ratio = 100 * (arithmetic_mean - rfr) / volatility
+            sharpe_ratio = 100 * (self.arithmetic_mean - rfr) / self.volatility
         elif daily is True:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            sharpe_ratio = 100 * (daily_mean - rfr_daily) / daily_volatility
+            sharpe_ratio = 100 * (self.daily_mean - rfr_daily) / self.daily_volatility
 
         return sharpe_ratio
 
-    def tracking_error(self, portfolio_returns=None):
+    def tracking_error(self):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-
-        tracking_error = np.std(portfolio_returns - self.benchmark_returns, ddof=1)
+        tracking_error = np.std(self.portfolio_returns - self.benchmark_returns, ddof=1)
 
         return tracking_error
 
