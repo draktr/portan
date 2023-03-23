@@ -12,12 +12,13 @@ class GetData:
         data_source="yahoo",
     ):
 
-        self.data = pdr.DataReader(
+        self._data = pdr.DataReader(
             tickers, start=start, end=end, data_source=data_source
         )
 
-    def get_dataframe(self):
-        return self.data
+    @property
+    def data(self):
+        return self._data
 
     def save_all_long(self):
         data_long = (
