@@ -81,6 +81,10 @@ class PortfolioAnalytics:
         analytics = pd.DataFrame(list(analytics.values()), index=analytics.keys())
         analytics.transpose().to_csv("analytics.csv")
 
+    def _rate_conversion(self, annual_rate):
+
+        return (annual_rate + 1) ** (1 / self.frequency) - 1
+
 
 class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
     def __init__(
@@ -444,7 +448,7 @@ class PMPT(PortfolioAnalytics):
 
     def upside_volatility(self, mar=0.03, daily=False):
 
-        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
+        mar_daily = self._rate_conversion(mar)
 
         positive_portfolio_returns = self.portfolio_returns - mar_daily
         positive_portfolio_returns = positive_portfolio_returns[
@@ -461,7 +465,7 @@ class PMPT(PortfolioAnalytics):
 
     def downside_volatility(self, mar=0.03, daily=False):
 
-        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
+        mar_daily = self._rate_conversion(mar)
 
         negative_portfolio_returns = self.portfolio_returns - mar_daily
         negative_portfolio_returns = negative_portfolio_returns[
@@ -500,7 +504,7 @@ class PMPT(PortfolioAnalytics):
 
     def upside_potential_ratio(self, mar=0.03, daily=False):
 
-        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
+        mar_daily = self._rate_conversion(mar)
 
         downside_volatility = self.downside_volatility(mar, daily)
         upside = self.portfolio_returns - mar_daily
@@ -511,7 +515,7 @@ class PMPT(PortfolioAnalytics):
 
     def downside_capm(self, mar=0.03):
 
-        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
+        mar_daily = self._rate_conversion(mar)
 
         negative_benchmark_returns = self.benchmark_returns - mar_daily
         negative_benchmark_returns = negative_benchmark_returns[
@@ -611,7 +615,7 @@ class PMPT(PortfolioAnalytics):
 
     def jensen_alpha(self, rfr=0.02, daily=False, compounding=True):
 
-        rfr_daily = (rfr + 1) ** (1 / self.frequency) - 1
+        rfr_daily = self._rate_conversion(rfr)
 
         excess_portfolio_returns = self.portfolio_returns - rfr_daily
         excess_benchmark_returns = self.benchmark_returns - rfr_daily
@@ -644,7 +648,7 @@ class PMPT(PortfolioAnalytics):
 
     def treynor(self, rfr=0.02, daily=False, compounding=True):
 
-        rfr_daily = (rfr + 1) ** (1 / self.frequency) - 1
+        rfr_daily = self._rate_conversion(rfr)
 
         excess_portfolio_returns = self.portfolio_returns - rfr_daily
         excess_benchmark_returns = self.benchmark_returns - rfr_daily
@@ -667,7 +671,7 @@ class PMPT(PortfolioAnalytics):
 
     def higher_partial_moment(self, mar=0.03, moment=3):
 
-        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
+        mar_daily = self._rate_conversion(mar)
 
         days = self.portfolio_returns.shape[0]
 
@@ -679,7 +683,7 @@ class PMPT(PortfolioAnalytics):
 
     def lower_partial_moment(self, mar=0.03, moment=3):
 
-        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
+        mar_daily = self._rate_conversion(mar)
         days = self.portfolio_returns.shape[0]
 
         lower_partial_moment = (1 / days) * np.sum(
