@@ -111,9 +111,9 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
         final_aum = self.final_aum()
 
-        if percentage is False:
+        if not percentage:
             net_return = final_aum - self.initial_aum
-        elif percentage is True:
+        elif percentage:
             net_return = (final_aum - self.initial_aum) / self.initial_aum
         else:
             raise ValueError("Argument 'percentage' has to be boolean.")
@@ -196,9 +196,9 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM ($)")
         ax.set_title("Assets Under Management")
-        if save is True:
+        if save:
             plt.savefig("aum.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def plot_portfolio_returns(self, show=True, save=False):
@@ -209,9 +209,9 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         ax.set_xlabel("Date")
         ax.set_ylabel("Daily Returns")
         ax.set_title("Portfolio Daily Returns")
-        if save is True:
+        if save:
             plt.savefig("portfolio_returns.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def plot_portfolio_returns_distribution(self, show=True, save=False):
@@ -222,9 +222,9 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         ax.set_xlabel("Daily Returns")
         ax.set_ylabel("Frequency")
         ax.set_title("Portfolio Returns Distribution")
-        if save is True:
+        if save:
             plt.savefig("portfolio_returns_distribution.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def plot_portfolio_cumulative_returns(self, show=True, save=False):
@@ -235,9 +235,9 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
         ax.set_title("Portfolio Cumulative Returns")
-        if save is True:
+        if save:
             plt.savefig("portfolio_cumulative_returns.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def plot_portfolio_piechart(
@@ -271,9 +271,9 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         )
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title(str(self.portfolio_name + " Asset Distribution"))
-        if save is True:
+        if save:
             plt.savefig(str(self.portfolio_name + "_pie_chart.png"), dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def plot_assets_cumulative_returns(self, show=True, save=False):
@@ -287,9 +287,9 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         ax.set_ylabel("Cumulative Returns")
         ax.set_title("Assets Cumulative Returns")
         ax.legend(labels=self.assets_names)
-        if save is True:
+        if save:
             plt.savefig("assets_cumulative_returns.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def _ap(self, pct, all_values):
@@ -377,20 +377,20 @@ class MPT(PortfolioAnalytics):
         ax.set_xlabel("Benchmark Excess Returns")
         ax.set_ylabel("Portfolio Excess Returns")
         ax.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
-        if save is True:
+        if save:
             plt.savefig("capm.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def sharpe(self, daily=False, compounding=True, rfr=0.02):
 
-        if daily is True and compounding is True:
+        if daily and compounding:
             raise ValueError("Mean returns cannot be compounded if daily.")
-        elif daily is False and compounding is True:
+        elif not daily and compounding:
             sharpe_ratio = 100 * (self.geometric_mean - rfr) / self.volatility
-        if daily is False and compounding is False:
+        if not daily and not compounding:
             sharpe_ratio = 100 * (self.arithmetic_mean - rfr) / self.volatility
-        elif daily is True:
+        elif daily:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
             sharpe_ratio = 100 * (self.daily_mean - rfr_daily) / self.daily_volatility
 
@@ -448,7 +448,7 @@ class PMPT(PortfolioAnalytics):
         positive_portfolio_returns = positive_portfolio_returns[
             positive_portfolio_returns > 0
         ]
-        if daily is False:
+        if not daily:
             upside_volatility = (
                 np.std(positive_portfolio_returns, ddof=1) * self.frequency
             )
@@ -465,7 +465,7 @@ class PMPT(PortfolioAnalytics):
         negative_portfolio_returns = negative_portfolio_returns[
             negative_portfolio_returns < 0
         ]
-        if daily is False:
+        if not daily:
             downside_volatility = (
                 np.std(negative_portfolio_returns, ddof=1) * self.frequency
             )
@@ -555,15 +555,15 @@ class PMPT(PortfolioAnalytics):
 
         downside_volatility = self.downside_volatility(mar, daily)
 
-        if daily is True and compounding is True:
+        if daily and compounding:
             raise ValueError(
                 "Mean returns cannot be compounded if daily."
             )  # TODO: think about these
-        elif daily is False and compounding is True:
+        elif not daily and compounding:
             sortino_ratio = 100 * (self.geometric_mean - rfr) / downside_volatility
-        elif daily is False and compounding is False:
+        elif not daily and not compounding:
             sortino_ratio = 100 * (self.arithmetic_mean - rfr) / downside_volatility
-        elif daily is True:
+        elif daily:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
             sortino_ratio = 100 * (self.daily_mean - rfr_daily) / downside_volatility
 
@@ -619,19 +619,19 @@ class PMPT(PortfolioAnalytics):
         )
         beta = model.coef_[0]
 
-        if daily is True and compounding is True:
+        if daily and compounding:
             raise ValueError("Mean returns cannot be compounded if daily.")
-        elif daily is False and compounding is True:
+        elif not daily and compounding:
             jensen_alpha = (
                 self.geometric_mean - rfr - beta * (self.benchmark_geometric_mean - rfr)
             )
-        if daily is False and compounding is False:
+        if not daily and not compounding:
             jensen_alpha = (
                 self.arithmetic_mean
                 - rfr
                 - beta * (self.benchmark_arithmetic_mean - rfr)
             )
-        elif daily is True:
+        elif daily:
             jensen_alpha = (
                 self.daily_mean
                 - rfr_daily
@@ -652,13 +652,13 @@ class PMPT(PortfolioAnalytics):
         )
         beta = model.coef_[0]
 
-        if daily is True and compounding is True:
+        if daily and compounding:
             raise ValueError("Mean returns cannot be compounded if daily.")
-        elif daily is False and compounding is True:
+        elif not daily and compounding:
             treynor_ratio = 100 * (self.geometric_mean - rfr) / beta
-        if daily is False and compounding is False:
+        if not daily and not compounding:
             treynor_ratio = 100 * (self.arithmetic_mean - rfr) / beta
-        elif daily is True:
+        elif daily:
             treynor_ratio = 100 * (self.daily_mean - rfr_daily) / beta
 
         return treynor_ratio
@@ -690,21 +690,21 @@ class PMPT(PortfolioAnalytics):
 
         lower_partial_moment = self.lower_partial_moment(mar, moment)
 
-        if daily is True and compounding is True:
+        if daily and compounding:
             raise ValueError("Mean returns cannot be compounded if daily.")
-        elif daily is False and compounding is True:
+        elif not daily and compounding:
             kappa_ratio = (
                 100
                 * (self.geometric_mean - mar)
                 / np.power(lower_partial_moment, (1 / moment))
             )
-        elif daily is False and compounding is False:
+        elif not daily and not compounding:
             kappa_ratio = (
                 100
                 * (self.arithmetic_mean - mar)
                 / np.power(lower_partial_moment, (1 / moment))
             )
-        elif daily is True:
+        elif daily:
             mar_daily = (mar + 1) ** (1 / 252) - 1
             kappa_ratio = (
                 100
@@ -731,11 +731,11 @@ class PMPT(PortfolioAnalytics):
 
         maximum_drawdown = self.maximum_drawdown_percentage(period)
 
-        if daily is False and compounding is True:
+        if not daily and compounding:
             calmar_ratio = 100 * (self.geometric_mean - rfr) / maximum_drawdown
-        if daily is False and compounding is False:
+        if not daily and not compounding:
             calmar_ratio = 100 * (self.arithmetic_mean - rfr) / maximum_drawdown
-        elif daily is True:
+        elif daily:
             rfr_daily = (rfr + 1) ** (
                 1 / 252
             ) - 1  # TODO: find more of these that i might have missed out
@@ -751,17 +751,17 @@ class PMPT(PortfolioAnalytics):
         sorted_drawdowns = np.sort(portfolio_drawdowns)
         d_average_drawdown = np.mean(sorted_drawdowns[-drawdowns:])
 
-        if daily is True and compounding is True:
+        if daily and compounding:
             raise ValueError("Mean returns cannot be compounded if daily.")
-        elif daily is False and compounding is True:
+        elif not daily and compounding:
             sterling_ratio = (
                 100 * (self.geometric_mean - rfr) / np.abs(d_average_drawdown)
             )
-        if daily is False and compounding is False:
+        if not daily and not compounding:
             sterling_ratio = (
                 100 * (self.arithmetic_mean - rfr) / np.abs(d_average_drawdown)
             )
-        elif daily is True:
+        elif daily:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
             sterling_ratio = (
                 100 * (self.daily_mean - rfr_daily) / np.abs(d_average_drawdown)
@@ -814,13 +814,13 @@ class Ulcer(PortfolioAnalytics):
 
         ulcer_index = self.ulcer(period)
 
-        if daily is True and compounding is True:
+        if daily and compounding:
             raise ValueError("Mean returns cannot be compounded if daily.")
-        elif daily is False and compounding is True:
+        elif not daily and compounding:
             martin_ratio = 100 * (self.geometric_mean - rfr) / ulcer_index
-        if daily is False and compounding is False:
+        if not daily and not compounding:
             martin_ratio = 100 * (self.arithmetic_mean - rfr) / ulcer_index
-        elif daily is True:
+        elif daily:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
             martin_ratio = 100 * (self.daily_mean - rfr_daily) / ulcer_index
 
@@ -846,9 +846,9 @@ class Ulcer(PortfolioAnalytics):
         ax.set_xlabel("Date")
         ax.set_ylabel("Ulcer Index")
         ax.set_title("Portfolio Ulcer Index")
-        if save is True:
+        if save:
             plt.savefig("ulcer.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
 
@@ -866,7 +866,7 @@ class ValueAtRisk(PortfolioAnalytics):
 
     def analytical_var(self, value, dof, compounding=True, distribution="normal"):
 
-        if compounding is True:  # TODO: if compounding:
+        if compounding:
             mean_return = self.geometric_mean
         else:
             mean_return = self.arithmetic_mean
@@ -914,7 +914,7 @@ class ValueAtRisk(PortfolioAnalytics):
         save=False,
     ):
 
-        if compounding is True:
+        if compounding:
             mean_return = self.geometric_mean
         else:
             mean_return = self.arithmetic_mean
@@ -952,9 +952,9 @@ class ValueAtRisk(PortfolioAnalytics):
             + distribution
             + ") Return Distribution and VaR Plot"
         )
-        if save is True:
+        if save:
             plt.savefig("analytical_var.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def plot_historical_var(self, value, number_of_bins=100, show=True, save=False):
@@ -978,9 +978,9 @@ class ValueAtRisk(PortfolioAnalytics):
         ax.set_xlabel("Daily Returns")
         ax.set_ylabel("Frequency of Daily Returns")
         ax.set_title("Historical Return Distribution and VaR Plot")
-        if save is True:
+        if save:
             plt.savefig("historical_var.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
 
@@ -1007,14 +1007,14 @@ class Matrices(PortfolioAnalytics):
         matrix = self.correlation_matrix()
 
         sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
-        if save is True:
+        if save:
             plt.savefig("correlation_matrix.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
     def covariance_matrix(self, daily=True):
 
-        if daily is False:  # TODO: dont assume daily
+        if not daily:  # TODO: dont assume daily
             matrix = self.portfolio_returns.cov().round(5) * self.frequency
         else:
             matrix = self.portfolio_returns.cov().round(5)
@@ -1026,9 +1026,9 @@ class Matrices(PortfolioAnalytics):
         matrix = self.covariance_matrix(daily)
 
         sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
-        if save is True:
+        if save:
             plt.savefig("covariance_matrix.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
 
 
@@ -1175,7 +1175,7 @@ class OmegaAnalysis(PortfolioAnalytics):
             ylabel="Omega Ratio",
             ylim=(0, 1.5),
         )
-        if save is True:
+        if save:
             plt.savefig("omega_curves.png", dpi=300)
-        if show is True:
+        if show:
             plt.show()
