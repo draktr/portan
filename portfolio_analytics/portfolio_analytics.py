@@ -42,7 +42,9 @@ class PortfolioAnalytics:
 
         # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
         self.self.portfolio_state = np.multiply(self.prices, self.allocation_assets)
-        self.self.portfolio_state["Whole Portfolio"] = self.self.portfolio_state.sum(axis=1)
+        self.self.portfolio_state["Whole Portfolio"] = self.self.portfolio_state.sum(
+            axis=1
+        )
 
         self.portfolio_returns = np.dot(self.assets_returns.to_numpy(), self.weights)
         self.portfolio_returns = pd.Series(
@@ -208,9 +210,7 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def plot_portfolio_returns_distribution(
-        self, show=True, save=False
-    ):
+    def plot_portfolio_returns_distribution(self, show=True, save=False):
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -223,9 +223,7 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def plot_portfolio_cumulative_returns(
-        self, show=True, save=False
-    ):
+    def plot_portfolio_cumulative_returns(self, show=True, save=False):
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -274,9 +272,7 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def plot_assets_cumulative_returns(
-        self, show=True, save=False
-    ):
+    def plot_assets_cumulative_returns(self, show=True, save=False):
 
         assets_cumulative_returns = (self.assets_returns + 1).cumprod()
 
@@ -337,7 +333,6 @@ class MPT(PortfolioAnalytics):
         self.benchmark_daily_mean = self.benchmark_assets_returns.mean()
 
     def capm(self, rfr=0.02):
-
 
         rfr_daily = (rfr + 1) ** (1 / 252) - 1
 
@@ -456,7 +451,9 @@ class PMPT(PortfolioAnalytics):
             positive_portfolio_returns > 0
         ]
         if daily is False:
-            upside_volatility = np.std(positive_portfolio_returns, ddof=1) * self.frequency
+            upside_volatility = (
+                np.std(positive_portfolio_returns, ddof=1) * self.frequency
+            )
         else:
             upside_volatility = np.std(positive_portfolio_returns, ddof=1)
 
@@ -471,14 +468,15 @@ class PMPT(PortfolioAnalytics):
             negative_portfolio_returns < 0
         ]
         if daily is False:
-            downside_volatility = np.std(negative_portfolio_returns, ddof=1) * self.frequency
+            downside_volatility = (
+                np.std(negative_portfolio_returns, ddof=1) * self.frequency
+            )
         else:
             downside_volatility = np.std(negative_portfolio_returns, ddof=1)
 
         return downside_volatility
 
     def volatility_skew(self, mar=0.03, daily=False):
-
 
         upside = self.upside_volatility(mar, daily)
         downside = self.downside_volatility(mar, daily)
@@ -491,7 +489,7 @@ class PMPT(PortfolioAnalytics):
         portfolio_downside_volatility = self.downside_volatility(mar, daily)
         benchmark_downside_volatility = self.downside_volatility(
             self.benchmark_returns, mar, daily, self.frequency
-        )       #TODO: take care of this
+        )  # TODO: take care of this
 
         omega_excess_return = (
             self.portfolio_returns
@@ -542,14 +540,12 @@ class PMPT(PortfolioAnalytics):
             negative_benchmark_returns,
         )
 
-    def downside_volatility_ratio(
-        self, mar=0.03, daily=False
-    ):
+    def downside_volatility_ratio(self, mar=0.03, daily=False):
 
         portfolio_downside_volatility = self.downside_volatility(mar, daily)
         benchmark_downside_volatility = self.downside_volatility(
             self.benchmark_returns, mar, daily, self.frequency
-        )       #TODO: fix this too
+        )  # TODO: fix this too
 
         downside_volatility_ratio = (
             portfolio_downside_volatility / benchmark_downside_volatility
@@ -562,7 +558,9 @@ class PMPT(PortfolioAnalytics):
         downside_volatility = self.downside_volatility(mar, daily)
 
         if daily is True and compounding is True:
-            raise ValueError("Mean returns cannot be compounded if daily.")     #TODO: think about these
+            raise ValueError(
+                "Mean returns cannot be compounded if daily."
+            )  # TODO: think about these
         elif daily is False and compounding is True:
             sortino_ratio = 100 * (self.geometric_mean - rfr) / downside_volatility
         elif daily is False and compounding is False:
@@ -631,11 +629,15 @@ class PMPT(PortfolioAnalytics):
             )
         if daily is False and compounding is False:
             jensen_alpha = (
-                self.arithmetic_mean - rfr - beta * (self.benchmark_arithmetic_mean - rfr)
+                self.arithmetic_mean
+                - rfr
+                - beta * (self.benchmark_arithmetic_mean - rfr)
             )
         elif daily is True:
             jensen_alpha = (
-                self.daily_mean - rfr_daily - beta * (self.benchmark_daily_mean - rfr_daily)
+                self.daily_mean
+                - rfr_daily
+                - beta * (self.benchmark_daily_mean - rfr_daily)
             )
 
         return jensen_alpha
@@ -736,9 +738,11 @@ class PMPT(PortfolioAnalytics):
         if daily is False and compounding is False:
             calmar_ratio = 100 * (self.arithmetic_mean - rfr) / maximum_drawdown
         elif daily is True:
-            rfr_daily = (rfr + 1) ** (1 / 252) - 1      #TODO: find more of these that i might have missed out
-                                                        #? do these assume daily data?
-                                                        #TODO: make it general
+            rfr_daily = (rfr + 1) ** (
+                1 / 252
+            ) - 1  # TODO: find more of these that i might have missed out
+            # ? do these assume daily data?
+            # TODO: make it general
             calmar_ratio = 100 * (self.daily_mean - rfr_daily) / maximum_drawdown
 
         return calmar_ratio
@@ -752,12 +756,18 @@ class PMPT(PortfolioAnalytics):
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
-            sterling_ratio = 100 * (self.geometric_mean - rfr) / np.abs(d_average_drawdown)
+            sterling_ratio = (
+                100 * (self.geometric_mean - rfr) / np.abs(d_average_drawdown)
+            )
         if daily is False and compounding is False:
-            sterling_ratio = 100 * (self.arithmetic_mean - rfr) / np.abs(d_average_drawdown)
+            sterling_ratio = (
+                100 * (self.arithmetic_mean - rfr) / np.abs(d_average_drawdown)
+            )
         elif daily is True:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            sterling_ratio = 100 * (self.daily_mean - rfr_daily) / np.abs(d_average_drawdown)
+            sterling_ratio = (
+                100 * (self.daily_mean - rfr_daily) / np.abs(d_average_drawdown)
+            )
 
         return sterling_ratio
 
@@ -774,13 +784,10 @@ class Ulcer(PortfolioAnalytics):
 
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def ulcer(self, self.portfolio_state=None, period=14, start=1):
+    def ulcer(self, period=14, start=1):
 
         close = np.empty(period)
         percentage_drawdown = np.empty(period)
-
-        if self.portfolio_state is None:
-            self.portfolio_state = self.self.portfolio_state
 
         if start == 1:
             period_high = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
@@ -801,44 +808,27 @@ class Ulcer(PortfolioAnalytics):
 
     def martin(
         self,
-        portfolio_returns=None,
         daily=False,
         compounding=True,
         rfr=0.02,
         period=14,
-        frequency=252,
     ):
-
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
 
         ulcer_index = self.ulcer(period)
 
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
-            martin_ratio = 100 * (geometric_mean - rfr) / ulcer_index
+            martin_ratio = 100 * (self.geometric_mean - rfr) / ulcer_index
         if daily is False and compounding is False:
-            martin_ratio = 100 * (arithmetic_mean - rfr) / ulcer_index
+            martin_ratio = 100 * (self.arithmetic_mean - rfr) / ulcer_index
         elif daily is True:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            martin_ratio = 100 * (daily_mean - rfr_daily) / ulcer_index
+            martin_ratio = 100 * (self.daily_mean - rfr_daily) / ulcer_index
 
         return martin_ratio
 
-    def ulcer_series(self, self.portfolio_state=None, period=14):
-
-        if self.portfolio_state is None:
-            self.portfolio_state = self.self.portfolio_state
+    def ulcer_series(self, period=14):
 
         ulcer_series = pd.DataFrame(
             columns=["Ulcer Index"], index=self.portfolio_state.index
@@ -848,9 +838,9 @@ class Ulcer(PortfolioAnalytics):
 
         return ulcer_series
 
-    def plot_ulcer(self, self.portfolio_state=None, period=14, show=True, save=False):
+    def plot_ulcer(self, period=14, show=True, save=False):
 
-        ulcer_series = self.ulcer_series(self.portfolio_state, period)
+        ulcer_series = self.ulcer_series(period)
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
