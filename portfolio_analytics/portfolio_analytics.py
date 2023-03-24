@@ -447,116 +447,80 @@ class PMPT(PortfolioAnalytics):
         self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
         self.benchmark_daily_mean = self.benchmark_assets_returns.mean()
 
-    def upside_volatility(
-        self, portfolio_returns=None, mar=0.03, daily=False, frequency=252
-    ):
+    def upside_volatility(self, mar=0.03, daily=False):
 
-        mar_daily = (mar + 1) ** (1 / 252) - 1
+        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            frequency = self.frequency
-
-        positive_portfolio_returns = portfolio_returns - mar_daily
+        positive_portfolio_returns = self.portfolio_returns - mar_daily
         positive_portfolio_returns = positive_portfolio_returns[
             positive_portfolio_returns > 0
         ]
         if daily is False:
-            upside_volatility = np.std(positive_portfolio_returns, ddof=1) * frequency
+            upside_volatility = np.std(positive_portfolio_returns, ddof=1) * self.frequency
         else:
             upside_volatility = np.std(positive_portfolio_returns, ddof=1)
 
         return upside_volatility
 
-    def downside_volatility(
-        self, portfolio_returns=None, mar=0.03, daily=False, frequency=252
-    ):
+    def downside_volatility(self, mar=0.03, daily=False):
 
-        mar_daily = (mar + 1) ** (1 / 252) - 1
+        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            frequency = self.frequency
-
-        negative_portfolio_returns = portfolio_returns - mar_daily
+        negative_portfolio_returns = self.portfolio_returns - mar_daily
         negative_portfolio_returns = negative_portfolio_returns[
             negative_portfolio_returns < 0
         ]
         if daily is False:
-            downside_volatility = np.std(negative_portfolio_returns, ddof=1) * frequency
+            downside_volatility = np.std(negative_portfolio_returns, ddof=1) * self.frequency
         else:
             downside_volatility = np.std(negative_portfolio_returns, ddof=1)
 
         return downside_volatility
 
-    def volatility_skew(
-        self, portfolio_returns=None, mar=0.03, daily=False, frequency=252
-    ):
+    def volatility_skew(self, mar=0.03, daily=False):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            frequency = self.frequency
 
-        upside = self.upside_volatility(portfolio_returns, mar, daily, frequency)
-        downside = self.downside_volatility(portfolio_returns, mar, daily, frequency)
+        upside = self.upside_volatility(mar, daily)
+        downside = self.downside_volatility(mar, daily)
         skew = upside / downside
 
         return skew
 
-    def omega_excess_return(
-        self, portfolio_returns=None, mar=0.03, daily=False, frequency=252
-    ):
+    def omega_excess_return(self, mar=0.03, daily=False):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            frequency = self.frequency
-
-        portfolio_downside_volatility = self.downside_volatility(
-            portfolio_returns, mar, daily, frequency
-        )
+        portfolio_downside_volatility = self.downside_volatility(mar, daily)
         benchmark_downside_volatility = self.downside_volatility(
             self.benchmark_returns, mar, daily, self.frequency
-        )
+        )       #TODO: take care of this
 
         omega_excess_return = (
-            portfolio_returns
+            self.portfolio_returns
             - 3 * portfolio_downside_volatility * benchmark_downside_volatility
         )
 
         return omega_excess_return
 
-    def upside_potential_ratio(
-        self, portfolio_returns=None, mar=0.03, daily=False, frequency=252
-    ):
+    def upside_potential_ratio(self, mar=0.03, daily=False):
 
-        mar_daily = (mar + 1) ** (1 / 252) - 1
+        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            frequency = self.frequency
-
-        downside_volatility = self.downside_volatility(
-            portfolio_returns, mar, daily, frequency
-        )
-        upside = portfolio_returns - mar_daily
+        downside_volatility = self.downside_volatility(mar, daily)
+        upside = self.portfolio_returns - mar_daily
         upside = upside[upside > 0].sum()
         upside_potential_ratio = upside / downside_volatility
 
         return upside_potential_ratio
 
-    def downside_capm(self, portfolio_returns=None, mar=0.03):
+    def downside_capm(self, mar=0.03):
 
-        mar_daily = (mar + 1) ** (1 / 252) - 1
-
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
+        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
 
         negative_benchmark_returns = self.benchmark_returns - mar_daily
         negative_benchmark_returns = negative_benchmark_returns[
             negative_benchmark_returns < 0
         ]
 
-        negative_portfolio_returns = portfolio_returns - mar_daily
+        negative_portfolio_returns = self.portfolio_returns - mar_daily
         negative_portfolio_returns = negative_portfolio_returns[
             negative_portfolio_returns < 0
         ]
@@ -579,19 +543,13 @@ class PMPT(PortfolioAnalytics):
         )
 
     def downside_volatility_ratio(
-        self, portfolio_returns=None, mar=0.03, daily=False, frequency=252
+        self, mar=0.03, daily=False
     ):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            frequency = self.frequency
-
-        portfolio_downside_volatility = self.downside_volatility(
-            portfolio_returns, mar, daily, frequency
-        )
+        portfolio_downside_volatility = self.downside_volatility(mar, daily)
         benchmark_downside_volatility = self.downside_volatility(
             self.benchmark_returns, mar, daily, self.frequency
-        )
+        )       #TODO: fix this too
 
         downside_volatility_ratio = (
             portfolio_downside_volatility / benchmark_downside_volatility
@@ -599,60 +557,31 @@ class PMPT(PortfolioAnalytics):
 
         return downside_volatility_ratio
 
-    def sortino(
-        self,
-        portfolio_returns=None,
-        mar=0.03,
-        rfr=0.02,
-        daily=False,
-        compounding=True,
-        frequency=252,
-    ):
+    def sortino(self, mar=0.03, rfr=0.02, daily=False, compounding=True, frequency=252):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-            frequency = self.frequency
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
-
-        downside_volatility = self.downside_volatility(
-            portfolio_returns, mar, daily, frequency
-        )
+        downside_volatility = self.downside_volatility(mar, daily)
 
         if daily is True and compounding is True:
-            raise ValueError("Mean returns cannot be compounded if daily.")
+            raise ValueError("Mean returns cannot be compounded if daily.")     #TODO: think about these
         elif daily is False and compounding is True:
-            sortino_ratio = 100 * (geometric_mean - rfr) / downside_volatility
+            sortino_ratio = 100 * (self.geometric_mean - rfr) / downside_volatility
         elif daily is False and compounding is False:
-            sortino_ratio = 100 * (arithmetic_mean - rfr) / downside_volatility
+            sortino_ratio = 100 * (self.arithmetic_mean - rfr) / downside_volatility
         elif daily is True:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            sortino_ratio = 100 * (daily_mean - rfr_daily) / downside_volatility
+            sortino_ratio = 100 * (self.daily_mean - rfr_daily) / downside_volatility
 
         return sortino_ratio
 
-    def drawdowns(self, portfolio_returns=None):
+    def drawdowns(self):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-
-        wealth_index = 1000 * (1 + portfolio_returns).cumprod()
+        wealth_index = 1000 * (1 + self.portfolio_returns).cumprod()
         previous_peaks = wealth_index.cummax()
         drawdowns = (wealth_index - previous_peaks) / previous_peaks
 
         return drawdowns
 
-    def maximum_drawdown(self, self.portfolio_state=None, period=1000):
-
-        if self.portfolio_state is None:
-            self.portfolio_state = self.self.portfolio_state
+    def maximum_drawdown(self, period=1000):
 
         if period >= self.portfolio_state.shape[0]:
             period = self.portfolio_state.shape[0]
@@ -667,10 +596,7 @@ class PMPT(PortfolioAnalytics):
 
         return maximum_drawdown
 
-    def maximum_drawdown_percentage(self, self.portfolio_state=None, period=1000):
-
-        if self.portfolio_state is None:
-            self.portfolio_state = self.self.portfolio_state
+    def maximum_drawdown_percentage(self, period=1000):
 
         if period > self.portfolio_state.shape[0]:
             period = self.portfolio_state.shape[0]
@@ -685,30 +611,11 @@ class PMPT(PortfolioAnalytics):
 
         return maximum_drawdown_ratio
 
-    def jensen_alpha(
-        self,
-        portfolio_returns=None,
-        rfr=0.02,
-        daily=False,
-        compounding=True,
-        frequency=252,
-    ):
+    def jensen_alpha(self, rfr=0.02, daily=False, compounding=True):
 
-        rfr_daily = (rfr + 1) ** (1 / 252) - 1
+        rfr_daily = (rfr + 1) ** (1 / self.frequency) - 1
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
-
-        excess_portfolio_returns = portfolio_returns - rfr_daily
+        excess_portfolio_returns = self.portfolio_returns - rfr_daily
         excess_benchmark_returns = self.benchmark_returns - rfr_daily
 
         model = LinearRegression().fit(
@@ -720,42 +627,24 @@ class PMPT(PortfolioAnalytics):
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
             jensen_alpha = (
-                geometric_mean - rfr - beta * (self.benchmark_geometric_mean - rfr)
+                self.geometric_mean - rfr - beta * (self.benchmark_geometric_mean - rfr)
             )
         if daily is False and compounding is False:
             jensen_alpha = (
-                arithmetic_mean - rfr - beta * (self.benchmark_arithmetic_mean - rfr)
+                self.arithmetic_mean - rfr - beta * (self.benchmark_arithmetic_mean - rfr)
             )
         elif daily is True:
             jensen_alpha = (
-                daily_mean - rfr_daily - beta * (self.benchmark_daily_mean - rfr_daily)
+                self.daily_mean - rfr_daily - beta * (self.benchmark_daily_mean - rfr_daily)
             )
 
         return jensen_alpha
 
-    def treynor(
-        self,
-        portfolio_returns=None,
-        rfr=0.02,
-        daily=False,
-        compounding=True,
-        frequency=252,
-    ):
+    def treynor(self, rfr=0.02, daily=False, compounding=True):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
+        rfr_daily = (rfr + 1) ** (1 / self.frequency) - 1
 
-        rfr_daily = (rfr + 1) ** (1 / 252) - 1
-        excess_portfolio_returns = portfolio_returns - rfr_daily
+        excess_portfolio_returns = self.portfolio_returns - rfr_daily
         excess_benchmark_returns = self.benchmark_returns - rfr_daily
 
         model = LinearRegression().fit(
@@ -766,181 +655,109 @@ class PMPT(PortfolioAnalytics):
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
-            treynor_ratio = 100 * (geometric_mean - rfr) / beta
+            treynor_ratio = 100 * (self.geometric_mean - rfr) / beta
         if daily is False and compounding is False:
-            treynor_ratio = 100 * (arithmetic_mean - rfr) / beta
+            treynor_ratio = 100 * (self.arithmetic_mean - rfr) / beta
         elif daily is True:
-            treynor_ratio = 100 * (daily_mean - rfr_daily) / beta
+            treynor_ratio = 100 * (self.daily_mean - rfr_daily) / beta
 
         return treynor_ratio
 
-    def higher_partial_moment(self, portfolio_returns=None, mar=0.03, moment=3):
+    def higher_partial_moment(self, mar=0.03, moment=3):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
+        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
 
-        mar_daily = (mar + 1) ** (1 / 252) - 1
-        days = portfolio_returns.shape[0]
+        days = self.portfolio_returns.shape[0]
 
         higher_partial_moment = (1 / days) * np.sum(
-            np.power(np.max(portfolio_returns - mar_daily, 0), moment)
+            np.power(np.max(self.portfolio_returns - mar_daily, 0), moment)
         )
 
         return higher_partial_moment
 
-    def lower_partial_moment(self, portfolio_returns=None, mar=0.03, moment=3):
+    def lower_partial_moment(self, mar=0.03, moment=3):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-
-        mar_daily = (mar + 1) ** (1 / 252) - 1
-        days = portfolio_returns.shape[0]
+        mar_daily = (mar + 1) ** (1 / self.frequency) - 1
+        days = self.portfolio_returns.shape[0]
 
         lower_partial_moment = (1 / days) * np.sum(
-            np.power(np.max(mar_daily - portfolio_returns, 0), moment)
+            np.power(np.max(mar_daily - self.portfolio_returns, 0), moment)
         )
 
         return lower_partial_moment
 
-    def kappa(
-        self,
-        portfolio_returns=None,
-        mar=0.03,
-        moment=3,
-        daily=False,
-        compounding=True,
-        frequency=252,
-    ):
+    def kappa(self, mar=0.03, moment=3, daily=False, compounding=True):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
-
-        lower_partial_moment = self.lower_partial_moment(portfolio_returns, mar, moment)
+        lower_partial_moment = self.lower_partial_moment(mar, moment)
 
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
             kappa_ratio = (
                 100
-                * (geometric_mean - mar)
+                * (self.geometric_mean - mar)
                 / np.power(lower_partial_moment, (1 / moment))
             )
         elif daily is False and compounding is False:
             kappa_ratio = (
                 100
-                * (arithmetic_mean - mar)
+                * (self.arithmetic_mean - mar)
                 / np.power(lower_partial_moment, (1 / moment))
             )
         elif daily is True:
             mar_daily = (mar + 1) ** (1 / 252) - 1
             kappa_ratio = (
                 100
-                * (daily_mean - mar_daily)
+                * (self.daily_mean - mar_daily)
                 / np.power(lower_partial_moment, (1 / moment))
             )
 
         return kappa_ratio
 
-    def gain_loss(self, portfolio_returns=None, mar=0.03, moment=1):
+    def gain_loss(self, mar=0.03, moment=1):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-
-        hpm = self.higher_partial_moment(portfolio_returns, mar, moment)
-        lpm = self.lower_partial_moment(portfolio_returns, mar, moment)
+        hpm = self.higher_partial_moment(mar, moment)
+        lpm = self.lower_partial_moment(mar, moment)
 
         gain_loss_ratio = hpm / lpm
 
         return gain_loss_ratio
 
-    def calmar(
-        self,
-        portfolio_returns=None,
-        self.portfolio_state=None,
-        period=1000,
-        rfr=0.02,
-        daily=False,
-        compounding=True,
-        frequency=252,
-    ):
-
-        if portfolio_returns is None and self.portfolio_state is not None:
-            raise ValueError(
-                "Argument portfolio_returns not provided. \
-                              Portfolio returns need to be provided for the calculation of mean return."
-            )
-        elif self.portfolio_state is None:
-            self.portfolio_state = self.self.portfolio_state
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
+    def calmar(self, period=1000, rfr=0.02, daily=False, compounding=True):
 
         if period >= self.portfolio_state.shape[0]:
             period = self.portfolio_state.shape[0]
             warnings.warn("Dataset too small. Period taken as {}.".format(period))
 
-        maximum_drawdown = self.maximum_drawdown_percentage(self.portfolio_state, period)
+        maximum_drawdown = self.maximum_drawdown_percentage(period)
 
         if daily is False and compounding is True:
-            calmar_ratio = 100 * (geometric_mean - rfr) / maximum_drawdown
+            calmar_ratio = 100 * (self.geometric_mean - rfr) / maximum_drawdown
         if daily is False and compounding is False:
-            calmar_ratio = 100 * (arithmetic_mean - rfr) / maximum_drawdown
+            calmar_ratio = 100 * (self.arithmetic_mean - rfr) / maximum_drawdown
         elif daily is True:
-            rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            calmar_ratio = 100 * (daily_mean - rfr_daily) / maximum_drawdown
+            rfr_daily = (rfr + 1) ** (1 / 252) - 1      #TODO: find more of these that i might have missed out
+                                                        #? do these assume daily data?
+                                                        #TODO: make it general
+            calmar_ratio = 100 * (self.daily_mean - rfr_daily) / maximum_drawdown
 
         return calmar_ratio
 
-    def sterling(
-        self,
-        portfolio_returns=None,
-        rfr=0.02,
-        drawdowns=3,
-        daily=False,
-        compounding=True,
-        frequency=252,
-    ):
+    def sterling(self, rfr=0.02, drawdowns=3, daily=False, compounding=True):
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
-            geometric_mean = self.geometric_mean
-            arithmetic_mean = self.arithmetic_mean
-            daily_mean = self.daily_mean
-        else:
-            daily_mean = portfolio_returns.mean()
-            arithmetic_mean = daily_mean * frequency
-            geometric_mean = (1 + portfolio_returns).prod() ** (
-                frequency / portfolio_returns.shape[0]
-            ) - 1
-
-        portfolio_drawdowns = self.drawdowns(portfolio_returns)
+        portfolio_drawdowns = self.drawdowns()
         sorted_drawdowns = np.sort(portfolio_drawdowns)
         d_average_drawdown = np.mean(sorted_drawdowns[-drawdowns:])
 
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
         elif daily is False and compounding is True:
-            sterling_ratio = 100 * (geometric_mean - rfr) / np.abs(d_average_drawdown)
+            sterling_ratio = 100 * (self.geometric_mean - rfr) / np.abs(d_average_drawdown)
         if daily is False and compounding is False:
-            sterling_ratio = 100 * (arithmetic_mean - rfr) / np.abs(d_average_drawdown)
+            sterling_ratio = 100 * (self.arithmetic_mean - rfr) / np.abs(d_average_drawdown)
         elif daily is True:
             rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            sterling_ratio = 100 * (daily_mean - rfr_daily) / np.abs(d_average_drawdown)
+            sterling_ratio = 100 * (self.daily_mean - rfr_daily) / np.abs(d_average_drawdown)
 
         return sterling_ratio
 
