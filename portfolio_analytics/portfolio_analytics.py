@@ -868,7 +868,7 @@ class ValueAtRisk(PortfolioAnalytics):
 
     def analytical_var(
         self, mean_return, volatility, value, dof, distribution="normal"
-    ):
+    ):  # TODO: get mean return and some other things from the object properties
 
         if distribution == "normal":
             var = stats.norm(mean_return, volatility).cdf(value)
@@ -991,18 +991,15 @@ class Matrices(PortfolioAnalytics):
 
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def correlation_matrix(self, returns=None):
+    def correlation_matrix(self):
 
-        if returns is None:
-            returns = self.portfolio_returns
-
-        matrix = returns.corr().round(5)
+        matrix = self.portfolio_returns.corr().round(5)
 
         return matrix
 
-    def plot_correlation_matrix(self, returns=None, show=True, save=False):
+    def plot_correlation_matrix(self, show=True, save=False):
 
-        matrix = self.correlation_matrix(returns)
+        matrix = self.correlation_matrix()
 
         sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
         if save is True:
@@ -1010,24 +1007,18 @@ class Matrices(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def covariance_matrix(self, returns=None, daily=True, frequency=252):
+    def covariance_matrix(self, daily=True):
 
-        if returns is None:
-            returns = self.portfolio_returns
-            frequency = self.frequency
-
-        if daily is False:
-            matrix = returns.cov().round(5) * frequency
+        if daily is False:  # TODO: dont assume daily
+            matrix = self.portfolio_returns.cov().round(5) * self.frequency
         else:
-            matrix = returns.cov().round(5)
+            matrix = self.portfolio_returns.cov().round(5)
 
         return matrix
 
-    def plot_covariance_matrix(
-        self, returns=None, daily=True, frequency=252, show=True, save=False
-    ):
+    def plot_covariance_matrix(self, daily=True, show=True, save=False):
 
-        matrix = self.covariance_matrix(returns, daily, frequency)
+        matrix = self.covariance_matrix(daily)
 
         sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
         if save is True:
