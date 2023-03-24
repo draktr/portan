@@ -382,13 +382,7 @@ class MPT(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def sharpe(
-        self,
-        daily=False,
-        compounding=True,
-        rfr=0.02,
-        frequency=252,
-    ):
+    def sharpe(self, daily=False, compounding=True, rfr=0.02):
 
         if daily is True and compounding is True:
             raise ValueError("Mean returns cannot be compounded if daily.")
@@ -557,7 +551,7 @@ class PMPT(PortfolioAnalytics):
 
         return downside_volatility_ratio
 
-    def sortino(self, mar=0.03, rfr=0.02, daily=False, compounding=True, frequency=252):
+    def sortino(self, mar=0.03, rfr=0.02, daily=False, compounding=True):
 
         downside_volatility = self.downside_volatility(mar, daily)
 
@@ -870,17 +864,20 @@ class ValueAtRisk(PortfolioAnalytics):
 
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def analytical_var(
-        self, mean_return, volatility, value, dof, distribution="normal"
-    ):  # TODO: get mean return and some other things from the object properties
+    def analytical_var(self, value, dof, compounding=True, distribution="normal"):
+
+        if compounding is True:  # TODO: if compounding:
+            mean_return = self.geometric_mean
+        else:
+            mean_return = self.arithmetic_mean
 
         if distribution == "normal":
-            var = stats.norm(mean_return, volatility).cdf(value)
+            var = stats.norm(mean_return, self.volatility).cdf(value)
             expected_loss = (
-                stats.norm(mean_return, volatility).pdf(
-                    stats.norm(mean_return, volatility).ppf((1 - var))
+                stats.norm(mean_return, self.volatility).pdf(
+                    stats.norm(mean_return, self.volatility).ppf((1 - var))
                 )
-                * volatility
+                * self.volatility
             ) / (1 - var) - mean_return
         elif distribution == "t":
             var = stats.t(dof).cdf(value)
@@ -891,7 +888,7 @@ class ValueAtRisk(PortfolioAnalytics):
                 * (1 - dof) ** (-1)
                 * (dof - 2 + percent_point_function**2)
                 * stats.t(dof).pdf(percent_point_function)
-                * volatility
+                * self.volatility
                 - mean_return
             )
         else:
@@ -899,29 +896,35 @@ class ValueAtRisk(PortfolioAnalytics):
 
         return var, expected_loss
 
-    def historical_var(self, portfolio_returns, value):
+    def historical_var(self, value):
 
-        returns_below_value = portfolio_returns[portfolio_returns < value]
-        var = returns_below_value.shape[0] / portfolio_returns.shape[0]
+        returns_below_value = self.portfolio_returns[self.portfolio_returns < value]
+        var = returns_below_value.shape[0] / self.portfolio_returns.shape[0]
 
         return var
 
     def plot_analytical_var(
         self,
-        mean_return,
-        volatility,
         value,
         dof,
+        compounding=True,
         z=3,
         distribution="Normal",
         show=True,
         save=False,
     ):
 
-        x = np.linspace(mean_return - z * volatility, mean_return + z * volatility, 100)
+        if compounding is True:
+            mean_return = self.geometric_mean
+        else:
+            mean_return = self.arithmetic_mean
+
+        x = np.linspace(
+            mean_return - z * self.volatility, mean_return + z * self.volatility, 100
+        )
 
         if distribution == "Normal":
-            pdf = stats.norm(mean_return, volatility).pdf(x)
+            pdf = stats.norm(mean_return, self.volatility).pdf(x)
         elif distribution == "t":
             pdf = stats.t(dof).pdf(x)
         else:
@@ -954,11 +957,9 @@ class ValueAtRisk(PortfolioAnalytics):
         if show is True:
             plt.show()
 
-    def plot_historical_var(
-        self, portfolio_returns, value, number_of_bins=100, show=True, save=False
-    ):
+    def plot_historical_var(self, value, number_of_bins=100, show=True, save=False):
 
-        sorted_portfolio_returns = np.sort(portfolio_returns)
+        sorted_portfolio_returns = np.sort(self.portfolio_returns)
         bins = np.linspace(
             sorted_portfolio_returns[0],
             sorted_portfolio_returns[-1] + 1,
