@@ -1123,24 +1123,20 @@ class OmegaAnalysis(PortfolioAnalytics):
             round(100 * (mar_upper_bound - mar_lower_bound)),
         )
 
-    def omega_ratio(self, portfolio_returns=None, mar=0.03):
+    def omega_ratio(self, mar=0.03):
         """
         Calculates the Omega Ratio of one or more portfolios.
 
         Args:
-            portfolio_returns (pd.DataFrame): Dataframe with the daily returns of single or more portfolios. Defaults to None
             mar (float, optional): Minimum Acceptable Return. Defaults to 0.03.
 
         Returns:
             pd.Series: Series with Omega Ratios of all portfolios.
-        """
-
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
+        """  # TODO: change docstrings style
 
         mar_daily = (mar + 1) ** np.sqrt(1 / 252) - 1
 
-        excess_returns = portfolio_returns - mar_daily
+        excess_returns = self.portfolio_returns - mar_daily
         winning = excess_returns[excess_returns > 0].sum()
         losing = -(excess_returns[excess_returns <= 0].sum())
 
@@ -1148,25 +1144,23 @@ class OmegaAnalysis(PortfolioAnalytics):
 
         return omega
 
-    def omega_curve(self, portfolio_returns=None, show=True, save=False):
+    def omega_curve(self, show=True, save=False):
         """
         Plots and/or saves Omega Curve(s) of of one or more portfolios.
 
         Args:
-            portfolio_returns (pd.DataFrame): Dataframe with the daily returns of single or more portfolios. Defaults to None
             show (bool, optional): Show the plot upon the execution of the code. Defaults to True.
             save (bool, optional): Save the plot on storage. Defaults to False.
         """
 
-        if portfolio_returns is None:
-            portfolio_returns = self.portfolio_returns
+        all_values = pd.DataFrame(columns=self.portfolio_returns.columns)
 
-        all_values = pd.DataFrame(columns=portfolio_returns.columns)
-
-        for portfolio in portfolio_returns.columns:
+        for portfolio in self.portfolio_returns.columns:
             omega_values = list()
             for mar in self.mar_array:
-                value = np.round(self.omega_ratio(portfolio_returns[portfolio], mar), 5)
+                value = np.round(
+                    self.omega_ratio(self.portfolio_returns[portfolio], mar), 5
+                )
                 omega_values.append(value)
             all_values[portfolio] = omega_values
 
