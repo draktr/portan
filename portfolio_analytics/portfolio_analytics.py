@@ -485,9 +485,19 @@ class PMPT(PortfolioAnalytics):
     def omega_excess_return(self, mar=0.03, daily=False):
 
         portfolio_downside_volatility = self.downside_volatility(mar, daily)
-        benchmark_downside_volatility = self.downside_volatility(
-            self.benchmark_returns, mar, daily, self.frequency
-        )  # TODO: take care of this
+
+        mar_daily = self._rate_conversion(mar)
+
+        negative_benchmark_returns = self.benchmark_returns - mar_daily
+        negative_benchmark_returns = negative_benchmark_returns[
+            negative_benchmark_returns < 0
+        ]
+        if not daily:
+            benchmark_downside_volatility = (
+                np.std(negative_benchmark_returns, ddof=1) * self.frequency
+            )
+        else:
+            benchmark_downside_volatility = np.std(negative_benchmark_returns, ddof=1)
 
         omega_excess_return = (
             self.portfolio_returns
@@ -541,9 +551,19 @@ class PMPT(PortfolioAnalytics):
     def downside_volatility_ratio(self, mar=0.03, daily=False):
 
         portfolio_downside_volatility = self.downside_volatility(mar, daily)
-        benchmark_downside_volatility = self.downside_volatility(
-            self.benchmark_returns, mar, daily, self.frequency
-        )  # TODO: fix this too
+
+        mar_daily = self._rate_conversion(mar)
+
+        negative_benchmark_returns = self.benchmark_returns - mar_daily
+        negative_benchmark_returns = negative_benchmark_returns[
+            negative_benchmark_returns < 0
+        ]
+        if not daily:
+            benchmark_downside_volatility = (
+                np.std(negative_benchmark_returns, ddof=1) * self.frequency
+            )
+        else:
+            benchmark_downside_volatility = np.std(negative_benchmark_returns, ddof=1)
 
         downside_volatility_ratio = (
             portfolio_downside_volatility / benchmark_downside_volatility
