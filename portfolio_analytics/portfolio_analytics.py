@@ -100,10 +100,10 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
         super().__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def excess_returns(self, mar=0.03):
+    def excess_returns(self, annual_mar=0.03):
 
-        mar_daily = (mar + 1) ** (1 / 252) - 1  # TODO
-        excess_returns = self.portfolio_returns - mar_daily
+        mar = self._rate_conversion(annual_mar)
+        excess_returns = self.portfolio_returns - mar
 
         self.analytics.update({str(inspect.stack()[0][3]): excess_returns})
 
@@ -337,12 +337,12 @@ class MPT(PortfolioAnalytics):
         self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
         self.benchmark_mean = self.benchmark_assets_returns.mean()
 
-    def capm(self, rfr=0.02):
+    def capm(self, annual_rfr=0.02):
 
-        rfr_daily = (rfr + 1) ** (1 / 252) - 1  # TODO:
+        rfr = self._rate_conversion(annual_rfr)
 
-        excess_portfolio_returns = self.portfolio_returns - rfr_daily
-        excess_benchmark_returns = self.benchmark_returns - rfr_daily
+        excess_portfolio_returns = self.portfolio_returns - rfr
+        excess_benchmark_returns = self.benchmark_returns - rfr
 
         model = LinearRegression().fit(
             excess_benchmark_returns, excess_portfolio_returns
@@ -359,9 +359,9 @@ class MPT(PortfolioAnalytics):
             excess_benchmark_returns,
         )
 
-    def plot_capm(self, rfr=0.02, show=True, save=False):
+    def plot_capm(self, annual_rfr=0.02, show=True, save=False):
 
-        capm = self.capm(rfr)
+        capm = self.capm(annual_rfr)
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -383,19 +383,23 @@ class MPT(PortfolioAnalytics):
         if show:
             plt.show()
 
-    def sharpe(self, annual=True, compounding=True, rfr=0.02):
+    def sharpe(self, annual_rfr=0.02, annual=True, compounding=True):
 
         if not annual and compounding:
             raise ValueError(
                 "Mean returns cannot be compounded if `annual` is `False`."
             )
         elif annual and compounding:
-            sharpe_ratio = 100 * (self.geometric_mean - rfr) / self.annual_volatility
+            sharpe_ratio = (
+                100 * (self.geometric_mean - annual_rfr) / self.annual_volatility
+            )
         if annual and not compounding:
-            sharpe_ratio = 100 * (self.arithmetic_mean - rfr) / self.annual_volatility
+            sharpe_ratio = (
+                100 * (self.arithmetic_mean - annual_rfr) / self.annual_volatility
+            )
         elif not annual:
-            rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            sharpe_ratio = 100 * (self.mean - rfr_daily) / self.volatility
+            rfr = self._rate_conversion(annual_rfr)
+            sharpe_ratio = 100 * (self.mean - rfr) / self.volatility
 
         return sharpe_ratio
 
@@ -443,13 +447,11 @@ class PMPT(PortfolioAnalytics):
         self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
         self.benchmark_mean = self.benchmark_assets_returns.mean()
 
-    def upside_volatility(
-        self, mar=0.03, annual=True
-    ):  # TODO: annual mar and below is mar
+    def upside_volatility(self, annual_mar=0.03, annual=True):
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
 
-        positive_portfolio_returns = self.portfolio_returns - mar_daily
+        positive_portfolio_returns = self.portfolio_returns - mar
         positive_portfolio_returns = positive_portfolio_returns[
             positive_portfolio_returns > 0
         ]
@@ -462,11 +464,11 @@ class PMPT(PortfolioAnalytics):
 
         return upside_volatility
 
-    def downside_volatility(self, mar=0.03, annual=True):
+    def downside_volatility(self, annual_mar=0.03, annual=True):
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
 
-        negative_portfolio_returns = self.portfolio_returns - mar_daily
+        negative_portfolio_returns = self.portfolio_returns - mar
         negative_portfolio_returns = negative_portfolio_returns[
             negative_portfolio_returns < 0
         ]
@@ -479,21 +481,21 @@ class PMPT(PortfolioAnalytics):
 
         return downside_volatility
 
-    def volatility_skew(self, mar=0.03, annual=True):
+    def volatility_skew(self, annual_mar=0.03, annual=True):
 
-        upside = self.upside_volatility(mar, annual)
-        downside = self.downside_volatility(mar, annual)
+        upside = self.upside_volatility(annual_mar, annual)
+        downside = self.downside_volatility(annual_mar, annual)
         skew = upside / downside
 
         return skew
 
-    def omega_excess_return(self, mar=0.03, annual=True):
+    def omega_excess_return(self, annual_mar=0.03, annual=True):
 
-        portfolio_downside_volatility = self.downside_volatility(mar, annual)
+        portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
 
-        negative_benchmark_returns = self.benchmark_returns - mar_daily
+        negative_benchmark_returns = self.benchmark_returns - mar
         negative_benchmark_returns = negative_benchmark_returns[
             negative_benchmark_returns < 0
         ]
@@ -511,27 +513,27 @@ class PMPT(PortfolioAnalytics):
 
         return omega_excess_return
 
-    def upside_potential_ratio(self, mar=0.03, annual=True):
+    def upside_potential_ratio(self, annual_mar=0.03, annual=True):
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
 
-        downside_volatility = self.downside_volatility(mar, annual)
-        upside = self.portfolio_returns - mar_daily
+        downside_volatility = self.downside_volatility(annual_mar, annual)
+        upside = self.portfolio_returns - mar
         upside = upside[upside > 0].sum()
         upside_potential_ratio = upside / downside_volatility
 
         return upside_potential_ratio
 
-    def downside_capm(self, mar=0.03):
+    def downside_capm(self, annual_mar=0.03):
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
 
-        negative_benchmark_returns = self.benchmark_returns - mar_daily
+        negative_benchmark_returns = self.benchmark_returns - mar
         negative_benchmark_returns = negative_benchmark_returns[
             negative_benchmark_returns < 0
         ]
 
-        negative_portfolio_returns = self.portfolio_returns - mar_daily
+        negative_portfolio_returns = self.portfolio_returns - mar
         negative_portfolio_returns = negative_portfolio_returns[
             negative_portfolio_returns < 0
         ]
@@ -553,13 +555,13 @@ class PMPT(PortfolioAnalytics):
             negative_benchmark_returns,
         )
 
-    def downside_volatility_ratio(self, mar=0.03, annual=True):
+    def downside_volatility_ratio(self, annual_mar=0.03, annual=True):
 
-        portfolio_downside_volatility = self.downside_volatility(mar, annual)
+        portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
 
-        negative_benchmark_returns = self.benchmark_returns - mar_daily
+        negative_benchmark_returns = self.benchmark_returns - mar
         negative_benchmark_returns = negative_benchmark_returns[
             negative_benchmark_returns < 0
         ]
@@ -576,21 +578,25 @@ class PMPT(PortfolioAnalytics):
 
         return downside_volatility_ratio
 
-    def sortino(self, mar=0.03, rfr=0.02, annual=True, compounding=True):
+    def sortino(self, annual_mar=0.03, annual_rfr=0.02, annual=True, compounding=True):
 
-        downside_volatility = self.downside_volatility(mar, annual)
+        downside_volatility = self.downside_volatility(annual_mar, annual)
 
         if not annual and compounding:
             raise ValueError(
                 "Mean returns cannot be compounded if `annual` is `False`."
             )
         elif annual and compounding:
-            sortino_ratio = 100 * (self.geometric_mean - rfr) / downside_volatility
+            sortino_ratio = (
+                100 * (self.geometric_mean - annual_rfr) / downside_volatility
+            )
         elif annual and not compounding:
-            sortino_ratio = 100 * (self.arithmetic_mean - rfr) / downside_volatility
+            sortino_ratio = (
+                100 * (self.arithmetic_mean - annual_rfr) / downside_volatility
+            )
         elif not annual:
-            rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            sortino_ratio = 100 * (self.mean - rfr_daily) / downside_volatility
+            rfr = self._rate_conversion(annual_rfr)
+            sortino_ratio = 100 * (self.mean - rfr) / downside_volatility
 
         return sortino_ratio
 
@@ -632,13 +638,12 @@ class PMPT(PortfolioAnalytics):
 
         return maximum_drawdown_ratio
 
-    def jensen_alpha(self, rfr=0.02, annual=True, compounding=True):
-        # TODO: annual_rfr, rfr
+    def jensen_alpha(self, annual_rfr=0.02, annual=True, compounding=True):
 
-        rfr_daily = self._rate_conversion(rfr)
+        rfr = self._rate_conversion(annual_rfr)
 
-        excess_portfolio_returns = self.portfolio_returns - rfr_daily
-        excess_benchmark_returns = self.benchmark_returns - rfr_daily
+        excess_portfolio_returns = self.portfolio_returns - rfr
+        excess_benchmark_returns = self.benchmark_returns - rfr
 
         model = LinearRegression().fit(
             excess_benchmark_returns, excess_portfolio_returns
@@ -651,27 +656,27 @@ class PMPT(PortfolioAnalytics):
             )
         elif annual and compounding:
             jensen_alpha = (
-                self.geometric_mean - rfr - beta * (self.benchmark_geometric_mean - rfr)
+                self.geometric_mean
+                - annual_rfr
+                - beta * (self.benchmark_geometric_mean - annual_rfr)
             )
         if annual and not compounding:
             jensen_alpha = (
                 self.arithmetic_mean
-                - rfr
-                - beta * (self.benchmark_arithmetic_mean - rfr)
+                - annual_rfr
+                - beta * (self.benchmark_arithmetic_mean - annual_rfr)
             )
         elif not annual:
-            jensen_alpha = (
-                self.mean - rfr_daily - beta * (self.benchmark_mean - rfr_daily)
-            )
+            jensen_alpha = self.mean - rfr - beta * (self.benchmark_mean - rfr)
 
         return jensen_alpha
 
-    def treynor(self, rfr=0.02, annual=True, compounding=True):
+    def treynor(self, annual_rfr=0.02, annual=True, compounding=True):
 
-        rfr_daily = self._rate_conversion(rfr)
+        rfr = self._rate_conversion(annual_rfr)
 
-        excess_portfolio_returns = self.portfolio_returns - rfr_daily
-        excess_benchmark_returns = self.benchmark_returns - rfr_daily
+        excess_portfolio_returns = self.portfolio_returns - rfr
+        excess_benchmark_returns = self.benchmark_returns - rfr
 
         model = LinearRegression().fit(
             excess_benchmark_returns, excess_portfolio_returns
@@ -683,40 +688,40 @@ class PMPT(PortfolioAnalytics):
                 "Mean returns cannot be compounded if `annual` is `False`."
             )
         elif annual and compounding:
-            treynor_ratio = 100 * (self.geometric_mean - rfr) / beta
+            treynor_ratio = 100 * (self.geometric_mean - annual_rfr) / beta
         if annual and not compounding:
-            treynor_ratio = 100 * (self.arithmetic_mean - rfr) / beta
+            treynor_ratio = 100 * (self.arithmetic_mean - annual_rfr) / beta
         elif not annual:
-            treynor_ratio = 100 * (self.mean - rfr_daily) / beta
+            treynor_ratio = 100 * (self.mean - rfr) / beta
 
         return treynor_ratio
 
-    def higher_partial_moment(self, mar=0.03, moment=3):
+    def higher_partial_moment(self, annual_mar=0.03, moment=3):
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
 
         days = self.portfolio_returns.shape[0]
 
         higher_partial_moment = (1 / days) * np.sum(
-            np.power(np.max(self.portfolio_returns - mar_daily, 0), moment)
+            np.power(np.max(self.portfolio_returns - mar, 0), moment)
         )
 
         return higher_partial_moment
 
-    def lower_partial_moment(self, mar=0.03, moment=3):
+    def lower_partial_moment(self, annual_mar=0.03, moment=3):
 
-        mar_daily = self._rate_conversion(mar)
+        mar = self._rate_conversion(annual_mar)
         days = self.portfolio_returns.shape[0]
 
         lower_partial_moment = (1 / days) * np.sum(
-            np.power(np.max(mar_daily - self.portfolio_returns, 0), moment)
+            np.power(np.max(mar - self.portfolio_returns, 0), moment)
         )
 
         return lower_partial_moment
 
-    def kappa(self, mar=0.03, moment=3, annual=True, compounding=True):
+    def kappa(self, annual_mar=0.03, moment=3, annual=True, compounding=True):
 
-        lower_partial_moment = self.lower_partial_moment(mar, moment)
+        lower_partial_moment = self.lower_partial_moment(annual_mar, moment)
 
         if not annual and compounding:
             raise ValueError(
@@ -725,35 +730,33 @@ class PMPT(PortfolioAnalytics):
         elif annual and compounding:
             kappa_ratio = (
                 100
-                * (self.geometric_mean - mar)
+                * (self.geometric_mean - annual_mar)
                 / np.power(lower_partial_moment, (1 / moment))
             )
         elif annual and not compounding:
             kappa_ratio = (
                 100
-                * (self.arithmetic_mean - mar)
+                * (self.arithmetic_mean - annual_mar)
                 / np.power(lower_partial_moment, (1 / moment))
             )
         elif not annual:
-            mar_daily = (mar + 1) ** (1 / 252) - 1
+            mar = self._rate_conversion(annual_mar)
             kappa_ratio = (
-                100
-                * (self.mean - mar_daily)
-                / np.power(lower_partial_moment, (1 / moment))
+                100 * (self.mean - mar) / np.power(lower_partial_moment, (1 / moment))
             )
 
         return kappa_ratio
 
-    def gain_loss(self, mar=0.03, moment=1):
+    def gain_loss(self, annual_mar=0.03, moment=1):
 
-        hpm = self.higher_partial_moment(mar, moment)
-        lpm = self.lower_partial_moment(mar, moment)
+        hpm = self.higher_partial_moment(annual_mar, moment)
+        lpm = self.lower_partial_moment(annual_mar, moment)
 
         gain_loss_ratio = hpm / lpm
 
         return gain_loss_ratio
 
-    def calmar(self, period=1000, rfr=0.02, annual=True, compounding=True):
+    def calmar(self, period=1000, annual_rfr=0.02, annual=True, compounding=True):
 
         if period >= self.portfolio_state.shape[0]:
             period = self.portfolio_state.shape[0]
@@ -767,16 +770,16 @@ class PMPT(PortfolioAnalytics):
                 "Mean returns cannot be compounded if `annual` is `False`."
             )
         elif annual and compounding:
-            calmar_ratio = 100 * (self.geometric_mean - rfr) / maximum_drawdown
+            calmar_ratio = 100 * (self.geometric_mean - annual_rfr) / maximum_drawdown
         elif annual and not compounding:
-            calmar_ratio = 100 * (self.arithmetic_mean - rfr) / maximum_drawdown
+            calmar_ratio = 100 * (self.arithmetic_mean - annual_rfr) / maximum_drawdown
         elif not annual:
-            rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            calmar_ratio = 100 * (self.mean - rfr_daily) / maximum_drawdown
+            rfr = self._rate_conversion(annual_rfr)
+            calmar_ratio = 100 * (self.mean - rfr) / maximum_drawdown
 
         return calmar_ratio
 
-    def sterling(self, rfr=0.02, drawdowns=3, annual=True, compounding=True):
+    def sterling(self, annual_rfr=0.02, drawdowns=3, annual=True, compounding=True):
 
         portfolio_drawdowns = self.drawdowns()
         sorted_drawdowns = np.sort(portfolio_drawdowns)
@@ -788,15 +791,15 @@ class PMPT(PortfolioAnalytics):
             )
         elif annual and compounding:
             sterling_ratio = (
-                100 * (self.geometric_mean - rfr) / np.abs(d_average_drawdown)
+                100 * (self.geometric_mean - annual_rfr) / np.abs(d_average_drawdown)
             )
         if annual and not compounding:
             sterling_ratio = (
-                100 * (self.arithmetic_mean - rfr) / np.abs(d_average_drawdown)
+                100 * (self.arithmetic_mean - annual_rfr) / np.abs(d_average_drawdown)
             )
         elif not annual:
-            rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            sterling_ratio = 100 * (self.mean - rfr_daily) / np.abs(d_average_drawdown)
+            rfr = self._rate_conversion(annual_rfr)
+            sterling_ratio = 100 * (self.mean - rfr) / np.abs(d_average_drawdown)
 
         return sterling_ratio
 
@@ -839,7 +842,7 @@ class Ulcer(PortfolioAnalytics):
         self,
         annual=True,
         compounding=True,
-        rfr=0.02,
+        annual_rfr=0.02,
         period=14,
     ):
 
@@ -850,12 +853,12 @@ class Ulcer(PortfolioAnalytics):
                 "Mean returns cannot be compounded if `annual` is `False`."
             )
         elif annual and compounding:
-            martin_ratio = 100 * (self.geometric_mean - rfr) / ulcer_index
+            martin_ratio = 100 * (self.geometric_mean - annual_rfr) / ulcer_index
         if annual and not compounding:
-            martin_ratio = 100 * (self.arithmetic_mean - rfr) / ulcer_index
+            martin_ratio = 100 * (self.arithmetic_mean - annual_rfr) / ulcer_index
         elif not annual:
-            rfr_daily = (rfr + 1) ** (1 / 252) - 1
-            martin_ratio = 100 * (self.mean - rfr_daily) / ulcer_index
+            rfr = self._rate_conversion(annual_rfr)
+            martin_ratio = 100 * (self.mean - rfr) / ulcer_index
 
         return martin_ratio
 
@@ -1140,8 +1143,8 @@ class OmegaAnalysis(PortfolioAnalytics):
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
-        mar_lower_bound=0,
-        mar_upper_bound=0.2,
+        annual_mar_lower_bound=0,
+        annual_mar_upper_bound=0.2,
     ):
         """
         Initiates the object.
@@ -1151,32 +1154,32 @@ class OmegaAnalysis(PortfolioAnalytics):
             weights (list-like object): Asset weights in portfolio.
             portfolio_name (str, optional): Name of the innvestment portfolio being analysed. Defaults to "Investment Portfolio".
             initial_aum (int, optional): _description_. Defaults to 10000.
-            mar_lower_bound (int, optional): MAR lower bound for the Omega Curve. Defaults to 0.
-            mar_upper_bound (float, optional): MAR upper bound for the Omega Curve. Defaults to 0.2.
+            annual_mar_lower_bound (int, optional): Annual Minimum Acceptable Return (MAR) lower bound for the Omega Curve. Defaults to 0.
+            annual_mar_upper_bound (float, optional): Annual Minimum Acceptable Return (MAR) upper bound for the Omega Curve. Defaults to 0.2.
         """
 
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
         self.mar_array = np.linspace(
-            mar_lower_bound,
-            mar_upper_bound,
-            round(100 * (mar_upper_bound - mar_lower_bound)),
+            annual_mar_lower_bound,
+            annual_mar_upper_bound,
+            round(100 * (annual_mar_upper_bound - annual_mar_lower_bound)),
         )
 
-    def omega_ratio(self, mar=0.03):
+    def omega_ratio(self, annual_mar=0.03):
         """
         Calculates the Omega Ratio of one or more portfolios.
 
         Args:
-            mar (float, optional): Minimum Acceptable Return. Defaults to 0.03.
+            annual_mar (float, optional): Annual Minimum Acceptable Return (MAR). Defaults to 0.03.
 
         Returns:
             pd.Series: Series with Omega Ratios of all portfolios.
         """  # TODO: change docstrings style
 
-        mar_daily = (mar + 1) ** np.sqrt(1 / 252) - 1  # TODO: this
+        mar = self._rate_conversion(annual_mar)
 
-        excess_returns = self.portfolio_returns - mar_daily
+        excess_returns = self.portfolio_returns - mar
         winning = excess_returns[excess_returns > 0].sum()
         losing = -(excess_returns[excess_returns <= 0].sum())
 
