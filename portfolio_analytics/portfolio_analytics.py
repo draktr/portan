@@ -41,12 +41,12 @@ class PortfolioAnalytics:
         self.allocation_assets = pd.Series(self.allocation_assets, index=self.tickers)
 
         # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
-        self.self.portfolio_state = np.multiply(
-            self.prices, self.allocation_assets
-        )  # TODO: this should be pandas
-        self.self.portfolio_state["Whole Portfolio"] = self.self.portfolio_state.sum(
-            axis=1
+        self.portfolio_state = pd.DataFrame(
+            np.multiply(self.prices, self.allocation_assets),
+            index = self.prices.index
+            columns = self.tickers
         )
+        self.portfolio_state["Whole Portfolio"] = self.portfolio_state.sum(axis=1)
 
         self.portfolio_returns = np.dot(self.assets_returns.to_numpy(), self.weights)
         self.portfolio_returns = pd.Series(
@@ -128,7 +128,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def min_aum(self):
 
-        min_aum = self.self.portfolio_state["Whole Portfolio"].min()
+        min_aum = self.portfolio_state["Whole Portfolio"].min()
 
         self.analytics.update({str(inspect.stack()[0][3]): min_aum})  # TODO: this
 
@@ -136,7 +136,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def max_aum(self):
 
-        max_aum = self.self.portfolio_state["Whole Portfolio"].max()
+        max_aum = self.portfolio_state["Whole Portfolio"].max()
 
         self.analytics.update({str(inspect.stack()[0][3]): max_aum})  # TODO: this
 
@@ -144,7 +144,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def mean_aum(self):
 
-        mean_aum = self.self.portfolio_state["Whole Portfolio"].mean()
+        mean_aum = self.portfolio_state["Whole Portfolio"].mean()
 
         self.analytics.update({str(inspect.stack()[0][3]): mean_aum})  # TODO: this
 
