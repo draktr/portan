@@ -95,16 +95,15 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def net_return(self, percentage=False):
 
+        if not isinstance(percentage, bool):
+            raise ValueError("Percentage argument should be a `bool`.")
+
         final_aum = self.final_aum()
 
         if not percentage:
             net_return = final_aum - self.initial_aum
-        elif percentage:
-            net_return = (final_aum - self.initial_aum) / self.initial_aum
         else:
-            raise ValueError(
-                "Argument 'percentage' has to be boolean."
-            )  # TODO: do this in _checks.py
+            net_return = (final_aum - self.initial_aum) / self.initial_aum
 
         return net_return
 
@@ -134,7 +133,9 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
     def distribution_test(self, test="dagostino-pearson", distribution="norm"):
 
-        if test == "kolomogorov-smirnov":
+        if test == "dagostino-pearson":
+            result = stats.normaltest(self.portfolio_returns)
+        elif test == "kolomogorov-smirnov":
             result = stats.kstest(self.portfolio_returns, distribution)
         elif test == "lilliefors":
             result = lilliefors(self.portfolio_returns)
@@ -142,8 +143,6 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
             result = stats.shapiro(self.portfolio_returns)
         elif test == "jarque-barre":
             result = stats.jarque_bera(self.portfolio_returns)
-        elif test == "dagostino-pearson":
-            result = stats.normaltest(self.portfolio_returns)
         elif test == "anderson-darling":
             result = stats.anderson(self.portfolio_returns, distribution)
         else:
@@ -580,7 +579,12 @@ class PMPT(PortfolioAnalytics):
 
     def sortino(self, annual_mar=0.03, annual_rfr=0.02, annual=True, compounding=True):
 
-        _checks._check_rate_arguments(annual_mar, annual_rfr, annual, compounding)
+        _checks._check_rate_arguments(
+            annual_mar=annual_mar,
+            annual_rfr=annual_rfr,
+            annual=annual,
+            compounding=compounding,
+        )
 
         downside_volatility = self.downside_volatility(annual_mar, annual)
 
@@ -608,9 +612,9 @@ class PMPT(PortfolioAnalytics):
 
     def maximum_drawdown(self, period=1000):
 
-        if period >= self.portfolio_state.shape[0]:
-            period = self.portfolio_state.shape[0]
-            warnings.warn("Dataset too small. Period taken as {}.".format(period))
+        period = _checks._check_period(
+            period=period, portfolio_state=self.portfolio_state
+        )
 
         peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
@@ -623,9 +627,9 @@ class PMPT(PortfolioAnalytics):
 
     def maximum_drawdown_percentage(self, period=1000):
 
-        if period > self.portfolio_state.shape[0]:
-            period = self.portfolio_state.shape[0]
-            warnings.warn("Dataset too small. Period taken as {}.".format(period))
+        period = _checks._check_period(
+            period=period, portfolio_state=self.portfolio_state
+        )
 
         peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
@@ -697,6 +701,7 @@ class PMPT(PortfolioAnalytics):
     def higher_partial_moment(self, annual_mar=0.03, moment=3):
 
         _checks._check_rate_arguments(annual_mar=annual_mar)
+        _checks._check_posints(argument=moment)
 
         mar = self._rate_conversion(annual_mar)
 
@@ -711,6 +716,7 @@ class PMPT(PortfolioAnalytics):
     def lower_partial_moment(self, annual_mar=0.03, moment=3):
 
         _checks._check_rate_arguments(annual_mar=annual_mar)
+        _checks._check_posints(argument=moment)
 
         mar = self._rate_conversion(annual_mar)
         days = self.portfolio_returns.shape[0]
@@ -726,6 +732,7 @@ class PMPT(PortfolioAnalytics):
         _checks._check_rate_arguments(
             annual_mar=annual_mar, annual=annual, compounding=compounding
         )
+        _checks._check_posints(argument=moment)
 
         lower_partial_moment = self.lower_partial_moment(annual_mar, moment)
 
@@ -752,6 +759,7 @@ class PMPT(PortfolioAnalytics):
     def gain_loss(self, annual_mar=0.03, moment=1):
 
         _checks._check_rate_arguments(annual_mar=annual_mar)
+        _checks._check_posints(argument=moment)
 
         hpm = self.higher_partial_moment(annual_mar, moment)
         lpm = self.lower_partial_moment(annual_mar, moment)
@@ -765,10 +773,9 @@ class PMPT(PortfolioAnalytics):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-
-        if period >= self.portfolio_state.shape[0]:  # TODO: maybe these in checks
-            period = self.portfolio_state.shape[0]
-            warnings.warn("Dataset too small. Period taken as {}.".format(period))
+        period = _checks._check_period(
+            period=period, portfolio_state=self.portfolio_state
+        )
 
         maximum_drawdown = self.maximum_drawdown_percentage(period)
 
@@ -787,6 +794,7 @@ class PMPT(PortfolioAnalytics):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
+        _checks._check_posints(argument=drawdowns)
 
         portfolio_drawdowns = self.drawdowns()
         sorted_drawdowns = np.sort(portfolio_drawdowns)
@@ -821,6 +829,11 @@ class Ulcer(PortfolioAnalytics):
 
     def ulcer(self, period=14, start=1):
 
+        period = _checks._check_period(
+            period=period, portfolio_state=self.portfolio_state
+        )
+        _checks._check_posints(argument=start)
+
         close = np.empty(period)
         percentage_drawdown = np.empty(period)
 
@@ -852,6 +865,9 @@ class Ulcer(PortfolioAnalytics):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
+        period = _checks._check_period(
+            period=period, portfolio_state=self.portfolio_state
+        )
 
         ulcer_index = self.ulcer(period)
 
@@ -867,6 +883,10 @@ class Ulcer(PortfolioAnalytics):
 
     def ulcer_series(self, period=14):
 
+        period = _checks._check_period(
+            period=period, portfolio_state=self.portfolio_state
+        )
+
         ulcer_series = pd.DataFrame(
             columns=["Ulcer Index"], index=self.portfolio_state.index
         )
@@ -877,6 +897,9 @@ class Ulcer(PortfolioAnalytics):
 
     def plot_ulcer(self, period=14, show=True, save=False):
 
+        period = _checks._check_period(
+            period=period, portfolio_state=self.portfolio_state
+        )
         _checks._check_plot_arguments(show=show, save=save)
 
         ulcer_series = self.ulcer_series(period)
