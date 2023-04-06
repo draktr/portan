@@ -43,8 +43,8 @@ class PortfolioAnalytics:
         # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
         self.portfolio_state = pd.DataFrame(
             np.multiply(self.prices, self.allocation_assets),
-            index = self.prices.index
-            columns = self.tickers
+            index=self.prices.index,
+            columns=self.tickers,
         )
         self.portfolio_state["Whole Portfolio"] = self.portfolio_state.sum(axis=1)
 
@@ -65,23 +65,6 @@ class PortfolioAnalytics:
 
         self.volatility = self.portfolio_returns.std()
         self.annual_volatility = self.volatility * np.sqrt(self.frequency)
-
-        self.analytics = {}  # TODO: decide on what to do with this
-
-    def save_executed(self):  # TODO: and this
-
-        analytics = pd.DataFrame(
-            list(self.analytics.values()), index=self.analytics.keys()
-        )
-        analytics.transpose().to_csv("analytics.csv")
-
-    def save_listed(self, methods):  # TODO:
-
-        analytics = {}
-        for method in methods:
-            analytics.update(method=getattr(self, method)())
-        analytics = pd.DataFrame(list(analytics.values()), index=analytics.keys())
-        analytics.transpose().to_csv("analytics.csv")
 
     def _rate_conversion(self, annual_rate):
 
@@ -122,15 +105,11 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
                 "Argument 'percentage' has to be boolean."
             )  # TODO: do this in _checks.py
 
-        self.analytics.update({str(inspect.stack()[0][3]): net_return})  # TODO: this
-
         return net_return
 
     def min_aum(self):
 
         min_aum = self.portfolio_state["Whole Portfolio"].min()
-
-        self.analytics.update({str(inspect.stack()[0][3]): min_aum})  # TODO: this
 
         return min_aum
 
@@ -138,25 +117,17 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
         max_aum = self.portfolio_state["Whole Portfolio"].max()
 
-        self.analytics.update({str(inspect.stack()[0][3]): max_aum})  # TODO: this
-
         return max_aum
 
     def mean_aum(self):
 
         mean_aum = self.portfolio_state["Whole Portfolio"].mean()
 
-        self.analytics.update({str(inspect.stack()[0][3]): mean_aum})  # TODO: this
-
         return mean_aum
 
     def final_aum(self):
 
         final_aum = self.allocation_assets * self.assets_info["regularMarketPrice"]
-
-        setattr(
-            self, self.analytics, self.analytics.update({"final_aum": final_aum})
-        )  # TODO: this
 
         return final_aum
 
@@ -176,8 +147,6 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
             result = stats.anderson(self.portfolio_returns, distribution)
         else:
             raise ValueError("Statistical test is unavailable.")
-
-        self.analytics.update({str(inspect.stack()[0][3]): result})  # TODO: this
 
         return result
 
