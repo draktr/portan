@@ -19,3 +19,11 @@ def _check_rate_arguments(
             raise ValueError(
                 "Mean returns cannot be compounded if `annual` is `False`."
             )
+
+
+def _check_plot_arguments(show, save):
+
+    if not isinstance(show, bool):
+        raise ValueError()
+    if not isinstance(save, bool):
+        raise ValueError()

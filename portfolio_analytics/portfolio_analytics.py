@@ -166,6 +166,8 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
 
     def plot_aum(self, show=True, save=False):
 
+        _checks._check_plot_arguments(show=show, save=save)
+
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         self.portfolio_state["Whole Portfolio"].plot(ax=ax)
@@ -178,6 +180,8 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_returns(self, show=True, save=False):
+
+        _checks._check_plot_arguments(show=show, save=save)
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -192,6 +196,8 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
 
     def plot_portfolio_returns_distribution(self, show=True, save=False):
 
+        _checks._check_plot_arguments(show=show, save=save)
+
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         self.portfolio_returns.plot.hist(bins=90)
@@ -205,6 +211,8 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
 
     def plot_portfolio_cumulative_returns(self, show=True, save=False):
 
+        _checks._check_plot_arguments(show=show, save=save)
+
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         self.portfolio_cumulative_returns.plot(ax=ax)
@@ -216,17 +224,18 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         if show:
             plt.show()
 
-    def plot_portfolio_piechart(self, weights, show=True, save=False):
+    def plot_portfolio_piechart(self, show=True, save=False):
 
-        allocation_funds = np.multiply(self.initial_aum, weights)
+        _checks._check_plot_arguments(show=show, save=save)
+
         wp = {"linewidth": 1, "edgecolor": "black"}
         explode = tuple(repeat(0.05, len(self.tickers)))
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         pie = ax.pie(
-            allocation_funds,
-            autopct=lambda pct: self._ap(pct, allocation_funds),
+            self.allocation_funds,
+            autopct=lambda pct: self._ap(pct, self.allocation_funds),
             explode=explode,
             labels=self.tickers,
             shadow=True,
@@ -248,6 +257,8 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_assets_cumulative_returns(self, show=True, save=False):
+
+        _checks._check_plot_arguments(show=show, save=save)
 
         assets_cumulative_returns = (self.assets_returns + 1).cumprod()
 
@@ -334,6 +345,7 @@ class MPT(PortfolioAnalytics):
     def plot_capm(self, annual_rfr=0.02, show=True, save=False):
 
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
+        _checks._check_plot_arguments(show=show, save=save)
 
         capm = self.capm(annual_rfr)
 
@@ -865,6 +877,8 @@ class Ulcer(PortfolioAnalytics):
 
     def plot_ulcer(self, period=14, show=True, save=False):
 
+        _checks._check_plot_arguments(show=show, save=save)
+
         ulcer_series = self.ulcer_series(period)
 
         fig = plt.figure()
@@ -941,6 +955,8 @@ class ValueAtRisk(PortfolioAnalytics):
         save=False,
     ):
 
+        _checks._check_plot_arguments(show=show, save=save)
+
         if compounding:  # TODO: add option for just self.mean
             mean_return = self.geometric_mean
         else:
@@ -988,6 +1004,8 @@ class ValueAtRisk(PortfolioAnalytics):
 
     def plot_historical_var(self, value, number_of_bins=100, show=True, save=False):
 
+        _checks._check_plot_arguments(show=show, save=save)
+
         sorted_portfolio_returns = np.sort(self.portfolio_returns)
         bins = np.linspace(
             sorted_portfolio_returns[0],
@@ -1033,6 +1051,8 @@ class Matrices(PortfolioAnalytics):
 
     def plot_correlation_matrix(self, show=True, save=False):
 
+        _checks._check_plot_arguments(show=show, save=save)
+
         matrix = self.correlation_matrix()
 
         sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
@@ -1051,6 +1071,8 @@ class Matrices(PortfolioAnalytics):
         return matrix
 
     def plot_covariance_matrix(self, annual=False, show=True, save=False):
+
+        _checks._check_plot_arguments(show=show, save=save)
 
         matrix = self.covariance_matrix(annual)
 
@@ -1180,7 +1202,7 @@ class OmegaAnalysis(PortfolioAnalytics):
 
         return omega
 
-    def omega_curve(self, show=True, save=False):
+    def plot_omega_curve(self, show=True, save=False):
         """
         Plots and/or saves Omega Curve(s) of of one or more portfolios.
 
@@ -1188,6 +1210,8 @@ class OmegaAnalysis(PortfolioAnalytics):
             show (bool, optional): Show the plot upon the execution of the code. Defaults to True.
             save (bool, optional): Save the plot on storage. Defaults to False.
         """
+
+        _checks._check_plot_arguments(show=show, save=save)
 
         all_values = pd.DataFrame(columns=self.portfolio_returns.columns)
 
