@@ -63,3 +63,65 @@ def _check_multiple_returns(returns):
         warnings.Warn()
 
     return returns
+
+
+def _check_init(prices, weights, portfolio_name, initial_aum, frequency):
+    if not isinstance(prices, pd.DataFrame):
+        raise ValueError()
+    if np.any(np.isnan(prices)):
+        raise ValueError()
+    if np.any(np.isinf(prices)):
+        raise ValueError()
+    if not isinstance(weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
+        raise ValueError()
+    if not isinstance(portfolio_name, str):
+        raise ValueError()
+    if not isinstance(initial_aum, (int, float)):
+        raise ValueError()
+    if initial_aum <= 0:
+        raise ValueError()
+    if not isinstance(frequency, (int, float)):
+        raise ValueError()
+
+
+def _check_pt_init(
+    prices,
+    weights,
+    benchmark_prices,
+    benchmark_weights,
+    portfolio_name,
+    benchmark_name,
+    initial_aum,
+    frequency,
+):
+    if not isinstance(prices, pd.DataFrame):
+        raise ValueError()
+    if np.any(np.isnan(prices)):
+        raise ValueError()
+    if np.any(np.isinf(prices)):
+        raise ValueError()
+    if not isinstance(weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
+        raise ValueError()
+    if not isinstance(benchmark_prices, pd.DataFrame):
+        raise ValueError()
+    if not isinstance(benchmark_weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
+        raise ValueError()
+    if not isinstance(portfolio_name, str):
+        raise ValueError()
+    if not isinstance(benchmark_name, str):
+        raise ValueError()
+    if not isinstance(initial_aum, (int, float)):
+        raise ValueError()
+    if initial_aum <= 0:
+        raise ValueError()
+    if not isinstance(frequency, (int, float)):
+        raise ValueError()
+
+
+def _check_mar_bounds(annual_mar_lower_bound, annual_mar_upper_bound):
+    if not isinstance(annual_mar_lower_bound, (int, float)):
+        raise ValueError()
+    if not isinstance(annual_mar_upper_bound, (int, float)):
+        raise ValueError()
+    if annual_mar_lower_bound >= annual_mar_upper_bound:
+        raise ValueError()

@@ -19,7 +19,15 @@ class PortfolioAnalytics:
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
-    ):
+    ) -> None:
+        _checks._check_init(
+            prices=prices,
+            weights=weights,
+            portfolio_name=portfolio_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         self.prices = prices
         self.assets_returns = self.prices.pct_change().drop(self.prices.index[0])
         self.tickers = self.prices.columns
@@ -76,7 +84,15 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
-    ):
+    ) -> None:
+        _checks._check_init(
+            prices=prices,
+            weights=weights,
+            portfolio_name=portfolio_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         super().__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def excess_returns(self, annual_mar=0.03):
@@ -146,7 +162,15 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
-    ):
+    ) -> None:
+        _checks._check_init(
+            prices=prices,
+            weights=weights,
+            portfolio_name=portfolio_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         super().__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def plot_aum(self, show=True, save=False):
@@ -271,6 +295,17 @@ class MPT(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
+        _checks._check_pt_init(
+            prices=prices,
+            weights=weights,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            portfolio_name=portfolio_name,
+            benchmark_name=benchmark_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
         self.benchmark_name = benchmark_name
@@ -380,6 +415,17 @@ class PMPT(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
+        _checks._check_pt_init(
+            prices=prices,
+            weights=weights,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            portfolio_name=portfolio_name,
+            benchmark_name=benchmark_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
         self.benchmark_name = benchmark_name
@@ -753,6 +799,14 @@ class Ulcer(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
+        _checks._check_init(
+            prices=prices,
+            weights=weights,
+            portfolio_name=portfolio_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def ulcer(self, period=14, start=1):
@@ -846,6 +900,14 @@ class ValueAtRisk(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
+        _checks._check_init(
+            prices=prices,
+            weights=weights,
+            portfolio_name=portfolio_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def analytical_var(
@@ -989,6 +1051,14 @@ class Matrices(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
+        _checks._check_init(
+            prices=prices,
+            weights=weights,
+            portfolio_name=portfolio_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+
         super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def correlation_matrix(self):
@@ -1037,7 +1107,7 @@ class OmegaAnalysis(PortfolioAnalytics):
         frequency=252,
         annual_mar_lower_bound=0,
         annual_mar_upper_bound=0.2,
-    ):
+    ) -> None:
         """
         Initiates the object
 
@@ -1056,6 +1126,18 @@ class OmegaAnalysis(PortfolioAnalytics):
         :param annual_mar_upper_bound: Annual Minimum Acceptable Return (MAR) upper bound for the Omega Curve., defaults to 0.2
         :type annual_mar_upper_bound: int or float, optional
         """
+
+        _checks._check_init(
+            prices=prices,
+            weights=weights,
+            portfolio_name=portfolio_name,
+            initial_aum=initial_aum,
+            frequency=frequency,
+        )
+        _checks._check_mar_bounds(
+            annual_mar_lower_bound=annual_mar_lower_bound,
+            annual_mar_upper_bound=annual_mar_upper_bound,
+        )
 
         super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
