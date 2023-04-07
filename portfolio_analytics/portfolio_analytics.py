@@ -928,12 +928,18 @@ class ValueAtRisk(PortfolioAnalytics):
 
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
-    def analytical_var(self, value, dof, compounding=True, distribution="normal"):
+    def analytical_var(
+        self, value, dof, annual=True, compounding=True, distribution="normal"
+    ):
 
-        if compounding:  # TODO: add option for just self.mean
+        _checks._check_rate_arguments(annual=annual, compounding=compounding)
+
+        if annual and compounding:
             mean_return = self.geometric_mean
-        else:
+        elif annual and not compounding:
             mean_return = self.arithmetic_mean
+        elif not annual:
+            mean_return = self.mean
 
         if distribution == "normal":
             var = stats.norm(mean_return, self.annual_volatility).cdf(value)
@@ -971,6 +977,7 @@ class ValueAtRisk(PortfolioAnalytics):
         self,
         value,
         dof,
+        annual=True,
         compounding=True,
         z=3,
         distribution="Normal",
@@ -978,12 +985,15 @@ class ValueAtRisk(PortfolioAnalytics):
         save=False,
     ):
 
+        _checks._check_rate_arguments(annual=annual, compounding=compounding)
         _checks._check_plot_arguments(show=show, save=save)
 
-        if compounding:  # TODO: add option for just self.mean
+        if annual and compounding:
             mean_return = self.geometric_mean
-        else:
+        elif annual and not compounding:
             mean_return = self.arithmetic_mean
+        elif not annual:
+            mean_return = self.mean
 
         x = np.linspace(
             mean_return - z * self.annual_volatility,
