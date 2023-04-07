@@ -8,7 +8,6 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
 from itertools import repeat
-import inspect
 from portfolio_analytics import _checks
 
 
@@ -21,7 +20,6 @@ class PortfolioAnalytics:
         initial_aum=10000,
         frequency=252,
     ):
-
         self.prices = data["Adj Close"]
         self.assets_returns = self.prices.pct_change().drop(self.prices.index[0])
         self.tickers = self.prices.columns
@@ -67,7 +65,6 @@ class PortfolioAnalytics:
         self.annual_volatility = self.volatility * np.sqrt(self.frequency)
 
     def _rate_conversion(self, annual_rate):
-
         return (annual_rate + 1) ** (1 / self.frequency) - 1
 
 
@@ -80,11 +77,9 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ):
-
         super().__init__(data, weights, portfolio_name, initial_aum, frequency)
 
     def excess_returns(self, annual_mar=0.03):
-
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
@@ -93,9 +88,7 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         return excess_returns
 
     def net_return(self, percentage=False):
-
-        if not isinstance(percentage, bool):
-            raise ValueError("Percentage argument should be a `bool`.")
+        _checks._check_percentage(percentage=percentage)
 
         final_aum = self.final_aum()
 
@@ -107,31 +100,26 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
         return net_return
 
     def min_aum(self):
-
         min_aum = self.portfolio_state["Whole Portfolio"].min()
 
         return min_aum
 
     def max_aum(self):
-
         max_aum = self.portfolio_state["Whole Portfolio"].max()
 
         return max_aum
 
     def mean_aum(self):
-
         mean_aum = self.portfolio_state["Whole Portfolio"].mean()
 
         return mean_aum
 
     def final_aum(self):
-
         final_aum = self.allocation_assets * self.assets_info["regularMarketPrice"]
 
         return final_aum
 
     def distribution_test(self, test="dagostino-pearson", distribution="norm"):
-
         if test == "dagostino-pearson":
             result = stats.normaltest(self.portfolio_returns)
         elif test == "kolomogorov-smirnov":
@@ -159,11 +147,9 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ):
-
         super().__init__(data, weights, portfolio_name, initial_aum, frequency)
 
     def plot_aum(self, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         fig = plt.figure()
@@ -178,7 +164,6 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_returns(self, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         fig = plt.figure()
@@ -193,7 +178,6 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_returns_distribution(self, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         fig = plt.figure()
@@ -208,7 +192,6 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_cumulative_returns(self, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         fig = plt.figure()
@@ -223,7 +206,6 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_portfolio_piechart(self, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         wp = {"linewidth": 1, "edgecolor": "black"}
@@ -255,7 +237,6 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def plot_assets_cumulative_returns(self, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         assets_cumulative_returns = (self.assets_returns + 1).cumprod()
@@ -273,7 +254,6 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
             plt.show()
 
     def _ap(self, pct, all_values):
-
         absolute = int(pct / 100.0 * np.sum(all_values))
 
         return "{:.1f}%\n(${:d})".format(pct, absolute)
@@ -291,7 +271,6 @@ class MPT(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
-
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
         self.benchmark_name = benchmark_name
@@ -317,7 +296,6 @@ class MPT(PortfolioAnalytics):
         self.benchmark_mean = self.benchmark_assets_returns.mean()
 
     def capm(self, annual_rfr=0.02):
-
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
 
         rfr = self._rate_conversion(annual_rfr)
@@ -341,7 +319,6 @@ class MPT(PortfolioAnalytics):
         )
 
     def plot_capm(self, annual_rfr=0.02, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         capm = self.capm(annual_rfr)
@@ -367,7 +344,6 @@ class MPT(PortfolioAnalytics):
             plt.show()
 
     def sharpe(self, annual_rfr=0.02, annual=True, compounding=True):
-
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -387,7 +363,6 @@ class MPT(PortfolioAnalytics):
         return sharpe_ratio
 
     def tracking_error(self):
-
         tracking_error = np.std(self.portfolio_returns - self.benchmark_returns, ddof=1)
 
         return tracking_error
@@ -405,7 +380,6 @@ class PMPT(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
-
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
         self.benchmark_name = benchmark_name
@@ -431,7 +405,6 @@ class PMPT(PortfolioAnalytics):
         self.benchmark_mean = self.benchmark_assets_returns.mean()
 
     def upside_volatility(self, annual_mar=0.03, annual=True):
-
         _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
 
         mar = self._rate_conversion(annual_mar)
@@ -450,7 +423,6 @@ class PMPT(PortfolioAnalytics):
         return upside_volatility
 
     def downside_volatility(self, annual_mar=0.03, annual=True):
-
         _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
 
         mar = self._rate_conversion(annual_mar)
@@ -469,7 +441,6 @@ class PMPT(PortfolioAnalytics):
         return downside_volatility
 
     def volatility_skew(self, annual_mar=0.03, annual=True):
-
         upside = self.upside_volatility(annual_mar, annual)
         downside = self.downside_volatility(annual_mar, annual)
         skew = upside / downside
@@ -477,7 +448,6 @@ class PMPT(PortfolioAnalytics):
         return skew
 
     def omega_excess_return(self, annual_mar=0.03, annual=True):
-
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
         mar = self._rate_conversion(annual_mar)
@@ -501,7 +471,6 @@ class PMPT(PortfolioAnalytics):
         return omega_excess_return
 
     def upside_potential_ratio(self, annual_mar=0.03, annual=True):
-
         mar = self._rate_conversion(annual_mar)
 
         downside_volatility = self.downside_volatility(annual_mar, annual)
@@ -512,7 +481,6 @@ class PMPT(PortfolioAnalytics):
         return upside_potential_ratio
 
     def downside_capm(self, annual_mar=0.03):
-
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
@@ -545,7 +513,6 @@ class PMPT(PortfolioAnalytics):
         )
 
     def downside_volatility_ratio(self, annual_mar=0.03, annual=True):
-
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
         mar = self._rate_conversion(annual_mar)
@@ -568,7 +535,6 @@ class PMPT(PortfolioAnalytics):
         return downside_volatility_ratio
 
     def sortino(self, annual_mar=0.03, annual_rfr=0.02, annual=True, compounding=True):
-
         _checks._check_rate_arguments(
             annual_mar=annual_mar,
             annual_rfr=annual_rfr,
@@ -593,45 +559,31 @@ class PMPT(PortfolioAnalytics):
         return sortino_ratio
 
     def drawdowns(self):
-
         wealth_index = 1000 * (1 + self.portfolio_returns).cumprod()
         previous_peaks = wealth_index.cummax()
         drawdowns = (wealth_index - previous_peaks) / previous_peaks
 
         return drawdowns
 
-    def maximum_drawdown(self, period=1000):
-
+    def maximum_drawdown(self, period=1000, percentage=False):
         period = _checks._check_period(
             period=period, portfolio_state=self.portfolio_state
         )
+        _checks._check_percentage(percentage=percentage)
 
         peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
         peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
         peak_index_int = self.portfolio_state.index.get_loc(peak_index)
         trough = np.min(self.portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
 
-        maximum_drawdown = trough - peak
+        if not percentage:
+            maximum_drawdown = trough - peak
+        else:
+            maximum_drawdown = (trough - peak) / peak
 
         return maximum_drawdown
 
-    def maximum_drawdown_percentage(self, period=1000):
-
-        period = _checks._check_period(
-            period=period, portfolio_state=self.portfolio_state
-        )
-
-        peak = np.max(self.portfolio_state.iloc[-period:]["Whole Portfolio"])
-        peak_index = self.portfolio_state["Whole Portfolio"].idxmax()
-        peak_index_int = self.portfolio_state.index.get_loc(peak_index)
-        trough = np.min(self.portfolio_state.iloc[-peak_index_int:]["Whole Portfolio"])
-
-        maximum_drawdown_ratio = (trough - peak) / peak
-
-        return maximum_drawdown_ratio
-
     def jensen_alpha(self, annual_rfr=0.02, annual=True, compounding=True):
-
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -664,7 +616,6 @@ class PMPT(PortfolioAnalytics):
         return jensen_alpha
 
     def treynor(self, annual_rfr=0.02, annual=True, compounding=True):
-
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -689,7 +640,6 @@ class PMPT(PortfolioAnalytics):
         return treynor_ratio
 
     def higher_partial_moment(self, annual_mar=0.03, moment=3):
-
         _checks._check_rate_arguments(annual_mar=annual_mar)
         _checks._check_posints(argument=moment)
 
@@ -704,7 +654,6 @@ class PMPT(PortfolioAnalytics):
         return higher_partial_moment
 
     def lower_partial_moment(self, annual_mar=0.03, moment=3):
-
         _checks._check_rate_arguments(annual_mar=annual_mar)
         _checks._check_posints(argument=moment)
 
@@ -718,7 +667,6 @@ class PMPT(PortfolioAnalytics):
         return lower_partial_moment
 
     def kappa(self, annual_mar=0.03, moment=3, annual=True, compounding=True):
-
         _checks._check_rate_arguments(
             annual_mar=annual_mar, annual=annual, compounding=compounding
         )
@@ -747,7 +695,6 @@ class PMPT(PortfolioAnalytics):
         return kappa_ratio
 
     def gain_loss(self, annual_mar=0.03, moment=1):
-
         hpm = self.higher_partial_moment(annual_mar, moment)
         lpm = self.lower_partial_moment(annual_mar, moment)
 
@@ -756,12 +703,11 @@ class PMPT(PortfolioAnalytics):
         return gain_loss_ratio
 
     def calmar(self, period=1000, annual_rfr=0.02, annual=True, compounding=True):
-
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        maximum_drawdown = self.maximum_drawdown_percentage(period)
+        maximum_drawdown = self.maximum_drawdown(period=period, percentage=True)
 
         if annual and compounding:
             calmar_ratio = 100 * (self.geometric_mean - annual_rfr) / maximum_drawdown
@@ -774,7 +720,6 @@ class PMPT(PortfolioAnalytics):
         return calmar_ratio
 
     def sterling(self, annual_rfr=0.02, drawdowns=3, annual=True, compounding=True):
-
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -808,11 +753,9 @@ class Ulcer(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
-
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
     def ulcer(self, period=14, start=1):
-
         period = _checks._check_period(
             period=period, portfolio_state=self.portfolio_state
         )
@@ -845,7 +788,6 @@ class Ulcer(PortfolioAnalytics):
         compounding=True,
         period=14,
     ):
-
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -866,7 +808,6 @@ class Ulcer(PortfolioAnalytics):
         return martin_ratio
 
     def ulcer_series(self, period=14):
-
         period = _checks._check_period(
             period=period, portfolio_state=self.portfolio_state
         )
@@ -880,7 +821,6 @@ class Ulcer(PortfolioAnalytics):
         return ulcer_series
 
     def plot_ulcer(self, period=14, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         ulcer_series = self.ulcer_series(period)
@@ -906,13 +846,11 @@ class ValueAtRisk(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
-
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
     def analytical_var(
         self, value, dof, annual=True, compounding=True, distribution="normal"
     ):
-
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
 
         if annual and compounding:
@@ -948,7 +886,6 @@ class ValueAtRisk(PortfolioAnalytics):
         return var, expected_loss
 
     def historical_var(self, value):
-
         returns_below_value = self.portfolio_returns[self.portfolio_returns < value]
         var = returns_below_value.shape[0] / self.portfolio_returns.shape[0]
 
@@ -965,7 +902,6 @@ class ValueAtRisk(PortfolioAnalytics):
         show=True,
         save=False,
     ):
-
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -1017,7 +953,6 @@ class ValueAtRisk(PortfolioAnalytics):
             plt.show()
 
     def plot_historical_var(self, value, number_of_bins=100, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         sorted_portfolio_returns = np.sort(self.portfolio_returns)
@@ -1054,17 +989,14 @@ class Matrices(PortfolioAnalytics):
         initial_aum=10000,
         frequency=252,
     ) -> None:
-
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
 
     def correlation_matrix(self):
-
         matrix = self.portfolio_returns.corr().round(5)
 
         return matrix
 
     def plot_correlation_matrix(self, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         matrix = self.correlation_matrix()
@@ -1076,7 +1008,6 @@ class Matrices(PortfolioAnalytics):
             plt.show()
 
     def covariance_matrix(self, annual=False):
-
         if annual:
             matrix = self.portfolio_returns.cov().round(5) * self.frequency
         else:
@@ -1085,7 +1016,6 @@ class Matrices(PortfolioAnalytics):
         return matrix
 
     def plot_covariance_matrix(self, annual=False, show=True, save=False):
-
         _checks._check_plot_arguments(show=show, save=save)
 
         matrix = self.covariance_matrix(annual)
