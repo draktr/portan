@@ -1038,7 +1038,8 @@ class OmegaAnalysis(PortfolioAnalytics):
         annual_mar_lower_bound=0,
         annual_mar_upper_bound=0.2,
     ):
-        """Initiates the object
+        """
+        Initiates the object
 
         :param data: Prices data for all assets in portfolio.
         :type data: pd.DataFrame
@@ -1065,7 +1066,8 @@ class OmegaAnalysis(PortfolioAnalytics):
         )
 
     def omega_ratio(self, annual_mar=0.03):
-        """Calculates the Omega Ratio of the portfolio.
+        """
+        Calculates the Omega Ratio of the portfolio.
 
         :param annual_mar: Annual Minimum Acceptable Return (MAR)., defaults to 0.03
         :type annual_mar: float, optional
@@ -1085,8 +1087,9 @@ class OmegaAnalysis(PortfolioAnalytics):
 
         return omega
 
-    def plot_omega_curve(self, show=True, save=False):
-        """Plots and/or saves Omega Curve of the portfolio
+    def plot_omega_curve(self, returns=None, show=True, save=False):
+        """
+        Plots and/or saves Omega Curve(s) of the portfolio(s)
 
         :param show: Show the plot upon the execution of the code., defaults to True
         :type show: bool, optional
@@ -1094,16 +1097,18 @@ class OmegaAnalysis(PortfolioAnalytics):
         :type save: bool, optional
         """
 
+        if returns is None:
+            returns = self.portfolio_returns
+
+        _checks._check_multiple_returns(returns=returns)
         _checks._check_plot_arguments(show=show, save=save)
 
-        all_values = pd.DataFrame(columns=self.portfolio_returns.columns)
+        all_values = pd.DataFrame(columns=returns.columns)
 
-        for portfolio in self.portfolio_returns.columns:
+        for portfolio in returns.columns:
             omega_values = list()
             for mar in self.mar_array:
-                value = np.round(
-                    self.omega_ratio(self.portfolio_returns[portfolio], mar), 5
-                )
+                value = np.round(self.omega_ratio(returns[portfolio], mar), 5)
                 omega_values.append(value)
             all_values[portfolio] = omega_values
 
