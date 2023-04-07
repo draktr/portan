@@ -52,3 +52,10 @@ def fill_nan(portfolio_returns, method="adjacent", data_object="pandas"):
         portfolio_returns.fillna(portfolio_returns.mean(), inplace=True)
     else:
         raise ValueError("Fill method unsupported.")
+
+
+def multiple_portfolios(tickers, weights, **kwargs):
+    data = GetData(tickers, weights, **kwargs).data["Adj Close"]
+    returns = data.pct_change().drop(data.index[0])
+
+    return returns
