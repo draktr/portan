@@ -8,7 +8,6 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
 from itertools import repeat
-import warnings
 import inspect
 from portfolio_analytics import _checks
 
@@ -343,7 +342,6 @@ class MPT(PortfolioAnalytics):
 
     def plot_capm(self, annual_rfr=0.02, show=True, save=False):
 
-        _checks._check_rate_arguments(annual_rfr=annual_rfr)
         _checks._check_plot_arguments(show=show, save=save)
 
         capm = self.capm(annual_rfr)
@@ -472,8 +470,6 @@ class PMPT(PortfolioAnalytics):
 
     def volatility_skew(self, annual_mar=0.03, annual=True):
 
-        _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
-        # TODO
         upside = self.upside_volatility(annual_mar, annual)
         downside = self.downside_volatility(annual_mar, annual)
         skew = upside / downside
@@ -481,8 +477,6 @@ class PMPT(PortfolioAnalytics):
         return skew
 
     def omega_excess_return(self, annual_mar=0.03, annual=True):
-
-        _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
 
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
@@ -507,8 +501,6 @@ class PMPT(PortfolioAnalytics):
         return omega_excess_return
 
     def upside_potential_ratio(self, annual_mar=0.03, annual=True):
-
-        _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
 
         mar = self._rate_conversion(annual_mar)
 
@@ -553,8 +545,6 @@ class PMPT(PortfolioAnalytics):
         )
 
     def downside_volatility_ratio(self, annual_mar=0.03, annual=True):
-
-        _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
 
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
@@ -758,9 +748,6 @@ class PMPT(PortfolioAnalytics):
 
     def gain_loss(self, annual_mar=0.03, moment=1):
 
-        _checks._check_rate_arguments(annual_mar=annual_mar)
-        _checks._check_posints(argument=moment)
-
         hpm = self.higher_partial_moment(annual_mar, moment)
         lpm = self.lower_partial_moment(annual_mar, moment)
 
@@ -772,9 +759,6 @@ class PMPT(PortfolioAnalytics):
 
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
-        )
-        period = _checks._check_period(
-            period=period, portfolio_state=self.portfolio_state
         )
 
         maximum_drawdown = self.maximum_drawdown_percentage(period)
@@ -897,9 +881,6 @@ class Ulcer(PortfolioAnalytics):
 
     def plot_ulcer(self, period=14, show=True, save=False):
 
-        period = _checks._check_period(
-            period=period, portfolio_state=self.portfolio_state
-        )
         _checks._check_plot_arguments(show=show, save=save)
 
         ulcer_series = self.ulcer_series(period)
@@ -980,7 +961,7 @@ class ValueAtRisk(PortfolioAnalytics):
         annual=True,
         compounding=True,
         z=3,
-        distribution="Normal",
+        distribution="normal",
         show=True,
         save=False,
     ):
@@ -1001,7 +982,7 @@ class ValueAtRisk(PortfolioAnalytics):
             100,
         )
 
-        if distribution == "Normal":
+        if distribution == "normal":
             pdf = stats.norm(mean_return, self.annual_volatility).pdf(x)
         elif distribution == "t":
             pdf = stats.t(dof).pdf(x)
