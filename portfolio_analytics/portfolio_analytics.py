@@ -1127,16 +1127,22 @@ class OmegaAnalysis(PortfolioAnalytics):
         annual_mar_lower_bound=0,
         annual_mar_upper_bound=0.2,
     ):
-        """
-        Initiates the object.
+        """Initiates the object
 
-        Args:
-            data (pd.DataFrame): Prices data for all assets in portfolio.
-            weights (list-like object): Asset weights in portfolio.
-            portfolio_name (str, optional): Name of the innvestment portfolio being analysed. Defaults to "Investment Portfolio".
-            initial_aum (int, optional): _description_. Defaults to 10000.
-            annual_mar_lower_bound (int, optional): Annual Minimum Acceptable Return (MAR) lower bound for the Omega Curve. Defaults to 0.
-            annual_mar_upper_bound (float, optional): Annual Minimum Acceptable Return (MAR) upper bound for the Omega Curve. Defaults to 0.2.
+        :param data: Prices data for all assets in portfolio.
+        :type data: pd.DataFrame
+        :param weights: Asset weights in portfolio.
+        :type weights: list or np.ndarray
+        :param portfolio_name: Name of the innvestment portfolio being analysed., defaults to "Investment Portfolio"
+        :type portfolio_name: str, optional
+        :param initial_aum: Initial Assets Under Management, defaults to 10000
+        :type initial_aum: int, optional
+        :param frequency: Number of values in the data in one calendar year, defaults to 252
+        :type frequency: int, optional
+        :param annual_mar_lower_bound: Annual Minimum Acceptable Return (MAR) lower bound for the Omega Curve., defaults to 0
+        :type annual_mar_lower_bound: int or float, optional
+        :param annual_mar_upper_bound: Annual Minimum Acceptable Return (MAR) upper bound for the Omega Curve., defaults to 0.2
+        :type annual_mar_upper_bound: int or float, optional
         """
 
         super.__init__(data, weights, portfolio_name, initial_aum, frequency)
@@ -1148,15 +1154,13 @@ class OmegaAnalysis(PortfolioAnalytics):
         )
 
     def omega_ratio(self, annual_mar=0.03):
+        """Calculates the Omega Ratio of the portfolio.
+
+        :param annual_mar: Annual Minimum Acceptable Return (MAR)., defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Omega Ratio of the portfolio
+        :rtype: pd.DataFrame
         """
-        Calculates the Omega Ratio of one or more portfolios.
-
-        Args:
-            annual_mar (float, optional): Annual Minimum Acceptable Return (MAR). Defaults to 0.03.
-
-        Returns:
-            pd.Series: Series with Omega Ratios of all portfolios.
-        """  # TODO: change docstrings style
 
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
@@ -1171,12 +1175,12 @@ class OmegaAnalysis(PortfolioAnalytics):
         return omega
 
     def plot_omega_curve(self, show=True, save=False):
-        """
-        Plots and/or saves Omega Curve(s) of of one or more portfolios.
+        """Plots and/or saves Omega Curve of the portfolio
 
-        Args:
-            show (bool, optional): Show the plot upon the execution of the code. Defaults to True.
-            save (bool, optional): Save the plot on storage. Defaults to False.
+        :param show: Show the plot upon the execution of the code., defaults to True
+        :type show: bool, optional
+        :param save: Save the plot on storage., defaults to False
+        :type save: bool, optional
         """
 
         _checks._check_plot_arguments(show=show, save=save)
