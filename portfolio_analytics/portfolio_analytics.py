@@ -14,13 +14,13 @@ from portfolio_analytics import _checks
 class PortfolioAnalytics:
     def __init__(
         self,
-        data,
+        prices,
         weights,
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
     ):
-        self.prices = data["Adj Close"]
+        self.prices = prices
         self.assets_returns = self.prices.pct_change().drop(self.prices.index[0])
         self.tickers = self.prices.columns
         self.weights = weights
@@ -71,13 +71,13 @@ class PortfolioAnalytics:
 class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
     ):
-        super().__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super().__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def excess_returns(self, annual_mar=0.03):
         _checks._check_rate_arguments(annual_mar=annual_mar)
@@ -141,13 +141,13 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 class ExploratoryVisualAnalytics(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
     ):
-        super().__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super().__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def plot_aum(self, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
@@ -262,21 +262,21 @@ class ExploratoryVisualAnalytics(PortfolioAnalytics):
 class MPT(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
-        benchmark_data,
+        benchmark_prices,
         benchmark_weights,
         portfolio_name="Investment Portfolio",
         benchmark_name="Benchmark",
         initial_aum=10000,
         frequency=252,
     ) -> None:
-        super.__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
         self.benchmark_name = benchmark_name
 
-        self.benchmark_assets_returns = (
-            benchmark_data["Adj Close"].pct_change().drop(benchmark_data.index[0])
+        self.benchmark_assets_returns = benchmark_prices.pct_change().drop(
+            benchmark_prices.index[0]
         )
 
         self.benchmark_returns = np.dot(
@@ -371,21 +371,21 @@ class MPT(PortfolioAnalytics):
 class PMPT(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
-        benchmark_data,
+        benchmark_prices,
         benchmark_weights,
         portfolio_name="Investment Portfolio",
         benchmark_name="Benchmark",
         initial_aum=10000,
         frequency=252,
     ) -> None:
-        super.__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
         self.benchmark_name = benchmark_name
 
-        self.benchmark_assets_returns = (
-            benchmark_data["Adj Close"].pct_change().drop(benchmark_data.index[0])
+        self.benchmark_assets_returns = benchmark_prices.pct_change().drop(
+            benchmark_prices.index[0]
         )
 
         self.benchmark_returns = np.dot(
@@ -747,13 +747,13 @@ class PMPT(PortfolioAnalytics):
 class Ulcer(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
     ) -> None:
-        super.__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def ulcer(self, period=14, start=1):
         period = _checks._check_period(
@@ -840,13 +840,13 @@ class Ulcer(PortfolioAnalytics):
 class ValueAtRisk(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
     ) -> None:
-        super.__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def analytical_var(
         self, value, dof, annual=True, compounding=True, distribution="normal"
@@ -983,13 +983,13 @@ class ValueAtRisk(PortfolioAnalytics):
 class Matrices(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
         frequency=252,
     ) -> None:
-        super.__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def correlation_matrix(self):
         matrix = self.portfolio_returns.corr().round(5)
@@ -1030,7 +1030,7 @@ class Matrices(PortfolioAnalytics):
 class OmegaAnalysis(PortfolioAnalytics):
     def __init__(
         self,
-        data,
+        prices,
         weights,
         portfolio_name="Investment Portfolio",
         initial_aum=10000,
@@ -1041,8 +1041,8 @@ class OmegaAnalysis(PortfolioAnalytics):
         """
         Initiates the object
 
-        :param data: Prices data for all assets in portfolio.
-        :type data: pd.DataFrame
+        :param prices: Prices data for all assets in portfolio.
+        :type prices: pd.DataFrame
         :param weights: Asset weights in portfolio.
         :type weights: list or np.ndarray
         :param portfolio_name: Name of the innvestment portfolio being analysed., defaults to "Investment Portfolio"
@@ -1057,7 +1057,7 @@ class OmegaAnalysis(PortfolioAnalytics):
         :type annual_mar_upper_bound: int or float, optional
         """
 
-        super.__init__(data, weights, portfolio_name, initial_aum, frequency)
+        super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
         self.mar_array = np.linspace(
             annual_mar_lower_bound,
