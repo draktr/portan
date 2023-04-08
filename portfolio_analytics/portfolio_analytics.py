@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
 from scipy import stats
+from sklearn import covariance
 from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
 from itertools import repeat
@@ -1062,7 +1063,7 @@ class Matrices(PortfolioAnalytics):
         super.__init__(prices, weights, portfolio_name, initial_aum, frequency)
 
     def correlation_matrix(self):
-        matrix = self.portfolio_returns.corr().round(5)
+        matrix = self.assets_returns.corr().round(5)
 
         return matrix
 
@@ -1077,18 +1078,64 @@ class Matrices(PortfolioAnalytics):
         if show:
             plt.show()
 
-    def covariance_matrix(self, annual=False):
-        if annual:
-            matrix = self.portfolio_returns.cov().round(5) * self.frequency
+    def covariance_matrix(self, method="regular", annual=False, **kwargs):
+        if method == "regular":
+            matrix = self.assets_returns.cov().round(5)
+        elif method == "empirical":
+            matrix = (
+                covariance.EmpiricalCovariance(**kwargs)
+                .fit(self.assets_returns)
+                .covariance_.round(5)
+            )
+        elif method == "graphical_lasso":
+            matrix = (
+                covariance.GraphicalLasso(**kwargs)
+                .fit(self.assets_returns)
+                .covariance_.round(5)
+            )
+        elif method == "elliptic_envelope":
+            matrix = (
+                covariance.EllipticEnvelope(**kwargs)
+                .fit(self.assets_returns)
+                .covariance_.round(5)
+            )
+        elif method == "ledoit_wolf":
+            matrix = (
+                covariance.LedoitWolf(**kwargs)
+                .fit(self.assets_returns)
+                .covariance_.round(5)
+            )
+
+        elif method == "mcd":
+            matrix = (
+                covariance.MinCovDet(**kwargs)
+                .fit(self.assets_returns)
+                .covariance_.round(5)
+            )
+        elif method == "oas":
+            matrix = (
+                covariance.OAS(**kwargs).fit(self.assets_returns).covariance_.round(5)
+            )
+        elif method == "shrunk_covariance":
+            matrix = (
+                covariance.ShrunkCovariance(**kwargs)
+                .fit(self.assets_returns)
+                .covariance_.round(5)
+            )
         else:
-            matrix = self.portfolio_returns.cov().round(5)
+            raise ValueError()
+
+        if annual:
+            matrix = matrix * self.frequency
 
         return matrix
 
-    def plot_covariance_matrix(self, annual=False, show=True, save=False):
+    def plot_covariance_matrix(
+        self, method="regular", annual=False, show=True, save=False, **kwargs
+    ):
         _checks._check_plot_arguments(show=show, save=save)
 
-        matrix = self.covariance_matrix(annual)
+        matrix = self.covariance_matrix(method, annual, **kwargs)
 
         sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
         if save:
