@@ -154,6 +154,22 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
 
         return result
 
+    def ewm_return(self, span, annual=True, compounding=True):
+        _checks._check_rate_arguments(annual=annual, compounding=compounding)
+
+        if annual and compounding:
+            mean = (
+                1 + self.portfolio_returns.ewm(span=span).mean().iloc[-1]
+            ) ** self.frequency - 1
+        elif annual and not compounding:
+            mean = (
+                self.portfolio_returns.ewm(span=span).mean().iloc[-1] * self.frequency
+            )
+        elif not annual:
+            mean = self.portfolio_returns.ewm(span=span).mean().iloc[-1]
+
+        return mean
+
 
 class ExploratoryVisualAnalytics(PortfolioAnalytics):
     def __init__(
@@ -330,6 +346,19 @@ class MPT(PortfolioAnalytics):
         ) - 1
         self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
         self.benchmark_mean = self.benchmark_assets_returns.mean()
+
+    def capm_return(self, annual_rfr=0.02, annual=True, compounding=True):
+        capm = self.capm(annual_rfr=annual_rfr)
+
+        if annual and compounding:
+            mean = annual_rfr + capm[1] * (self.benchmark_geometric_mean - annual_rfr)
+        elif annual and not compounding:
+            mean = annual_rfr + capm[1] * (self.benchmark_arithmetic_mean - annual_rfr)
+        elif not annual:
+            rfr = self._rate_conversion(annual_rfr)
+            mean = rfr + capm[1] * (self.benchmark_mean - rfr)
+
+        return mean
 
     def capm(self, annual_rfr=0.02):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
