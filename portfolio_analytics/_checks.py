@@ -29,15 +29,15 @@ def _check_plot_arguments(show, save):
         raise ValueError()
 
 
-def _check_period(period, portfolio_state):
-    if not isinstance(period, int):
+def _check_periods(periods, state):
+    if not isinstance(periods, int):
         raise ValueError()
 
-    if period >= portfolio_state.shape[0]:
-        period = portfolio_state.shape[0]
-        warnings.warn("Dataset too small. Period taken as {}.".format(period))
+    if periods >= state.shape[0]:
+        periods = state.shape[0]
+        warnings.warn("Dataset too small. `periods` taken as {}.".format(periods))
 
-    return period
+    return periods
 
 
 def _check_posints(argument):
@@ -65,7 +65,7 @@ def _check_multiple_returns(returns):
     return returns
 
 
-def _check_init(prices, weights, portfolio_name, initial_aum, frequency):
+def _check_init(prices, weights, name, initial_aum, frequency):
     if not isinstance(prices, pd.DataFrame):
         raise ValueError()
     if np.any(np.isnan(prices)):
@@ -74,7 +74,7 @@ def _check_init(prices, weights, portfolio_name, initial_aum, frequency):
         raise ValueError()
     if not isinstance(weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
         raise ValueError()
-    if not isinstance(portfolio_name, str):
+    if not isinstance(name, str):
         raise ValueError()
     if not isinstance(initial_aum, (int, float)):
         raise ValueError()
@@ -89,7 +89,7 @@ def _check_pt_init(
     weights,
     benchmark_prices,
     benchmark_weights,
-    portfolio_name,
+    name,
     benchmark_name,
     initial_aum,
     frequency,
@@ -106,7 +106,7 @@ def _check_pt_init(
         raise ValueError()
     if not isinstance(benchmark_weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
         raise ValueError()
-    if not isinstance(portfolio_name, str):
+    if not isinstance(name, str):
         raise ValueError()
     if not isinstance(benchmark_name, str):
         raise ValueError()
