@@ -58,6 +58,13 @@ def fill_nan(portfolio_returns, method="adjacent"):
     return portfolio_returns
 
 
+def fill_inf(portfolio_returns, method="adjacent"):
+    portfolio_returns.replace([np.inf, -np.inf], np.nan)
+    portfolio_returns = fill_nan(portfolio_returns=portfolio_returns, method=method)
+
+    return portfolio_returns
+
+
 def multiple_portfolios(tickers, weights, **kwargs):
     data = GetData(tickers, weights, **kwargs).data["Adj Close"]
     returns = data.pct_change().drop(data.index[0])
