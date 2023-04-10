@@ -42,11 +42,12 @@ def _check_periods(periods, state):
     return periods
 
 
-def _check_posints(argument):
-    if not isinstance(argument, int):
-        raise ValueError()
-    if argument < 1:
-        raise ValueError()
+def _check_posints(**kwargs):
+    for name, value in kwargs.items():
+        if not isinstance(value, int):
+            raise ValueError(f"`{name}` should be of type `int`")
+        if value < 1:
+            raise ValueError(f"`{name}` should be positive")
 
 
 def _check_percentage(percentage):

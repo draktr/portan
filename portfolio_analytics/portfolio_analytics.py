@@ -693,7 +693,7 @@ class PostModern(PortfolioAnalytics):
 
     def hpm(self, annual_mar=0.03, moment=3):
         _checks._check_rate_arguments(annual_mar=annual_mar)
-        _checks._check_posints(argument=moment)
+        _checks._check_posints(moment=moment)
 
         mar = self._rate_conversion(annual_mar)
 
@@ -707,7 +707,7 @@ class PostModern(PortfolioAnalytics):
 
     def lpm(self, annual_mar=0.03, moment=3):
         _checks._check_rate_arguments(annual_mar=annual_mar)
-        _checks._check_posints(argument=moment)
+        _checks._check_posints(moment=moment)
 
         mar = self._rate_conversion(annual_mar)
         days = self.returns.shape[0]
@@ -722,7 +722,7 @@ class PostModern(PortfolioAnalytics):
         _checks._check_rate_arguments(
             annual_mar=annual_mar, annual=annual, compounding=compounding
         )
-        _checks._check_posints(argument=moment)
+        _checks._check_posints(moment=moment)
 
         lower_partial_moment = self.lpm(annual_mar, moment)
 
@@ -775,7 +775,7 @@ class PostModern(PortfolioAnalytics):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        _checks._check_posints(argument=drawdowns)
+        _checks._check_posints(drawdowns=drawdowns)
 
         portfolio_drawdowns = self.drawdowns()
         sorted_drawdowns = np.sort(portfolio_drawdowns)
@@ -817,7 +817,7 @@ class Ulcer(PortfolioAnalytics):
 
     def ulcer(self, periods=14, start=1):
         periods = _checks._check_periods(periods=periods, state=self.state)
-        _checks._check_posints(argument=start)
+        _checks._check_posints(start=start)
 
         close = np.empty(periods)
         percentage_drawdown = np.empty(periods)
