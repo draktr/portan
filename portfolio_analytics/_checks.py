@@ -125,3 +125,8 @@ def _check_mar_bounds(annual_mar_lower_bound, annual_mar_upper_bound):
         raise ValueError()
     if annual_mar_lower_bound >= annual_mar_upper_bound:
         raise ValueError()
+
+
+def _check_array_lengths(array_one, array_two):
+    if len(array_one) != len(array_two):
+        warnings.warn()
