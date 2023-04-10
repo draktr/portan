@@ -76,26 +76,6 @@ class PortfolioAnalytics:
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
 
-
-class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        name="Investment Portfolio",
-        initial_aum=10000,
-        frequency=252,
-    ) -> None:
-        _checks._check_init(
-            prices=prices,
-            weights=weights,
-            name=name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-
-        super().__init__(prices, weights, name, initial_aum, frequency)
-
     def excess_returns(self, annual_mar=0.03):
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
@@ -167,26 +147,6 @@ class ExploratoryQuantitativeAnalytics(PortfolioAnalytics):
             mean = self.returns.ewm(span=span).mean().iloc[-1]
 
         return mean
-
-
-class ExploratoryVisualAnalytics(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        name="Investment Portfolio",
-        initial_aum=10000,
-        frequency=252,
-    ) -> None:
-        _checks._check_init(
-            prices=prices,
-            weights=weights,
-            name=name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-
-        super().__init__(prices, weights, name, initial_aum, frequency)
 
     def plot_aum(self, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
