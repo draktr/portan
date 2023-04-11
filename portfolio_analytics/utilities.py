@@ -47,22 +47,26 @@ def rate_conversion(given_rate, periods=252):
     return output_rate
 
 
-def fill_nan(portfolio_returns, method="adjacent"):
+def fill_nan(returns, method="adjacent"):
     if method == "adjacent":
-        portfolio_returns.interpolate(method="linear", inplace=True)
+        returns = returns.interpolate(method="linear", inplace=True)
     elif method == "column":
-        portfolio_returns.fillna(portfolio_returns.mean(), inplace=True)
+        returns = returns.fillna(returns.mean(), inplace=True)
+    elif method == "ffill":
+        returns = returns.fillna(method="ffill", inplace=True)
+    elif method == "bfill":
+        returns = returns.fillna(method="bfill", inplace=True)
     else:
         raise ValueError("Fill method unsupported.")
 
-    return portfolio_returns
+    return returns
 
 
-def fill_inf(portfolio_returns, method="adjacent"):
-    portfolio_returns.replace([np.inf, -np.inf], np.nan)
-    portfolio_returns = fill_nan(portfolio_returns=portfolio_returns, method=method)
+def fill_inf(returns, method="adjacent"):
+    returns.replace([np.inf, -np.inf], np.nan)
+    returns = fill_nan(returns=returns, method=method)
 
-    return portfolio_returns
+    return returns
 
 
 def multiple_portfolios(tickers, weights, **kwargs):
