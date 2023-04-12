@@ -40,12 +40,14 @@ class PortfolioAnalytics:
         self.frequency = frequency
 
         # funds allocated to each asset
-        self.allocation_funds = np.multiply(self.initial_aum, self.weights)
-        self.allocation_funds = pd.Series(self.allocation_funds, index=self.tickers)
+        self.allocation_funds = pd.Series(
+            np.multiply(self.initial_aum, self.weights), index=self.tickers
+        )
 
         # number of assets bought at t0
-        self.allocation_assets = np.divide(self.allocation_funds, self.prices.iloc[0].T)
-        self.allocation_assets = pd.Series(self.allocation_assets, index=self.tickers)
+        self.allocation_assets = pd.Series(
+            np.divide(self.allocation_funds, self.prices.iloc[0].T), index=self.tickers
+        )
 
         # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
         self.state = pd.DataFrame(
@@ -55,9 +57,8 @@ class PortfolioAnalytics:
         )
         self.state["Whole Portfolio"] = self.state.sum(axis=1)
 
-        self.returns = np.dot(self.assets_returns.to_numpy(), self.weights)
         self.returns = pd.Series(
-            self.returns,
+            np.dot(self.assets_returns.to_numpy(), self.weights),
             index=self.assets_returns.index,
             name=self.name,
         )
@@ -284,11 +285,11 @@ class Modern(PortfolioAnalytics):
             columns=[benchmark_name],
         )
 
+        self.benchmark_mean = self.benchmark_returns.mean()
+        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
         self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
             self.frequency / self.benchmark_returns.shape[0]
         ) - 1
-        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
-        self.benchmark_mean = self.benchmark_assets_returns.mean()
 
     def capm_return(self, annual_rfr=0.02, annual=True, compounding=True):
         capm = self.capm(annual_rfr=annual_rfr)
@@ -415,11 +416,11 @@ class PostModern(PortfolioAnalytics):
             columns=[benchmark_name],
         )
 
+        self.benchmark_mean = self.benchmark_returns.mean()
+        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
         self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
             self.frequency / self.benchmark_returns.shape[0]
         ) - 1
-        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
-        self.benchmark_mean = self.benchmark_assets_returns.mean()
 
     def upside_volatility(self, annual_mar=0.03, annual=True):
         _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
