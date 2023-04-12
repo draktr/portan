@@ -73,6 +73,11 @@ class PortfolioAnalytics:
         self.volatility = self.returns.std()
         self.annual_volatility = self.volatility * np.sqrt(self.frequency)
 
+        self.min_aum = self.state["Whole Portfolio"].min()
+        self.max_aum = self.state["Whole Portfolio"].max()
+        self.mean_aum = self.state["Whole Portfolio"].mean()
+        self.final_aum = self.allocation_assets * self.assets_info["regularMarketPrice"]
+
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
 
@@ -95,26 +100,6 @@ class PortfolioAnalytics:
             net_return = (final_aum - self.initial_aum) / self.initial_aum
 
         return net_return
-
-    def min_aum(self):
-        min_aum = self.state["Whole Portfolio"].min()
-
-        return min_aum
-
-    def max_aum(self):
-        max_aum = self.state["Whole Portfolio"].max()
-
-        return max_aum
-
-    def mean_aum(self):
-        mean_aum = self.state["Whole Portfolio"].mean()
-
-        return mean_aum
-
-    def current_aum(self):
-        final_aum = self.allocation_assets * self.assets_info["regularMarketPrice"]
-
-        return final_aum
 
     def distribution_test(self, test="dagostino-pearson", distribution="norm"):
         if test == "dagostino-pearson":
