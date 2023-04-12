@@ -275,12 +275,8 @@ class Modern(PortfolioAnalytics):
             benchmark_prices.index[0]
         )
 
-        self.benchmark_returns = np.dot(
-            self.benchmark_assets_returns.to_numpy(), benchmark_weights
-        )
-        self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
         self.benchmark_returns = pd.DataFrame(
-            self.benchmark_returns,
+            np.dot(self.benchmark_assets_returns.to_numpy(), benchmark_weights),
             index=self.benchmark_assets_returns.index,
             columns=[benchmark_name],
         )
@@ -406,12 +402,8 @@ class PostModern(PortfolioAnalytics):
             benchmark_prices.index[0]
         )
 
-        self.benchmark_returns = np.dot(
-            self.benchmark_assets_returns.to_numpy(), benchmark_weights
-        )
-        self.benchmark_returns = np.delete(self.benchmark_returns, [0], axis=0)
         self.benchmark_returns = pd.DataFrame(
-            self.benchmark_returns,
+            np.dot(self.benchmark_assets_returns.to_numpy(), benchmark_weights),
             index=self.benchmark_assets_returns.index,
             columns=[benchmark_name],
         )
