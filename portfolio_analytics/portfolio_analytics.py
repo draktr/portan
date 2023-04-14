@@ -262,50 +262,6 @@ class PortfolioAnalytics:
 
         return "{:.1f}%\n(${:d})".format(pct, absolute)
 
-
-class Modern(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        benchmark_prices,
-        benchmark_weights,
-        name="Investment Portfolio",
-        benchmark_name="Benchmark",
-        initial_aum=10000,
-        frequency=252,
-    ) -> None:
-        _checks._check_pt_init(
-            prices=prices,
-            weights=weights,
-            benchmark_prices=benchmark_prices,
-            benchmark_weights=benchmark_weights,
-            name=name,
-            benchmark_name=benchmark_name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-
-        super.__init__(prices, weights, name, initial_aum, frequency)
-
-        self.benchmark_name = benchmark_name
-
-        self.benchmark_assets_returns = benchmark_prices.pct_change().drop(
-            benchmark_prices.index[0]
-        )
-
-        self.benchmark_returns = pd.DataFrame(
-            np.dot(self.benchmark_assets_returns.to_numpy(), benchmark_weights),
-            index=self.benchmark_assets_returns.index,
-            columns=[benchmark_name],
-        )
-
-        self.benchmark_mean = self.benchmark_returns.mean()
-        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
-        self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
-            self.frequency / self.benchmark_returns.shape[0]
-        ) - 1
-
     def capm_return(self, annual_rfr=0.02, annual=True, compounding=True):
         capm = self.capm(annual_rfr=annual_rfr)
 
@@ -388,50 +344,6 @@ class Modern(PortfolioAnalytics):
         tracking_error = np.std(self.returns - self.benchmark_returns, ddof=1)
 
         return tracking_error
-
-
-class PostModern(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        benchmark_prices,
-        benchmark_weights,
-        name="Investment Portfolio",
-        benchmark_name="Benchmark",
-        initial_aum=10000,
-        frequency=252,
-    ) -> None:
-        _checks._check_pt_init(
-            prices=prices,
-            weights=weights,
-            benchmark_prices=benchmark_prices,
-            benchmark_weights=benchmark_weights,
-            name=name,
-            benchmark_name=benchmark_name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-
-        super.__init__(prices, weights, name, initial_aum, frequency)
-
-        self.benchmark_name = benchmark_name
-
-        self.benchmark_assets_returns = benchmark_prices.pct_change().drop(
-            benchmark_prices.index[0]
-        )
-
-        self.benchmark_returns = pd.DataFrame(
-            np.dot(self.benchmark_assets_returns.to_numpy(), benchmark_weights),
-            index=self.benchmark_assets_returns.index,
-            columns=[benchmark_name],
-        )
-
-        self.benchmark_mean = self.benchmark_returns.mean()
-        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
-        self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
-            self.frequency / self.benchmark_returns.shape[0]
-        ) - 1
 
     def upside_volatility(self, annual_mar=0.03, annual=True):
         _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
