@@ -664,26 +664,6 @@ class PortfolioAnalytics:
 
         return sterling_ratio
 
-
-class Ulcer(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        name="Investment Portfolio",
-        initial_aum=10000,
-        frequency=252,
-    ) -> None:
-        _checks._check_init(
-            prices=prices,
-            weights=weights,
-            name=name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-
-        super.__init__(prices, weights, name, initial_aum, frequency)
-
     def ulcer(self, periods=14, start=1):
         periods = _checks._check_periods(periods=periods, state=self.state)
         _checks._check_posints(start=start)
@@ -754,26 +734,6 @@ class Ulcer(PortfolioAnalytics):
             plt.savefig("ulcer.png", dpi=300)
         if show:
             plt.show()
-
-
-class ValueAtRisk(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        name="Investment Portfolio",
-        initial_aum=10000,
-        frequency=252,
-    ) -> None:
-        _checks._check_init(
-            prices=prices,
-            weights=weights,
-            name=name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-
-        super.__init__(prices, weights, name, initial_aum, frequency)
 
     def analytical_var(
         self, value, dof, annual=True, compounding=True, distribution="normal"
