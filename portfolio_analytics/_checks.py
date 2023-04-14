@@ -73,32 +73,7 @@ def _check_multiple_returns(returns):
     return returns
 
 
-def _check_init(prices, weights, name, initial_aum, frequency):
-    if not isinstance(prices, pd.DataFrame):
-        raise ValueError("`prices` should be of type `pd.DataFrame`")
-    if np.any(np.isnan(prices)):
-        raise ValueError(
-            "`prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
-        )
-    if np.any(np.isinf(prices)):
-        raise ValueError(
-            "`prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
-        )
-    if not isinstance(weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
-        raise ValueError(
-            "`weights` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
-        )
-    if not isinstance(name, str):
-        raise ValueError("`name` should be of type `str`")
-    if not isinstance(initial_aum, (int, float)):
-        raise ValueError("`initial_aum` should be of type `str`")
-    if initial_aum <= 0:
-        raise ValueError("`initial_aum` should be positive")
-    if not isinstance(frequency, (int, float)):
-        raise ValueError("`frequency` should be of type `int` or `float`")
-
-
-def _check_pt_init(
+def _check_init(
     prices,
     weights,
     benchmark_prices,
@@ -146,6 +121,10 @@ def _check_pt_init(
         raise ValueError("`initial_aum` should be positive")
     if not isinstance(frequency, (int, float)):
         raise ValueError("`frequency` should be of type `int` or `float`")
+    if prices.shape[0] != benchmark_prices.shape[0]:
+        raise ValueError(
+            "`prices` should have the same number of datapoints as `benchmark_prices`"
+        )
 
 
 def _check_mar_bounds(annual_mar_lower_bound, annual_mar_upper_bound):

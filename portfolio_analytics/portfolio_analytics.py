@@ -17,7 +17,10 @@ class PortfolioAnalytics:
         self,
         prices,
         weights,
+        benchmark_prices,
+        benchmark_weights,
         name="Investment Portfolio",
+        benchmark_name="Benchmark Portfolio",
         initial_aum=10000,
         frequency=252,
     ) -> None:
@@ -78,6 +81,22 @@ class PortfolioAnalytics:
         self.max_aum = self.state["Whole Portfolio"].max()
         self.mean_aum = self.state["Whole Portfolio"].mean()
         self.final_aum = self.allocation_assets * self.assets_info["regularMarketPrice"]
+
+        self.benchmark_assets_returns = self.benchmark_prices.pct_change().drop(
+            self.benchmark_prices.index[0]
+        )
+
+        self.benchmark_returns = pd.DataFrame(
+            np.dot(self.benchmark_assets_returns.to_numpy(), self.benchmark_weights),
+            index=self.benchmark_assets_returns.index,
+            columns=[self.benchmark_name],
+        )
+
+        self.benchmark_mean = self.benchmark_returns.mean()
+        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
+        self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
+            self.frequency / self.benchmark_returns.shape[0]
+        ) - 1
 
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
