@@ -80,7 +80,7 @@ class PortfolioAnalytics:
         self.min_aum = self.state["Whole Portfolio"].min()
         self.max_aum = self.state["Whole Portfolio"].max()
         self.mean_aum = self.state["Whole Portfolio"].mean()
-        self.final_aum = np.sum(self.allocation_assets * self.state.iloc[-1, 0:-1])
+        self.final_aum = self.state.iloc[-1, -1]
 
         self.benchmark_assets_returns = self.benchmark_prices.pct_change().drop(
             self.benchmark_prices.index[0]
