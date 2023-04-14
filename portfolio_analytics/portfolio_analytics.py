@@ -866,26 +866,6 @@ class PortfolioAnalytics:
         if show:
             plt.show()
 
-
-class Matrices(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        name="Investment Portfolio",
-        initial_aum=10000,
-        frequency=252,
-    ) -> None:
-        _checks._check_init(
-            prices=prices,
-            weights=weights,
-            name=name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-
-        super.__init__(prices, weights, name, initial_aum, frequency)
-
     def correlation(self):
         matrix = self.assets_returns.corr().round(5)
 
@@ -967,57 +947,6 @@ class Matrices(PortfolioAnalytics):
         if show:
             plt.show()
 
-
-class Omega(PortfolioAnalytics):
-    def __init__(
-        self,
-        prices,
-        weights,
-        name="Investment Portfolio",
-        initial_aum=10000,
-        frequency=252,
-        annual_mar_lower_bound=0,
-        annual_mar_upper_bound=0.2,
-    ) -> None:
-        """
-        Initiates the object
-
-        :param prices: Prices data for all assets in portfolio.
-        :type prices: pd.DataFrame
-        :param weights: Asset weights in portfolio.
-        :type weights: list or np.ndarray
-        :param name: Name of the innvestment portfolio being analysed., defaults to "Investment Portfolio"
-        :type name: str, optional
-        :param initial_aum: Initial Assets Under Management, defaults to 10000
-        :type initial_aum: int, optional
-        :param frequency: Number of values in the data in one calendar year, defaults to 252
-        :type frequency: int, optional
-        :param annual_mar_lower_bound: Annual Minimum Acceptable Return (MAR) lower bound for the Omega curve., defaults to 0
-        :type annual_mar_lower_bound: int or float, optional
-        :param annual_mar_upper_bound: Annual Minimum Acceptable Return (MAR) upper bound for the Omega curve., defaults to 0.2
-        :type annual_mar_upper_bound: int or float, optional
-        """
-
-        _checks._check_init(
-            prices=prices,
-            weights=weights,
-            name=name,
-            initial_aum=initial_aum,
-            frequency=frequency,
-        )
-        _checks._check_mar_bounds(
-            annual_mar_lower_bound=annual_mar_lower_bound,
-            annual_mar_upper_bound=annual_mar_upper_bound,
-        )
-
-        super.__init__(prices, weights, name, initial_aum, frequency)
-
-        self.mar_array = np.linspace(
-            annual_mar_lower_bound,
-            annual_mar_upper_bound,
-            round(100 * (annual_mar_upper_bound - annual_mar_lower_bound)),
-        )
-
     def omega_ratio(self, annual_mar=0.03):
         """
         Calculates the Omega ratio of the portfolio.
@@ -1040,27 +969,34 @@ class Omega(PortfolioAnalytics):
 
         return omega
 
-    def plot_omega_curve(self, returns=None, show=True, save=False):
-        """
-        Plots and/or saves Omega curve(s) of the portfolio(s)
-
-        :param show: Show the plot upon the execution of the code., defaults to True
-        :type show: bool, optional
-        :param save: Save the plot on storage., defaults to False
-        :type save: bool, optional
-        """
-
+    def plot_omega_curve(
+        self,
+        returns=None,
+        annual_mar_lower_bound=0,
+        annual_mar_upper_bound=0.2,
+        show=True,
+        save=False,
+    ):
         if returns is None:
             returns = self.returns
 
         _checks._check_multiple_returns(returns=returns)
         _checks._check_plot_arguments(show=show, save=save)
+        _checks._check_mar_bounds(
+            annual_mar_lower_bound=annual_mar_lower_bound,
+            annual_mar_upper_bound=annual_mar_upper_bound,
+        )
 
         all_values = pd.DataFrame(columns=returns.columns)
+        mar_array = np.linspace(
+            annual_mar_lower_bound,
+            annual_mar_upper_bound,
+            round(100 * (annual_mar_upper_bound - annual_mar_lower_bound)),
+        )
 
         for portfolio in returns.columns:
             omega_values = list()
-            for mar in self.mar_array:
+            for mar in mar_array:
                 value = np.round(self.omega_ratio(returns[portfolio], mar), 5)
                 omega_values.append(value)
             all_values[portfolio] = omega_values
