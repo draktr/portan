@@ -1,20 +1,20 @@
 import os
-import pandas_datareader as pdr
 from datetime import datetime
+import yfinance as yf
 
 
 class GetData:
     def __init__(
-        self,
-        tickers,
-        start="1970-01-02",
-        end=str(datetime.now())[0:10],
-        data_source="yahoo",
+        self, tickers, start="1970-01-02", end=str(datetime.now())[0:10], interval="1d"
     ):
-
-        self._data = pdr.DataReader(
-            tickers, start=start, end=end, data_source=data_source
-        )
+        if len(tickers) == 1:
+            self._data = yf.Ticker(tickers).history(
+                start=start, end=end, interval=interval
+            )
+        else:
+            self._data = yf.Tickers(tickers).history(
+                start=start, end=end, interval=interval
+            )
 
     @property
     def data(self):
@@ -32,9 +32,9 @@ class GetData:
     def save_all_wide(self):
         self.data.to_csv("all_tickers_data_wide.csv")
 
-    def save_adj_close_only(self):
-        adj_close_only = self.data["Adj Close"]
-        adj_close_only.to_csv("adj_close_only.csv")
+    def save_close_only(self):
+        close_only = self.data["Close"]
+        close_only.to_csv("close_only.csv")
 
     def save_separately(self):
         os.mkdir("tickers_data")
