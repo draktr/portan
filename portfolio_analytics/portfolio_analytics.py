@@ -292,11 +292,13 @@ class PortfolioAnalytics:
         alpha = model.intercept_
         beta = model.coef_[0]
         r_squared = model.score(excess_benchmark_returns, excess_returns)
+        epsilon = excess_returns - alpha - beta * excess_benchmark_returns
 
         return (
             alpha,
             beta,
             r_squared,
+            epsilon,
             excess_returns,
             excess_benchmark_returns,
         )
@@ -308,8 +310,8 @@ class PortfolioAnalytics:
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        ax.scatter(capm[4], capm[3], color="b")
-        ax.plot(capm[4], capm[0] + capm[1] * capm[4], color="r")
+        ax.scatter(capm[5], capm[4], color="b")
+        ax.plot(capm[5], capm[0] + capm[1] * capm[5], color="r")
         empty_patch = mpatches.Patch(color="none", visible=False)
         ax.legend(
             handles=[empty_patch, empty_patch],
@@ -493,11 +495,17 @@ class PortfolioAnalytics:
         downside_alpha = model.intercept_
         downside_beta = model.coef_[0]
         downside_r_squared = model.score(negative_benchmark_returns, negative_returns)
+        downside_epsilon = (
+            negative_returns
+            - downside_alpha
+            - downside_beta * negative_benchmark_returns
+        )
 
         return (
             downside_beta,
             downside_alpha,
             downside_r_squared,
+            downside_epsilon,
             negative_returns,
             negative_benchmark_returns,
         )
@@ -1074,7 +1082,3 @@ class PortfolioAnalytics:
             plt.savefig("omega_curves.png", dpi=300)
         if show:
             plt.show()
-
-    #####################################################################
-    #####################################################################
-    #####################################################################
