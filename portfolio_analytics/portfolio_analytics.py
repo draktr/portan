@@ -376,10 +376,32 @@ class PortfolioAnalytics:
 
         return sharpe_ratio
 
-    def tracking_error(self):
-        tracking_error = np.std(self.returns - self.benchmark_returns, ddof=1)
+    def excess_return(self, annual, compounding):
+        _checks._check_rate_arguments(annual=annual, compounding=compounding)
+
+        if annual and compounding:
+            excess_return = self.geometric_mean - self.benchmark_geometric_mean
+        elif annual and not compounding:
+            excess_return = self.arithmetic_mean - self.benchmark_arithmetic_mean
+        elif not annual:
+            excess_return = self.mean - self.benchmark_mean
+
+        return excess_return
+
+    def tracking_error(self, annual=True, compounding=True):
+        excess_return = self.excess_return(annual=annual, compounding=compounding)
+
+        tracking_error = np.std(excess_return)
 
         return tracking_error
+
+    def information_ratio(self, annual=True, compounding=True):
+        excess_return = self.excess_return(annual=annual, compounding=compounding)
+        tracking_error = self.tracking_error(annual=annual, compounding=compounding)
+
+        information_ratio = excess_return / tracking_error
+
+        return information_ratio
 
     def upside_volatility(self, annual_mar=0.03, annual=True):
         _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
