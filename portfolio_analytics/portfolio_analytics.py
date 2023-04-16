@@ -101,13 +101,18 @@ class PortfolioAnalytics:
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
 
-    def excess_returns(self, annual_mar=0.03):
+    def excess_return_above_mar(self, annual_mar=0.03, annual=True, compounding=True):
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
-        mar = self._rate_conversion(annual_mar)
-        excess_returns = self.returns - mar
+        if annual and compounding:
+            excess_return = self.geometric_mean - annual_mar
+        if annual and not compounding:
+            excess_return = self.arithmetic_mean - annual_mar
+        if not annual:
+            mar = self._rate_conversion(annual_mar)
+            excess_return = self.mean - mar
 
-        return excess_returns
+        return excess_return
 
     def net_return(self, percentage=False):
         _checks._check_percentage(percentage=percentage)
