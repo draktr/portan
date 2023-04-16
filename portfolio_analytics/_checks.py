@@ -144,3 +144,8 @@ def _check_array_lengths(array_one, array_two):
             "Two arrays to be concatenated are not of the same length. Note that this will result in som `NaN` values",
             UserWarning,
         )
+
+
+def _check_sharpe(adjusted, probabilistic):
+    if adjusted and probabilistic:
+        raise ValueError()

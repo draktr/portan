@@ -321,10 +321,19 @@ class PortfolioAnalytics:
         if show:
             plt.show()
 
-    def sharpe(self, annual_rfr=0.02, annual=True, compounding=True):
+    def sharpe(
+        self,
+        annual_rfr=0.02,
+        annual=True,
+        compounding=True,
+        adjusted=False,
+        probabilistic=False,
+        sharpe_benchmark=0.0,
+    ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
+        _checks._check_sharpe(adjusted=adjusted, probabilistic=probabilistic)
 
         if annual and compounding:
             sharpe_ratio = (
@@ -337,6 +346,33 @@ class PortfolioAnalytics:
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
             sharpe_ratio = 100 * (self.mean - rfr) / self.volatility
+
+        if adjusted:
+            skew = stats.skew(self.returns)
+            kurtosis = stats.kurtosis(self.returns)
+
+            sharpe_ratio = sharpe_ratio * (
+                1
+                + (skew / 6) * sharpe_ratio
+                - ((kurtosis - 3) / 24) * sharpe_ratio**2
+            )
+
+        if probabilistic:
+            skew = stats.skew(self.returns)
+            kurtosis = stats.kurtosis(self.returns)
+
+            sharpe_std = np.sqrt(
+                (
+                    1
+                    + (0.5 * sharpe_ratio**2)
+                    - (skew * sharpe_ratio)
+                    + (((kurtosis - 3) / 4) * sharpe_ratio**2)
+                )
+                / (self.returns.shape[0] - 1)
+            )
+            sharpe_ratio = stats.norm.cdf(
+                (sharpe_ratio - sharpe_benchmark) / sharpe_std
+            )
 
         return sharpe_ratio
 
@@ -1011,3 +1047,7 @@ class PortfolioAnalytics:
             plt.savefig("omega_curves.png", dpi=300)
         if show:
             plt.show()
+
+    #####################################################################
+    #####################################################################
+    #####################################################################
