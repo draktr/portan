@@ -8,6 +8,7 @@ from scipy import stats
 from sklearn import covariance
 from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
+from statsmodels.tsa.stattools import acf
 from itertools import repeat
 from portfolio_analytics import _checks
 
@@ -1082,3 +1083,11 @@ class PortfolioAnalytics:
             plt.savefig("omega_curves.png", dpi=300)
         if show:
             plt.show()
+
+    def herfindahl_index(self):
+        acf = acf(self.returns)
+        positive_acf = np.where(acf >= 0, acf)[1:]
+        scaled_acf = positive_acf / np.sum(positive_acf)
+        herfindahl_index = np.sum(scaled_acf**2)
+
+        return herfindahl_index
