@@ -1091,3 +1091,14 @@ class PortfolioAnalytics:
         herfindahl_index = np.sum(scaled_acf**2)
 
         return herfindahl_index
+
+    def appraisal(self, annual_rfr=0.02, annual=True, compounding=True):
+        capm = self.capm(annual_rfr=annual_rfr)
+        specific_risk = np.sqrt(
+            np.sum((capm[3] - np.mean(capm[3])) ** 2) / capm[3].shape[0]
+        ) * np.sqrt(self.returns.shape[0] - 1)
+        appraisal_ratio = (
+            self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+        )
+
+        return appraisal_ratio
