@@ -148,9 +148,11 @@ def _check_array_lengths(array_one, array_two):
 
 def _check_sharpe(adjusted, probabilistic):
     if adjusted and probabilistic:
-        raise ValueError()
+        raise ValueError(
+            "`adjusted` and `probabilistic` arguments cannot both be `True`"
+        )
 
 
 def _check_booleans(argument):
     if not isinstance(argument, bool):
-        raise ValueError()
+        raise ValueError("Argument should be a boolean")
