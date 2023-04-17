@@ -149,3 +149,8 @@ def _check_array_lengths(array_one, array_two):
 def _check_sharpe(adjusted, probabilistic):
     if adjusted and probabilistic:
         raise ValueError()
+
+
+def _check_booleans(argument):
+    if not isinstance(argument, bool):
+        raise ValueError()
