@@ -1038,6 +1038,28 @@ class PortfolioAnalytics:
 
         return omega
 
+    def omega_sharpe_ratio(self, annual_mar=0.03, annual=True, compounding=True):
+        _checks._check_rate_arguments(
+            annual_mar=annual_mar, annual=annual, compounding=compounding
+        )
+
+        mar = self._rate_conversion(annual_mar)
+        excess_returns = self.returns - mar
+        losing = (1 / excess_returns.shape[0]) * (
+            -(excess_returns[excess_returns <= 0].sum())
+        )
+
+        if annual and compounding:
+            annual_losing = self._rate_conversion(losing)
+            omega_sharpe_ratio = (self.geometric_mean - annual_mar) / annual_losing
+        elif annual and not compounding:
+            annual_losing = self._rate_conversion(losing)
+            omega_sharpe_ratio = (self.arithmetic_mean - annual_mar) / annual_losing
+        elif not annual:
+            omega_sharpe_ratio = (self.mean - mar) / losing
+
+        return omega_sharpe_ratio
+
     def plot_omega_curve(
         self,
         returns=None,
