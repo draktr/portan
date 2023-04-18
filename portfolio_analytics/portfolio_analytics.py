@@ -78,6 +78,9 @@ class PortfolioAnalytics:
         self.volatility = self.returns.std()
         self.annual_volatility = self.volatility * np.sqrt(self.frequency)
 
+        self.skewness = stats.skew(self.returns)
+        self.kurtosis = stats.kurtosis(self.returns)
+
         self.min_aum = self.state["Whole Portfolio"].min()
         self.max_aum = self.state["Whole Portfolio"].max()
         self.mean_aum = self.state["Whole Portfolio"].mean()
@@ -356,25 +359,19 @@ class PortfolioAnalytics:
             sharpe_ratio = 100 * (self.mean - rfr) / self.volatility
 
         if adjusted:
-            skew = stats.skew(self.returns)
-            kurtosis = stats.kurtosis(self.returns)
-
             sharpe_ratio = sharpe_ratio * (
                 1
-                + (skew / 6) * sharpe_ratio
-                - ((kurtosis - 3) / 24) * sharpe_ratio**2
+                + (self.skewness / 6) * sharpe_ratio
+                - ((self.kurtosis - 3) / 24) * sharpe_ratio**2
             )
 
         if probabilistic:
-            skew = stats.skew(self.returns)
-            kurtosis = stats.kurtosis(self.returns)
-
             sharpe_std = np.sqrt(
                 (
                     1
                     + (0.5 * sharpe_ratio**2)
-                    - (skew * sharpe_ratio)
-                    + (((kurtosis - 3) / 4) * sharpe_ratio**2)
+                    - (self.skewness * sharpe_ratio)
+                    + (((self.kurtosis - 3) / 4) * sharpe_ratio**2)
                 )
                 / (self.returns.shape[0] - 1)
             )
@@ -1140,3 +1137,8 @@ class PortfolioAnalytics:
         bernado_ledoit_ratio = np.sum(positive_returns) / -np.sum(negative_returns)
 
         return bernado_ledoit_ratio
+
+    def skewness_kurtosis_ratio(self):
+        skewness_kurtosis_ratio = self.skewness / self.kurtosis
+
+        return skewness_kurtosis_ratio
