@@ -1125,3 +1125,10 @@ class PortfolioAnalytics:
         if modified:
             burke_ratio = burke_ratio * np.sqrt(self.returns.shape[0])
         return burke_ratio
+
+    def hurst_index(self):
+        m = (np.maximum(self.returns) - np.minimum(self.returns)) / np.std(self.returns)
+        n = self.returns.shape[0]
+        hurst_index = np.log(m) / np.log(n)
+
+        return hurst_index
