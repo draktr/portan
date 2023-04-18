@@ -1132,3 +1132,11 @@ class PortfolioAnalytics:
         hurst_index = np.log(m) / np.log(n)
 
         return hurst_index
+
+    def bernado_ledoit(self):
+        positive_returns = np.where(self.returns > 0, self.returns)
+        negative_returns = np.where(self.returns < 0, self.returns)
+
+        bernado_ledoit_ratio = np.sum(positive_returns) / -np.sum(negative_returns)
+
+        return bernado_ledoit_ratio
