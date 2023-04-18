@@ -436,7 +436,7 @@ class PortfolioAnalytics:
 
         return downside_volatility
 
-    def volatility_skew(self, annual_mar=0.03, annual=True):
+    def volatility_skewness(self, annual_mar=0.03, annual=True):
         upside = self.upside_volatility(annual_mar, annual)
         downside = self.downside_volatility(annual_mar, annual)
         skew = upside / downside
