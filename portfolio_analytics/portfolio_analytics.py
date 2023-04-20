@@ -1164,3 +1164,13 @@ class PortfolioAnalytics:
         skewness_kurtosis_ratio = self.skewness / self.kurtosis
 
         return skewness_kurtosis_ratio
+
+    def d(self):
+        positive_returns = np.where(self.returns > 0, self.returns)
+        negative_returns = np.where(self.returns < 0, self.returns)
+
+        d_ratio = (negative_returns.shape[0] * np.sum(negative_returns)) / (
+            positive_returns.shape[0] * np.sum(positive_returns)
+        )
+
+        return d_ratio
