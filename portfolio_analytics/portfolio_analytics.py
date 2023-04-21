@@ -1174,3 +1174,15 @@ class PortfolioAnalytics:
         )
 
         return d_ratio
+
+    def kelly_criterion(self, annual_rfr=0.02, half=False):
+        _checks._check_rate_arguments(annual_rfr=annual_rfr)
+        _checks._check_booleans(argument=half)
+
+        excess_returns = self.returns - annual_rfr
+        kelly_criterion = np.mean(excess_returns) / np.std(self.returns)
+
+        if half:
+            kelly_criterion = kelly_criterion / 2
+
+        return kelly_criterion
