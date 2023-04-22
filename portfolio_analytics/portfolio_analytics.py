@@ -1186,3 +1186,35 @@ class PortfolioAnalytics:
             kelly_criterion = kelly_criterion / 2
 
         return kelly_criterion
+
+    def modigliani(
+        self,
+        annual_rfr=0.02,
+        annual=True,
+        compounding=True,
+        adjusted=False,
+        probabilistic=False,
+        sharpe_benchmark=0.0,
+    ):
+        sharpe_ratio = self.sharpe(
+            annual_rfr=annual_rfr,
+            annual=annual,
+            compounding=compounding,
+            adjusted=adjusted,
+            probabilistic=probabilistic,
+            sharpe_benchmark=sharpe_benchmark,
+        )
+
+        if annual and compounding:
+            modigliani_measure = (
+                sharpe_ratio * self.benchmark_geometric_mean + annual_rfr
+            )
+        elif annual and not compounding:
+            modigliani_measure = (
+                sharpe_ratio * self.benchmark_arithmetic_mean + annual_rfr
+            )
+        elif not annual:
+            rfr = self._rate_conversion(annual_rfr)
+            modigliani_measure = sharpe_ratio * self.benchmark_mean + rfr
+
+        return modigliani_measure
