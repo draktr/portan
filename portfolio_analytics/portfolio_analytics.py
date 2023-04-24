@@ -1218,3 +1218,8 @@ class PortfolioAnalytics:
             modigliani_measure = sharpe_ratio * self.benchmark_mean + rfr
 
         return modigliani_measure
+
+    def fama_beta(self):
+        fama_beta = np.var(self.returns) / np.var(self.benchmark_returns)
+
+        return fama_beta
