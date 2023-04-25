@@ -1245,3 +1245,11 @@ class PortfolioAnalytics:
             diversification = (fama_beta - capm[1]) * (self.benchmark_mean - rfr)
 
         return diversification
+
+    def net_selectivity(self, annual_rfr=0.02, annual=True, compounding=True):
+        jensen_alpha = self.jensen_alpha(annual_rfr, annual, compounding)
+        diversification = self.diversification(annual_rfr, annual, compounding)
+
+        net_selectivity = jensen_alpha - diversification
+
+        return net_selectivity
