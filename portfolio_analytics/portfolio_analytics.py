@@ -1223,3 +1223,25 @@ class PortfolioAnalytics:
         fama_beta = np.var(self.returns) / np.var(self.benchmark_returns)
 
         return fama_beta
+
+    def diversification(self, annual_rfr=0.02, annual=True, compounding=True):
+        _checks._check_rate_arguments(
+            annual_rfr=annual_rfr, annual=annual, compounding=compounding
+        )
+
+        fama_beta = self.fama_beta()
+        capm = self.capm(annual_rfr)
+
+        if annual and compounding:
+            diversification = (fama_beta - capm[1]) * (
+                self.benchmark_geometric_mean - annual_rfr
+            )
+        elif annual and not compounding:
+            diversification = (fama_beta - capm[1]) * (
+                self.benchmark_arithmetic_mean - annual_rfr
+            )
+        elif not annual:
+            rfr = self._rate_conversion(annual_rfr)
+            diversification = (fama_beta - capm[1]) * (self.benchmark_mean - rfr)
+
+        return diversification
