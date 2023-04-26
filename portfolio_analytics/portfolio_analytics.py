@@ -1253,3 +1253,25 @@ class PortfolioAnalytics:
         net_selectivity = jensen_alpha - diversification
 
         return net_selectivity
+
+    def downside_frequency(self, annual_mar=0.03):
+        _checks._check_rate_arguments(annual_mar=annual_mar)
+
+        mar = self._rate_conversion(annual_mar)
+        excess_returns = self.returns - mar
+        losing = excess_returns[excess_returns <= 0]
+
+        downside_frequency = losing.shape[0] / self.returns.shape[0]
+
+        return downside_frequency
+
+    def upside_frequency(self, annual_mar=0.03):
+        _checks._check_rate_arguments(annual_mar=annual_mar)
+
+        mar = self._rate_conversion(annual_mar)
+        excess_returns = self.returns - mar
+        winning = excess_returns[excess_returns > 0]
+
+        upside_frequency = winning.shape[0] / self.returns.shape[0]
+
+        return upside_frequency
