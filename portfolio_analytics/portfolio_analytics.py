@@ -554,29 +554,6 @@ class PortfolioAnalytics:
 
         return sortino_ratio
 
-    def drawdowns(self):
-        wealth_index = 1000 * (1 + self.returns).cumprod()
-        previous_peaks = wealth_index.cummax()
-        drawdowns = (wealth_index - previous_peaks) / previous_peaks
-
-        return drawdowns
-
-    def maximum_drawdown(self, periods=1000, percentage=False):
-        periods = _checks._check_periods(periods=periods, state=self.state)
-        _checks._check_percentage(percentage=percentage)
-
-        peak = np.max(self.state.iloc[-periods:]["Whole Portfolio"])
-        peak_index = self.state["Whole Portfolio"].idxmax()
-        peak_index_int = self.state.index.get_loc(peak_index)
-        trough = np.min(self.state.iloc[-peak_index_int:]["Whole Portfolio"])
-
-        if not percentage:
-            maximum_drawdown = trough - peak
-        else:
-            maximum_drawdown = (trough - peak) / peak
-
-        return maximum_drawdown
-
     def jensen_alpha(self, annual_rfr=0.02, annual=True, compounding=True):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
@@ -1275,3 +1252,14 @@ class PortfolioAnalytics:
         upside_frequency = winning.shape[0] / self.returns.shape[0]
 
         return upside_frequency
+
+    def upside_potential_ratio(self, annual_mar=0.03, annual=True):
+        _checks._check_rate_arguments(annual_mar=annual_mar)
+        mar = self._rate_conversion(annual_mar)
+
+        downside_volatility = self.downside_volatility(annual_mar, annual)
+        upside = self.returns - mar
+        upside = upside[upside > 0].sum()
+        upside_potential_ratio = upside / downside_volatility
+
+        return upside_potential_ratio
