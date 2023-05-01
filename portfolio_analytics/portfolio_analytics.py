@@ -1263,3 +1263,21 @@ class PortfolioAnalytics:
         upside_potential_ratio = upside / downside_volatility
 
         return upside_potential_ratio
+
+    def up_capture(self):
+        positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
+        corresponding_returns = np.mean(self.returns[positive_benchmark_returns.index])
+
+        up_capture_indicator = corresponding_returns / positive_benchmark_returns.mean()
+
+        return up_capture_indicator
+
+    def down_capture(self):
+        negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
+        corresponding_returns = np.mean(self.returns[negative_benchmark_returns.index])
+
+        down_capture_indicator = (
+            corresponding_returns / negative_benchmark_returns.mean()
+        )
+
+        return down_capture_indicator
