@@ -1281,3 +1281,23 @@ class PortfolioAnalytics:
         )
 
         return down_capture_indicator
+
+    def up_number(self):
+        positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
+        corresponding_returns = self.returns[positive_benchmark_returns.index]
+
+        up_number_ratio = (
+            corresponding_returns.shape[0] / positive_benchmark_returns.shape[0]
+        )
+
+        return up_number_ratio
+
+    def down_number(self):
+        negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
+        corresponding_returns = self.returns[negative_benchmark_returns.index]
+
+        down_number_ratio = (
+            corresponding_returns.shape[0] / negative_benchmark_returns.shape[0]
+        )
+
+        return down_number_ratio
