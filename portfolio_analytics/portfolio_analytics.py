@@ -1301,3 +1301,25 @@ class PortfolioAnalytics:
         )
 
         return down_number_ratio
+
+    def up_percentage(self):
+        positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
+        corresponding_returns = self.returns[
+            (self.returns > self.benchmark_returns) & self.benchmark_returns > 0
+        ]
+
+        up_percentage = (
+            corresponding_returns.shape[0] / positive_benchmark_returns.shape[0]
+        )
+
+        return up_percentage
+
+    def down_percentage(self):
+        negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
+        corresponding_returns = self.returns[
+            (self.returns > self.benchmark_returns) & self.benchmark_returns <= 0
+        ]
+
+        down_percentage = corresponding_returns.shape[0] / negative_benchmark_returns
+
+        return down_percentage
