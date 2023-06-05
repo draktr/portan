@@ -25,7 +25,7 @@ class PortfolioAnalytics:
         initial_aum=10000,
         frequency=252,
     ) -> None:
-        _checks._check_init(
+        prices, weights, benchmark_prices, benchmark_weights = _checks._check_init(
             prices=prices,
             weights=weights,
             benchmark_prices=benchmark_prices,
@@ -65,7 +65,7 @@ class PortfolioAnalytics:
             index=self.prices.index,
             columns=self.tickers,
         )
-        self.state["Whole Portfolio"] = self.state.sum(axis=1)
+        self.state["Portfolio"] = self.state.sum(axis=1)
 
         self.returns = pd.Series(
             np.dot(self.assets_returns.to_numpy(), self.weights),
@@ -87,9 +87,9 @@ class PortfolioAnalytics:
         self.skewness = stats.skew(self.returns)
         self.kurtosis = stats.kurtosis(self.returns)
 
-        self.min_aum = self.state["Whole Portfolio"].min()
-        self.max_aum = self.state["Whole Portfolio"].max()
-        self.mean_aum = self.state["Whole Portfolio"].mean()
+        self.min_aum = self.state["Portfolio"].min()
+        self.max_aum = self.state["Portfolio"].max()
+        self.mean_aum = self.state["Portfolio"].mean()
         self.final_aum = self.state.iloc[-1, -1]
 
         self.benchmark_prices = benchmark_prices
@@ -100,6 +100,7 @@ class PortfolioAnalytics:
             self.benchmark_prices.index[0]
         )
 
+        # TODO: do a permanent fix here that allows for one and multiple asset benchmark
         self.benchmark_returns = pd.DataFrame(
             np.dot(self.benchmark_assets_returns.to_numpy(), self.benchmark_weights),
             index=self.benchmark_assets_returns.index,
@@ -177,7 +178,7 @@ class PortfolioAnalytics:
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        self.state["Whole Portfolio"].plot(ax=ax)
+        self.state["Portfolio"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM ($)")
         ax.set_title("Assets Under Management")
@@ -728,14 +729,14 @@ class PortfolioAnalytics:
         percentage_drawdown = np.empty(periods)
 
         if start == 1:
-            periods_high = np.max(self.state.iloc[-periods:]["Whole Portfolio"])
+            periods_high = np.max(self.state.iloc[-periods:]["Portfolio"])
         else:
             periods_high = np.max(
-                self.state.iloc[-periods - start + 1 : -start + 1]["Whole Portfolio"]
+                self.state.iloc[-periods - start + 1 : -start + 1]["Portfolio"]
             )
 
         for i in range(periods):
-            close[i] = self.state.iloc[-i - start + 1]["Whole Portfolio"]
+            close[i] = self.state.iloc[-i - start + 1]["Portfolio"]
             percentage_drawdown[i] = 100 * ((close[i] - periods_high)) / periods_high
 
         ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
