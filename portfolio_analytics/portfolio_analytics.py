@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import pandas_datareader as pdr
+import yfinance as yf
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
@@ -40,8 +40,11 @@ class PortfolioAnalytics:
         self.assets_returns = self.prices.pct_change().drop(self.prices.index[0])
         self.tickers = self.prices.columns
         self.weights = weights
-        self.assets_info = pdr.get_quote_yahoo(self.tickers)
-        self.assets_names = self.assets_info["longName"]
+        self.assets_info = np.empty(len(self.tickers), dtype=object)
+        self.assets_names = np.empty(len(self.tickers), dtype="<U64")
+        for i, ticker in enumerate(self.tickers):
+            self.assets_info[i] = yf.Ticker(ticker).info
+            self.assets_names[i] = self.assets_info[i]["longName"]
         self.name = name
         self.initial_aum = initial_aum
         self.frequency = frequency
