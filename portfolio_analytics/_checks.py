@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import warnings
+import numbers
 
 
 def _check_rate_arguments(
@@ -83,8 +84,12 @@ def _check_init(
     initial_aum,
     frequency,
 ):
-    if not isinstance(prices, pd.DataFrame):
-        raise ValueError("`prices` should be of type `pd.DataFrame`")
+    if not isinstance(prices, (list, np.ndarray, pd.DataFrame, pd.Series)):
+        raise ValueError(
+            "`prices` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
+        )
+    if isinstance(prices, (list, np.ndarray)):
+        prices = pd.DataFrame(prices)
     if np.any(np.isnan(prices)):
         raise ValueError(
             "`prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
@@ -93,12 +98,24 @@ def _check_init(
         raise ValueError(
             "`prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
         )
-    if not isinstance(weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
+
+    if isinstance(weights, (pd.DataFrame, pd.Series)):
+        weights = weights.to_numpy()
+    elif isinstance(weights, list):
+        weights = np.array(weights)
+    elif isinstance(weights, np.ndarray):
+        pass
+    else:
         raise ValueError(
             "`weights` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
         )
-    if not isinstance(benchmark_prices, pd.DataFrame):
-        raise ValueError("`benchmark_prices` should be of type `pd.DataFrame`")
+
+    if not isinstance(benchmark_prices, (list, np.ndarray, pd.DataFrame, pd.Series)):
+        raise ValueError(
+            "`benchmark_prices` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
+        )
+    if isinstance(benchmark_prices, (list, np.ndarray)):
+        benchmark_prices = pd.DataFrame(benchmark_prices)
     if np.any(np.isnan(benchmark_prices)):
         raise ValueError(
             "`benchmark_prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
@@ -107,24 +124,40 @@ def _check_init(
         raise ValueError(
             "`benchmark_prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
         )
-    if not isinstance(benchmark_weights, (list, np.ndarray, pd.DataFrame, pd.Series)):
+
+    if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
+        benchmark_weights = benchmark_weights.to_numpy()
+    elif isinstance(benchmark_weights, list):
+        benchmark_weights = np.array(benchmark_weights)
+    elif isinstance(benchmark_weights, np.ndarray):
+        pass
+    else:
         raise ValueError(
             "`benchmark_weights` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
         )
+
     if not isinstance(name, str):
         raise ValueError("`name` should be of type `str`")
+
     if not isinstance(benchmark_name, str):
         raise ValueError("`benchmark_name` should be of type `str`")
-    if not isinstance(initial_aum, (int, float)):
-        raise ValueError("`initial_aum` should be of type `str`")
+
+    if not isinstance(initial_aum, numbers.Number):
+        raise ValueError("`initial_aum` should be a number")
     if initial_aum <= 0:
         raise ValueError("`initial_aum` should be positive")
-    if not isinstance(frequency, (int, float)):
-        raise ValueError("`frequency` should be of type `int` or `float`")
+
+    if not isinstance(frequency, numbers.Number):
+        raise ValueError("`frequency` should be a number")
+    if frequency <= 0:
+        raise ValueError("`frequency` should be positive")
+
     if prices.shape[0] != benchmark_prices.shape[0]:
         raise ValueError(
             "`prices` should have the same number of datapoints as `benchmark_prices`"
         )
+
+    return prices, weights, benchmark_prices, benchmark_weights
 
 
 def _check_mar_bounds(annual_mar_lower_bound, annual_mar_upper_bound):
