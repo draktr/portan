@@ -98,6 +98,10 @@ def _check_init(
         raise ValueError(
             "`prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
         )
+    if prices.shape[1] == 1:
+        warnings.warn(
+            "Your portfolio contains only one asset, check if this is intended"
+        )
 
     if isinstance(weights, (pd.DataFrame, pd.Series)):
         weights = weights.to_numpy()
@@ -155,6 +159,15 @@ def _check_init(
     if prices.shape[0] != benchmark_prices.shape[0]:
         raise ValueError(
             "`prices` should have the same number of datapoints as `benchmark_prices`"
+        )
+
+    if prices.shape[1] != weights.shape[1]:
+        raise ValueError(
+            "Number of assets prices doesn't match the number of weights provided"
+        )
+    if benchmark_prices.shape[1] != benchmark_weights.shape[1]:
+        raise ValueError(
+            "Number of benchmark prices doesn't match the number of benchmark weights provided"
         )
 
     return prices, weights, benchmark_prices, benchmark_weights

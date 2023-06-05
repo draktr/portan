@@ -67,11 +67,18 @@ class PortfolioAnalytics:
         )
         self.state["Portfolio"] = self.state.sum(axis=1)
 
-        self.returns = pd.Series(
-            np.dot(self.assets_returns.to_numpy(), self.weights),
-            index=self.assets_returns.index,
-            name=self.name,
-        )
+        if len(weights) == 1:
+            self.returns = pd.Series(
+                np.dot(self.assets_returns.to_numpy(), self.weights[0]),
+                index=self.assets_returns.index,
+                name=self.name,
+            )
+        elif len(weights) > 1:
+            self.returns = pd.Series(
+                np.dot(self.assets_returns.to_numpy(), self.weights),
+                index=self.assets_returns.index,
+                name=self.name,
+            )
 
         self.cumulative_returns = (self.returns + 1).cumprod()
 
@@ -100,12 +107,22 @@ class PortfolioAnalytics:
             self.benchmark_prices.index[0]
         )
 
-        # TODO: do a permanent fix here that allows for one and multiple asset benchmark
-        self.benchmark_returns = pd.DataFrame(
-            np.dot(self.benchmark_assets_returns.to_numpy(), self.benchmark_weights),
-            index=self.benchmark_assets_returns.index,
-            columns=[self.benchmark_name],
-        )
+        if len(self.benchmark_weights) == 1:
+            self.benchmark_returns = pd.DataFrame(
+                np.dot(
+                    self.benchmark_assets_returns.to_numpy(), self.benchmark_weights[0]
+                ),
+                index=self.benchmark_assets_returns.index,
+                columns=[self.benchmark_name],
+            )
+        elif len(self.benchmark_weights) > 1:
+            self.benchmark_returns = pd.DataFrame(
+                np.dot(
+                    self.benchmark_assets_returns.to_numpy(), self.benchmark_weights
+                ),
+                index=self.benchmark_assets_returns.index,
+                columns=[self.benchmark_name],
+            )
 
         self.benchmark_mean = self.benchmark_returns.mean()
         self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
