@@ -28,7 +28,10 @@ class PortfolioAnalytics:
         _checks._check_init(
             prices=prices,
             weights=weights,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
             name=name,
+            benchmark_name=benchmark_name,
             initial_aum=initial_aum,
             frequency=frequency,
         )
@@ -85,6 +88,10 @@ class PortfolioAnalytics:
         self.max_aum = self.state["Whole Portfolio"].max()
         self.mean_aum = self.state["Whole Portfolio"].mean()
         self.final_aum = self.state.iloc[-1, -1]
+
+        self.benchmark_prices = benchmark_prices
+        self.benchmark_weights = benchmark_weights
+        self.benchmark_name = benchmark_name
 
         self.benchmark_assets_returns = self.benchmark_prices.pct_change().drop(
             self.benchmark_prices.index[0]
