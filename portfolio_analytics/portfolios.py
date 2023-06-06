@@ -1,199 +1,70 @@
-import numpy as np
-import pandas as pd
-import pandas_datareader as pdr
-from datetime import datetime
+TICKERS = dict()
+WEIGHTS = dict()
 
+TICKERS["All Weather"] = ["ITOT", "SCHQ", "SCHR", "GSP", "SGOL"]
+WEIGHTS["All Weather"] = [0.3, 0.4, 0.15, 0.075, 0.075]
 
-class Portfolios:
-    def __init__(self, daily=False, compounding=True, frequency=252):
+TICKERS["Butterfly"] = ["ITOT", "VBR", "SCHQ", "SCHO", "SGOL"]
+WEIGHTS["Butterfly"] = [0.2, 0.2, 0.2, 0.2, 0.2]
 
-        self.daily = daily
-        self.compounding = compounding
-        self.frequency = frequency
+TICKERS["60/40"] = ["ITOT", "SCHR"]
+WEIGHTS["60/40"] = [0.6, 0.4]
 
-    def get_singlife(self):
-        # Singlife Sure Invest Dynamic Portfolio as of June 30th 2022
-        tickers = [
-            "0P00006G1V.SI",
-            "0P0000SO1U.SI",
-            "0P0000ZJWQ.SI",
-            "0P00016FYC.SI",
-            "0P0001CB2H.SI",
-            "0P0001FL3C.SI",
-            "0P00006HYS.SI",
-            "0P00018FHU.SI",
-            "0P0001BONF.SI",
-            "0P0001OK4Y.SI",
-        ]
-        weights = [
-            0.2004,
-            0.02,
-            0.999,
-            0.1199,
-            0.01,
-            0.0601,
-            0.2098,
-            0.1299,
-            0.1098,
-            0.0402,
-        ]
+TICKERS["Core Four"] = ["ITOT", "SPDW", "SCHR", "SCHH"]
+WEIGHTS["Core Four"] = [0.48, 0.24, 0.2, 0.08]
 
-        singlife_dynamic_t = pd.DataFrame(
-            tickers, columns=["Singlife Dynamic 30/6/2022"]
-        )
-        singlife_dynamic_w = pd.DataFrame(
-            weights, columns=["Singlife Dynamic 30/6/2022"]
-        )
+TICKERS["Coffeehouse"] = ["SCHX", "SCHV", "SCHA", "VBR", "SPDW", "SCHR", "SCHH"]
+WEIGHTS["Coffeehouse"] = [0.1, 0.1, 0.1, 0.1, 0.1, 0.4, 0.1]
 
-        return singlife_dynamic_t, singlife_dynamic_w
+TICKERS["Global"] = ["SPTM", "SPDW", "VWO", "SPTI", "BWX", "SCHH", "SGOL"]
+WEIGHTS["Global"] = [0.225, 0.225, 0.05, 0.176, 0.264, 0.04, 0.02]
 
-    def get_classics(self):
+TICKERS["Ideal"] = ["SCHX", "SCHV", "VBR", "VBK", "SPDW", "SCHO", "SCHH"]
+WEIGHTS["Ideal"] = [0.0625, 0.0925, 0.0625, 0.0925, 0.31, 0.30, 0.08]
 
-        all_weather_t = ["ITOT", "SCHQ", "SCHR", "GSP", "SGOL"]
-        all_weather_w = [0.3, 0.4, 0.15, 0.075, 0.075]
+TICKERS["Larry"] = ["VBR", "ISVL", "VWO", "SCHR"]
+WEIGHTS["Larry"] = [0.15, 0.075, 0.075, 0.7]
 
-        butterfly_t = ["ITOT", "VBR", "SCHQ", "SCHO", "SGOL"]
-        butterfly_w = [0.2, 0.2, 0.2, 0.2, 0.2]
+TICKERS["Three Fund"] = ["ITOT", "SPDW", "SCHR"]
+WEIGHTS["Three Fund"] = [0.48, 0.12, 0.4]
 
-        sixty_fourty_t = ["ITOT", "SCHR"]
-        sixty_fourty_w = [0.6, 0.4]
+TICKERS["Sandwich"] = [
+    "SCHX",
+    "SCHA",
+    "SPDW",
+    "SCHC",
+    "VWO",
+    "SCHR",
+    "BIL",
+    "IGOV",
+    "SCHH",
+]
+WEIGHTS["Sandwich"] = [0.2, 0.08, 0.06, 0.1, 0.06, 0.3, 0.11, 0.04, 0.05]
 
-        core_four_t = ["ITOT", "SPDW", "SCHR", "SCHH"]
-        core_four_w = [0.48, 0.24, 0.2, 0.08]
+TICKERS["Swensen"] = ["ITOT", "SPDW", "VWO", "SCHR", "SCHH"]
+WEIGHTS["Swensen"] = [0.3, 0.15, 0.05, 0.3, 0.2]
 
-        # coffeehouse_t = ["SCHX", "SCHV", "SCHA", "VBR", "SPDW", "SCHR", "SCHH"]
-        # coffeehouse_w = [0.1, 0.1, 0.1, 0.1, 0.1, 0.4, 0.1]
-
-        global_t = ["SPTM", "SPDW", "VWO", "SPTI", "BWX", "SCHH", "SGOL"]
-        global_w = [0.225, 0.225, 0.05, 0.176, 0.264, 0.04, 0.02]
-
-        ideal_t = ["SCHX", "SCHV", "VBR", "VBK", "SPDW", "SCHO", "SCHH"]
-        ideal_w = [0.0625, 0.0925, 0.0625, 0.0925, 0.31, 0.30, 0.08]
-
-        # larry_t = ["VBR", "ISVL", "VWO", "SCHR"]
-        # larry_w = [0.15, 0.075, 0.075, 0.7]
-
-        three_fund_t = ["ITOT", "SPDW", "SCHR"]
-        three_fund_w = [0.48, 0.12, 0.4]
-
-        # sandwich_t = ["SCHX", "SCHA", "SPDW", "SCHC", "VWO", "SCHR", "BIL", "IGOV", "SCHH"]
-        # sandwich_w = [0.2, 0.08, 0.06, 0.1, 0.06, 0.3, 0.11, 0.04, 0.05]
-
-        swensen_t = ["ITOT", "SPDW", "VWO", "SCHR", "SCHH"]
-        swensen_w = [0.3, 0.15, 0.05, 0.3, 0.2]
-
-        portfolios_t = pd.concat(
-            [
-                pd.Series(sixty_fourty_t),
-                pd.Series(all_weather_t),
-                pd.Series(butterfly_t),
-                pd.Series(core_four_t),
-                pd.Series(global_t),
-                pd.Series(ideal_t),
-                pd.Series(swensen_t),
-                pd.Series(three_fund_t),
-            ],
-            axis=1,
-        )
-        portfolios_t.columns = [
-            "60-40",
-            "All Weather",
-            "Butterfly",
-            "Core-4",
-            "Global Market",
-            "Ideal Index",
-            "Swensen",
-            "Three Fund",
-        ]
-
-        portfolios_w = pd.concat(
-            [
-                pd.Series(sixty_fourty_w),
-                pd.Series(all_weather_w),
-                pd.Series(butterfly_w),
-                pd.Series(core_four_w),
-                pd.Series(global_w),
-                pd.Series(ideal_w),
-                pd.Series(swensen_w),
-                pd.Series(three_fund_w),
-            ],
-            axis=1,
-        )
-        portfolios_w.columns = [
-            "60-40",
-            "All Weather",
-            "Butterfly",
-            "Core-4",
-            "Global Market",
-            "Ideal Index",
-            "Swensen",
-            "Three Fund",
-        ]
-
-        return portfolios_t, portfolios_w
-
-    def single_portfolio_returns(
-        self,
-        assets_tickers,
-        assets_weights,
-        start="2010-01-01",
-        end=str(datetime.now())[0:10],
-        data=None,
-        portfolio_name="Investment Portfolio",
-    ):
-
-        if data is None:
-            prices = pdr.DataReader(
-                assets_tickers, start=start, end=end, data_source="yahoo"
-            )["Adj Close"]
-            assets_returns = prices.pct_change()
-        else:
-            prices = pd.read_csv(data, index_col=["Date"])
-            assets_returns = prices.pct_change()
-
-        assets_returns = assets_returns.drop(assets_returns.index[0])
-        portfolio_returns = np.dot(assets_returns.to_numpy(), assets_weights)
-        portfolio_returns = pd.DataFrame(
-            portfolio_returns, columns=[portfolio_name], index=assets_returns.index
-        )
-
-        return portfolio_returns
-
-    def get_characteristics(self, portfolios, weights):
-
-        mean_returns = pd.Series(index=portfolios.columns, dtype="float64")
-        volatilities = pd.Series(index=portfolios.columns, dtype="float64")
-        portfolios_returns = pd.DataFrame(columns=portfolios.columns, dtype="float64")
-
-        for portfolio in portfolios.columns:
-            portfolios_returns[portfolio] = self.single_portfolio_returns(
-                portfolios[portfolio].dropna(),
-                weights[portfolio].dropna(),
-                start="2010-01-01",
-                end=str(datetime.now())[0:10],
-                data=None,
-                portfolio_name=portfolio,
-            )
-
-            if self.daily is False and self.compounding is True:
-                mean_returns[portfolio] = (
-                    1 + portfolios_returns[portfolio]
-                ).prod() ** (
-                    self.frequency / portfolios_returns[portfolio].shape[0]
-                ) - 1
-                volatilities[portfolio] = portfolios_returns[portfolio].std() * np.sqrt(
-                    self.frequency
-                )
-
-            elif self.daily is False and self.compounding is False:
-                mean_returns[portfolio] = (
-                    portfolios_returns[portfolio].mean() * self.frequency
-                )
-                volatilities[portfolio] = portfolios_returns[portfolio].std() * np.sqrt(
-                    self.frequency
-                )
-            else:
-                mean_returns[portfolio] = portfolios_returns[portfolio].mean()
-                volatilities[portfolio] = portfolios_returns[portfolio].std()
-
-        return mean_returns, volatilities
+TICKERS["Singlife Dynamic"] = [
+    "0P00006G1V.SI",
+    "0P0000SO1U.SI",
+    "0P0000ZJWQ.SI",
+    "0P00016FYC.SI",
+    "0P0001CB2H.SI",
+    "0P0001FL3C.SI",
+    "0P00006HYS.SI",
+    "0P00018FHU.SI",
+    "0P0001BONF.SI",
+    "0P0001OK4Y.SI",
+]
+WEIGHTS["Singlife"] = [
+    0.2004,
+    0.02,
+    0.999,
+    0.1199,
+    0.01,
+    0.0601,
+    0.2098,
+    0.1299,
+    0.1098,
+    0.0402,
+]
