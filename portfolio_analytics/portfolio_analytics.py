@@ -8,7 +8,7 @@ from scipy import stats
 from sklearn import covariance
 from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
-from statsmodels.tsa.stattools import acf
+from statsmodels.tsa import stattools
 from itertools import repeat
 import warnings
 from portfolio_analytics import _checks
@@ -1322,7 +1322,7 @@ class PortfolioAnalytics:
             plt.show()
 
     def herfindahl_index(self):
-        acf = acf(self.returns)
+        acf = stattools.acf(self.returns)
         positive_acf = np.where(acf >= 0, acf)[1:]
         scaled_acf = positive_acf / np.sum(positive_acf)
         herfindahl_index = np.sum(scaled_acf**2)
