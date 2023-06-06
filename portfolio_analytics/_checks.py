@@ -156,19 +156,33 @@ def _check_init(
     if frequency <= 0:
         raise ValueError("`frequency` should be positive")
 
-    if prices.shape[0] != benchmark_prices.shape[0]:
-        raise ValueError(
-            "`prices` should have the same number of datapoints as `benchmark_prices`"
-        )
-
     if prices.shape[1] != weights.shape[1]:
         raise ValueError(
             "Number of assets prices doesn't match the number of weights provided"
         )
-    if benchmark_prices.shape[1] != benchmark_weights.shape[1]:
+
+    if benchmark_prices is not None and benchmark_weights is None:
         raise ValueError(
-            "Number of benchmark prices doesn't match the number of benchmark weights provided"
+            "`benchmark_weights` is not provided, while `benchmark_prices` is provided. Please provide either both arguments (to access all methods) or none of the two arguments (to access only methods that do not require benchmark). Note that benchmark can also be set by providing `benchmark_prices` and `benchmark_weights` to any relevant method."
         )
+    elif benchmark_prices is None and benchmark_weights is not None:
+        raise ValueError(
+            "`benchmark_prices` is not provided, while `benchmark_weights` is provided. Please provide either both arguments (to access all methods) or none of the two arguments (to access only methods that do not require benchmark). Note that benchmark can also be set by providing `benchmark_prices` and `benchmark_weights` to any relevant method."
+        )
+    elif benchmark_prices is None and benchmark_weights is None:
+        warnings.warn(
+            "`benchmark_prices` and `benchmark_weights` arguments are not provided. You will only be able to use methods that do not require benchmark. Alternatively, you can set benchmark by providing `benchmark_prices` and `benchmark_weights` to any method requiring benchmark"
+        )
+
+    if benchmark_prices is not None:
+        if prices.shape[0] != benchmark_prices.shape[0]:
+            raise ValueError(
+                "`prices` should have the same number of datapoints as `benchmark_prices`"
+            )
+        if benchmark_prices.shape[1] != benchmark_weights.shape[1]:
+            raise ValueError(
+                "Number of benchmark prices doesn't match the number of benchmark weights provided"
+            )
 
     return prices, weights, benchmark_prices, benchmark_weights
 

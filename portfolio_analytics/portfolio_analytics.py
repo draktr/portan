@@ -10,6 +10,7 @@ from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
 from statsmodels.tsa.stattools import acf
 from itertools import repeat
+import warnings
 from portfolio_analytics import _checks
 
 
@@ -18,8 +19,8 @@ class PortfolioAnalytics:
         self,
         prices,
         weights,
-        benchmark_prices,
-        benchmark_weights,
+        benchmark_prices=None,
+        benchmark_weights=None,
         name="Investment Portfolio",
         benchmark_name="Benchmark Portfolio",
         initial_aum=10000,
@@ -99,6 +100,54 @@ class PortfolioAnalytics:
         self.mean_aum = self.state["Portfolio"].mean()
         self.final_aum = self.state.iloc[-1, -1]
 
+        if benchmark_prices is None and benchmark_weights is None:
+            self.benchmark_prices = benchmark_prices
+            self.benchmark_weights = benchmark_weights
+            self.benchmark_name = benchmark_name
+
+            self.benchmark_assets_returns = None
+            self.benchmark_returns = None
+
+            self.benchmark_mean = None
+            self.benchmark_arithmetic_mean = None
+            self.benchmark_geometric_mean = None
+        elif benchmark_prices is not None and benchmark_weights is not None:
+            self.benchmark_prices = benchmark_prices
+            self.benchmark_weights = benchmark_weights
+            self.benchmark_name = benchmark_name
+
+            self.benchmark_assets_returns = self.benchmark_prices.pct_change().drop(
+                self.benchmark_prices.index[0]
+            )
+
+            if len(self.benchmark_weights) == 1:
+                self.benchmark_returns = pd.DataFrame(
+                    np.dot(
+                        self.benchmark_assets_returns.to_numpy(),
+                        self.benchmark_weights[0],
+                    ),
+                    index=self.benchmark_assets_returns.index,
+                    columns=[self.benchmark_name],
+                )
+            elif len(self.benchmark_weights) > 1:
+                self.benchmark_returns = pd.DataFrame(
+                    np.dot(
+                        self.benchmark_assets_returns.to_numpy(),
+                        self.benchmark_weights,
+                    ),
+                    index=self.benchmark_assets_returns.index,
+                    columns=[self.benchmark_name],
+                )
+
+            self.benchmark_mean = self.benchmark_returns.mean()
+            self.benchmark_arithmetic_mean = (
+                self.benchmark_returns.mean() * self.frequency
+            )
+            self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
+                self.frequency / self.benchmark_returns.shape[0]
+            ) - 1
+
+    def set_benchmark(self, benchmark_prices, benchmark_weights, benchmark_name):
         self.benchmark_prices = benchmark_prices
         self.benchmark_weights = benchmark_weights
         self.benchmark_name = benchmark_name
@@ -110,7 +159,8 @@ class PortfolioAnalytics:
         if len(self.benchmark_weights) == 1:
             self.benchmark_returns = pd.DataFrame(
                 np.dot(
-                    self.benchmark_assets_returns.to_numpy(), self.benchmark_weights[0]
+                    self.benchmark_assets_returns.to_numpy(),
+                    self.benchmark_weights[0],
                 ),
                 index=self.benchmark_assets_returns.index,
                 columns=[self.benchmark_name],
@@ -118,7 +168,8 @@ class PortfolioAnalytics:
         elif len(self.benchmark_weights) > 1:
             self.benchmark_returns = pd.DataFrame(
                 np.dot(
-                    self.benchmark_assets_returns.to_numpy(), self.benchmark_weights
+                    self.benchmark_assets_returns.to_numpy(),
+                    self.benchmark_weights,
                 ),
                 index=self.benchmark_assets_returns.index,
                 columns=[self.benchmark_name],
@@ -129,6 +180,8 @@ class PortfolioAnalytics:
         self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
             self.frequency / self.benchmark_returns.shape[0]
         ) - 1
+
+        warnings.warn()
 
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
@@ -299,8 +352,21 @@ class PortfolioAnalytics:
 
         return "{:.1f}%\n(${:d})".format(pct, absolute)
 
-    def capm_return(self, annual_rfr=0.02, annual=True, compounding=True):
-        capm = self.capm(annual_rfr=annual_rfr)
+    def capm_return(
+        self,
+        annual_rfr=0.02,
+        annual=True,
+        compounding=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        capm = self.capm(
+            annual_rfr=annual_rfr,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         if annual and compounding:
             mean = annual_rfr + capm[1] * (self.benchmark_geometric_mean - annual_rfr)
@@ -312,8 +378,24 @@ class PortfolioAnalytics:
 
         return mean
 
-    def capm(self, annual_rfr=0.02):
+    def capm(
+        self,
+        annual_rfr=0.02,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -335,10 +417,23 @@ class PortfolioAnalytics:
             excess_benchmark_returns,
         )
 
-    def plot_capm(self, annual_rfr=0.02, show=True, save=False):
+    def plot_capm(
+        self,
+        annual_rfr=0.02,
+        show=True,
+        save=False,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
         _checks._check_plot_arguments(show=show, save=save)
 
-        capm = self.capm(annual_rfr)
+        capm = self.capm(
+            annual_rfr,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -409,8 +504,25 @@ class PortfolioAnalytics:
 
         return sharpe_ratio
 
-    def excess_return(self, annual, compounding):
+    def excess_return(
+        self,
+        annual,
+        compounding,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
 
         if annual and compounding:
             excess_return = self.geometric_mean - self.benchmark_geometric_mean
@@ -421,8 +533,21 @@ class PortfolioAnalytics:
 
         return excess_return
 
-    def tracking_error(self, annual=True, compounding=True):
-        excess_return = self.excess_return(annual=annual, compounding=compounding)
+    def tracking_error(
+        self,
+        annual=True,
+        compounding=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        excess_return = self.excess_return(
+            annual=annual,
+            compounding=compounding,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         tracking_error = np.std(excess_return)
 
@@ -471,7 +596,25 @@ class PortfolioAnalytics:
 
         return skew
 
-    def omega_excess_return(self, annual_mar=0.03, annual=True):
+    def omega_excess_return(
+        self,
+        annual_mar=0.03,
+        annual=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
         mar = self._rate_conversion(annual_mar)
@@ -504,8 +647,24 @@ class PortfolioAnalytics:
 
         return upside_potential_ratio
 
-    def downside_capm(self, annual_mar=0.03):
+    def downside_capm(
+        self,
+        annual_mar=0.03,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
         _checks._check_rate_arguments(annual_mar=annual_mar)
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
 
         mar = self._rate_conversion(annual_mar)
 
@@ -536,7 +695,25 @@ class PortfolioAnalytics:
             negative_benchmark_returns,
         )
 
-    def downside_volatility_ratio(self, annual_mar=0.03, annual=True):
+    def downside_volatility_ratio(
+        self,
+        annual_mar=0.03,
+        annual=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
         mar = self._rate_conversion(annual_mar)
@@ -582,10 +759,28 @@ class PortfolioAnalytics:
 
         return sortino_ratio
 
-    def jensen_alpha(self, annual_rfr=0.02, annual=True, compounding=True):
+    def jensen_alpha(
+        self,
+        annual_rfr=0.02,
+        annual=True,
+        compounding=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -612,10 +807,28 @@ class PortfolioAnalytics:
 
         return jensen_alpha
 
-    def treynor(self, annual_rfr=0.02, annual=True, compounding=True):
+    def treynor(
+        self,
+        annual_rfr=0.02,
+        annual=True,
+        compounding=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -1200,7 +1413,21 @@ class PortfolioAnalytics:
         adjusted=False,
         probabilistic=False,
         sharpe_benchmark=0.0,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
     ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         sharpe_ratio = self.sharpe(
             annual_rfr=annual_rfr,
             annual=annual,
@@ -1224,18 +1451,47 @@ class PortfolioAnalytics:
 
         return modigliani_measure
 
-    def fama_beta(self):
+    def fama_beta(
+        self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         fama_beta = np.var(self.returns) / np.var(self.benchmark_returns)
 
         return fama_beta
 
-    def diversification(self, annual_rfr=0.02, annual=True, compounding=True):
+    def diversification(
+        self,
+        annual_rfr=0.02,
+        annual=True,
+        compounding=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
         fama_beta = self.fama_beta()
-        capm = self.capm(annual_rfr)
+        capm = self.capm(
+            annual_rfr,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         if annual and compounding:
             diversification = (fama_beta - capm[1]) * (
@@ -1292,7 +1548,23 @@ class PortfolioAnalytics:
 
         return upside_potential_ratio
 
-    def up_capture(self):
+    def up_capture(
+        self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
         corresponding_returns = np.mean(self.returns[positive_benchmark_returns.index])
 
@@ -1300,7 +1572,23 @@ class PortfolioAnalytics:
 
         return up_capture_indicator
 
-    def down_capture(self):
+    def down_capture(
+        self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
         corresponding_returns = np.mean(self.returns[negative_benchmark_returns.index])
 
@@ -1310,7 +1598,23 @@ class PortfolioAnalytics:
 
         return down_capture_indicator
 
-    def up_number(self):
+    def up_number(
+        self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
         corresponding_returns = self.returns[positive_benchmark_returns.index]
 
@@ -1320,7 +1624,23 @@ class PortfolioAnalytics:
 
         return up_number_ratio
 
-    def down_number(self):
+    def down_number(
+        self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
         corresponding_returns = self.returns[negative_benchmark_returns.index]
 
@@ -1330,7 +1650,23 @@ class PortfolioAnalytics:
 
         return down_number_ratio
 
-    def up_percentage(self):
+    def up_percentage(
+        self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
         corresponding_returns = self.returns[
             (self.returns > self.benchmark_returns) & self.benchmark_returns > 0
@@ -1342,7 +1678,23 @@ class PortfolioAnalytics:
 
         return up_percentage
 
-    def down_percentage(self):
+    def down_percentage(
+        self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
         negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
         corresponding_returns = self.returns[
             (self.returns > self.benchmark_returns) & self.benchmark_returns <= 0
