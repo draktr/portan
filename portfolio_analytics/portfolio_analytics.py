@@ -697,54 +697,6 @@ class PortfolioAnalytics:
 
         return upside_potential_ratio[0]
 
-    def downside_capm(
-        self,
-        annual_mar=0.03,
-        benchmark_prices=None,
-        benchmark_weights=None,
-        benchmark_name="Benchmark Portfolio",
-    ):
-        _checks._check_rate_arguments(annual_mar=annual_mar)
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
-
-        mar = self._rate_conversion(annual_mar)
-
-        negative_benchmark_returns = self.benchmark_returns - mar
-        negative_benchmark_returns = negative_benchmark_returns[
-            negative_benchmark_returns < 0
-        ]
-
-        negative_returns = self.returns - mar
-        negative_returns = negative_returns[negative_returns < 0]
-
-        model = LinearRegression().fit(negative_benchmark_returns, negative_returns)
-        downside_alpha = model.intercept_
-        downside_beta = model.coef_[0]
-        downside_r_squared = model.score(negative_benchmark_returns, negative_returns)
-        downside_epsilon = (
-            negative_returns
-            - downside_alpha
-            - downside_beta * negative_benchmark_returns
-        )
-
-        return (
-            downside_alpha,
-            downside_beta,
-            downside_r_squared,
-            downside_epsilon,
-            negative_returns,
-            negative_benchmark_returns,
-        )
-
     def downside_volatility_ratio(
         self,
         annual_mar=0.03,
