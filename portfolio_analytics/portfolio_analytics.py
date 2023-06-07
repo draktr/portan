@@ -83,17 +83,17 @@ class PortfolioAnalytics:
 
         self.cumulative_returns = (self.returns + 1).cumprod()
 
-        self.mean = self.returns.mean()
+        self.mean = self.returns.mean()[0]
         self.arithmetic_mean = self.mean * self.frequency
-        self.geometric_mean = (1 + self.returns).prod() ** (
-            self.frequency / self.returns.shape[0]
-        ) - 1
+        self.geometric_mean = (
+            (1 + self.returns).prod() ** (self.frequency / self.returns.shape[0]) - 1
+        )[0]
 
-        self.volatility = self.returns.std()
+        self.volatility = self.returns.std()[0]
         self.annual_volatility = self.volatility * np.sqrt(self.frequency)
 
-        self.skewness = stats.skew(self.returns)
-        self.kurtosis = stats.kurtosis(self.returns)
+        self.skewness = stats.skew(self.returns)[0]
+        self.kurtosis = stats.kurtosis(self.returns)[0]
 
         self.min_aum = self.state["Portfolio"].min()
         self.max_aum = self.state["Portfolio"].max()
@@ -139,13 +139,13 @@ class PortfolioAnalytics:
                     columns=[self.benchmark_name],
                 )
 
-            self.benchmark_mean = self.benchmark_returns.mean()
-            self.benchmark_arithmetic_mean = (
-                self.benchmark_returns.mean() * self.frequency
-            )
-            self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
-                self.frequency / self.benchmark_returns.shape[0]
-            ) - 1
+            self.benchmark_mean = self.benchmark_returns.mean()[0]
+            self.benchmark_arithmetic_mean = self.benchmark_mean * self.frequency
+            self.benchmark_geometric_mean = (
+                (1 + self.benchmark_returns).prod()
+                ** (self.frequency / self.benchmark_returns.shape[0])
+                - 1
+            )[0]
 
     def set_benchmark(self, benchmark_prices, benchmark_weights, benchmark_name):
         self.benchmark_prices = benchmark_prices
@@ -175,11 +175,13 @@ class PortfolioAnalytics:
                 columns=[self.benchmark_name],
             )
 
-        self.benchmark_mean = self.benchmark_returns.mean()
-        self.benchmark_arithmetic_mean = self.benchmark_returns.mean() * self.frequency
-        self.benchmark_geometric_mean = (1 + self.benchmark_returns).prod() ** (
-            self.frequency / self.benchmark_returns.shape[0]
-        ) - 1
+        self.benchmark_mean = self.benchmark_returns.mean()[0]
+        self.benchmark_arithmetic_mean = self.benchmark_mean * self.frequency
+        self.benchmark_geometric_mean = (
+            (1 + self.benchmark_returns).prod()
+            ** (self.frequency / self.benchmark_returns.shape[0])
+            - 1
+        )[0]
 
         warnings.warn()
 
@@ -202,7 +204,7 @@ class PortfolioAnalytics:
     def net_return(self, percentage=False):
         _checks._check_percentage(percentage=percentage)
 
-        final_aum = self.final_aum()
+        final_aum = self.final_aum
 
         if not percentage:
             net_return = final_aum - self.initial_aum
@@ -229,19 +231,34 @@ class PortfolioAnalytics:
 
         return result
 
-    def ewm_return(self, span, annual=True, compounding=True):
+    def ewm_return(
+        self,
+        com=None,
+        span=None,
+        halflife=None,
+        alpha=None,
+        annual=True,
+        compounding=True,
+        **kwargs
+    ):
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
 
         if annual and compounding:
             mean = (
-                1 + self.returns.ewm(span=span).mean().iloc[-1]
+                1
+                + self.returns.ewm(com, span, halflife, alpha, **kwargs).mean().iloc[-1]
             ) ** self.frequency - 1
         elif annual and not compounding:
-            mean = self.returns.ewm(span=span).mean().iloc[-1] * self.frequency
+            mean = (
+                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean().iloc[-1]
+                * self.frequency
+            )
         elif not annual:
-            mean = self.returns.ewm(span=span).mean().iloc[-1]
+            mean = (
+                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean().iloc[-1]
+            )
 
-        return mean
+        return mean[0]
 
     def plot_aum(self, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
@@ -276,7 +293,7 @@ class PortfolioAnalytics:
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        self.returns.plot.hist(bins=90)
+        self.returns.plot.hist(ax=ax, bins=90)
         ax.set_xlabel("Returns")
         ax.set_ylabel("Frequency")
         ax.set_title("Portfolio Returns Distribution")
@@ -403,10 +420,12 @@ class PortfolioAnalytics:
         excess_benchmark_returns = self.benchmark_returns - rfr
 
         model = LinearRegression().fit(excess_benchmark_returns, excess_returns)
-        alpha = model.intercept_
-        beta = model.coef_[0]
+        alpha = model.intercept_[0]
+        beta = model.coef_[0][0]
         r_squared = model.score(excess_benchmark_returns, excess_returns)
-        epsilon = excess_returns - alpha - beta * excess_benchmark_returns
+        epsilon = np.subtract(
+            excess_returns.to_numpy(), alpha - beta * excess_benchmark_returns
+        )
 
         return (
             alpha,
@@ -443,8 +462,8 @@ class PortfolioAnalytics:
         ax.legend(
             handles=[empty_patch, empty_patch],
             labels=[
-                r"$\alpha$" + " = " + str(np.round(capm[0], 3)),
-                r"$\beta$" + " = " + str(np.round(capm[1], 3)),
+                r"$\alpha$" + " = " + str(np.round(capm[0], 5)),
+                r"$\beta$" + " = " + str(np.round(capm[1], 5)),
             ],
         )
         ax.set_xlabel("Benchmark Excess Returns")
@@ -506,8 +525,8 @@ class PortfolioAnalytics:
 
     def excess_return(
         self,
-        annual,
-        compounding,
+        annual=True,
+        compounding=True,
         benchmark_prices=None,
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
@@ -535,6 +554,27 @@ class PortfolioAnalytics:
 
     def tracking_error(
         self,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        if benchmark_prices is not None and benchmark_weights is not None:
+            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+        elif benchmark_prices is not None and self.benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        elif benchmark_prices is None and self.benchmark_prices is None:
+            raise ValueError(
+                "Benchmark is not set. Provide benchmark prices and benchmark weights"
+            )
+
+        tracking_error = np.std(self.returns - self.benchmark_returns.to_numpy())
+
+        return tracking_error[0]
+
+    def information_ratio(
+        self,
         annual=True,
         compounding=True,
         benchmark_prices=None,
@@ -548,14 +588,11 @@ class PortfolioAnalytics:
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
-
-        tracking_error = np.std(excess_return)
-
-        return tracking_error
-
-    def information_ratio(self, annual=True, compounding=True):
-        excess_return = self.excess_return(annual=annual, compounding=compounding)
-        tracking_error = self.tracking_error(annual=annual, compounding=compounding)
+        tracking_error = self.tracking_error(
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         information_ratio = excess_return / tracking_error
 
@@ -573,7 +610,7 @@ class PortfolioAnalytics:
         else:
             upside_volatility = np.std(positive_returns, ddof=1)
 
-        return upside_volatility
+        return upside_volatility[0]
 
     def downside_volatility(self, annual_mar=0.03, annual=True):
         _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
@@ -587,7 +624,7 @@ class PortfolioAnalytics:
         else:
             downside_volatility = np.std(negative_returns, ddof=1)
 
-        return downside_volatility
+        return downside_volatility[0]
 
     def volatility_skewness(self, annual_mar=0.03, annual=True):
         upside = self.upside_volatility(annual_mar, annual)
@@ -600,10 +637,12 @@ class PortfolioAnalytics:
         self,
         annual_mar=0.03,
         annual=True,
+        compounding=True,
         benchmark_prices=None,
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
+        _checks._check_rate_arguments(annual=annual, compounding=compounding)
         if benchmark_prices is not None and benchmark_weights is not None:
             self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
         elif benchmark_prices is not None and self.benchmark_prices is not None:
@@ -630,12 +669,23 @@ class PortfolioAnalytics:
         else:
             benchmark_downside_volatility = np.std(negative_benchmark_returns, ddof=1)
 
-        omega_excess_return = (
-            self.returns
-            - 3 * portfolio_downside_volatility * benchmark_downside_volatility
-        )
+        if annual and compounding:
+            omega_excess_return = (
+                self.geometric_mean
+                - 3 * portfolio_downside_volatility * benchmark_downside_volatility
+            )
+        elif annual and not compounding:
+            omega_excess_return = (
+                self.arithmetic_mean
+                - 3 * portfolio_downside_volatility * benchmark_downside_volatility
+            )
+        elif not annual:
+            omega_excess_return = (
+                self.mean
+                - 3 * portfolio_downside_volatility * benchmark_downside_volatility
+            )
 
-        return omega_excess_return
+        return omega_excess_return[0]
 
     def upside_potential(self, annual_mar=0.03, annual=True):
         mar = self._rate_conversion(annual_mar)
@@ -645,7 +695,7 @@ class PortfolioAnalytics:
         upside = upside[upside > 0].sum()
         upside_potential_ratio = upside / downside_volatility
 
-        return upside_potential_ratio
+        return upside_potential_ratio[0]
 
     def downside_capm(
         self,
@@ -687,8 +737,8 @@ class PortfolioAnalytics:
         )
 
         return (
-            downside_beta,
             downside_alpha,
+            downside_beta,
             downside_r_squared,
             downside_epsilon,
             negative_returns,
@@ -733,7 +783,7 @@ class PortfolioAnalytics:
             portfolio_downside_volatility / benchmark_downside_volatility
         )
 
-        return downside_volatility_ratio
+        return downside_volatility_ratio[0]
 
     def sortino(self, annual_mar=0.03, annual_rfr=0.02, annual=True, compounding=True):
         _checks._check_rate_arguments(
@@ -805,7 +855,7 @@ class PortfolioAnalytics:
         elif not annual:
             jensen_alpha = self.mean - rfr - beta * (self.benchmark_mean - rfr)
 
-        return jensen_alpha
+        return jensen_alpha[0]
 
     def treynor(
         self,
@@ -845,7 +895,7 @@ class PortfolioAnalytics:
         elif not annual:
             treynor_ratio = 100 * (self.mean - rfr) / beta
 
-        return treynor_ratio
+        return treynor_ratio[0]
 
     def hpm(self, annual_mar=0.03, moment=3):
         _checks._check_rate_arguments(annual_mar=annual_mar)
@@ -1108,16 +1158,18 @@ class PortfolioAnalytics:
             pdf,
             linewidth=2,
             color="b",
-            label="Analytical (Theoretical) Distribution of Portfolio Returns",
+            label="Analytical Distribution",
         )
         ax.fill_between(
-            x[0:cutoff], pdf[0:cutoff], facecolor="r", label="Analytical VaR"
+            x[0:cutoff], pdf[0:cutoff], facecolor="r", label="Value-At-Risk"
         )
-        ax.legend()
+        ax.legend(
+            loc="upper right",
+        )
         ax.set_xlabel("Returns")
         ax.set_ylabel("Density of Returns")
         ax.set_title(
-            "Analytical (Theoretical,"
+            "Analytical (Theoretical, "
             + distribution
             + ") Return Distribution and VaR Plot"
         )
@@ -1134,16 +1186,16 @@ class PortfolioAnalytics:
             sorted_returns[0],
             sorted_returns[-1] + 1,
             number_of_bins,
-        )
+        )[:, 0]
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         ax.hist(
             sorted_returns,
             bins,
-            label="Historical Distribution of Portfolio Returns",
+            label="Historical Distribution",
         )
-        ax.axvline(x=value, ymin=0, color="r", label="Historical VaR Cutoff")
+        ax.axvline(x=value, ymin=0, color="r", label="Value-At-Risk Cutoff")
         ax.legend()
         ax.set_xlabel("Returns")
         ax.set_ylabel("Frequency of Returns")
@@ -1234,7 +1286,7 @@ class PortfolioAnalytics:
         if show:
             plt.show()
 
-    def omega_ratio(self, annual_mar=0.03):
+    def omega_ratio(self, returns=None, annual_mar=0.03):
         """
         Calculates the Omega ratio of the portfolio.
 
@@ -1244,15 +1296,21 @@ class PortfolioAnalytics:
         :rtype: pd.DataFrame
         """
 
+        if returns is None:
+            returns = self.returns
+
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
 
-        excess_returns = self.returns - mar
+        excess_returns = returns - mar
         winning = excess_returns[excess_returns > 0].sum()
         losing = -(excess_returns[excess_returns <= 0].sum())
 
         omega = winning / losing
+
+        if not isinstance(omega, (int, float)):
+            omega = omega[0]
 
         return omega
 
@@ -1276,13 +1334,13 @@ class PortfolioAnalytics:
         elif not annual:
             omega_sharpe_ratio = (self.mean - mar) / losing
 
-        return omega_sharpe_ratio
+        return omega_sharpe_ratio[0]
 
     def plot_omega_curve(
         self,
         returns=None,
         annual_mar_lower_bound=0,
-        annual_mar_upper_bound=0.2,
+        annual_mar_upper_bound=0.1,
         show=True,
         save=False,
     ):
@@ -1314,7 +1372,6 @@ class PortfolioAnalytics:
             title="Omega Curve",
             xlabel="Minimum Acceptable Return (%)",
             ylabel="Omega Ratio",
-            ylim=(0, 1.5),
         )
         if save:
             plt.savefig("omega_curves.png", dpi=300)
@@ -1370,13 +1427,13 @@ class PortfolioAnalytics:
 
         return hurst_index
 
-    def bernado_ledoit(self):
+    def bernardo_ledoit(self):
         positive_returns = np.where(self.returns > 0, self.returns)
         negative_returns = np.where(self.returns < 0, self.returns)
 
-        bernado_ledoit_ratio = np.sum(positive_returns) / -np.sum(negative_returns)
+        bernardo_ledoit_ratio = np.sum(positive_returns) / -np.sum(negative_returns)
 
-        return bernado_ledoit_ratio
+        return bernardo_ledoit_ratio
 
     def skewness_kurtosis_ratio(self):
         skewness_kurtosis_ratio = self.skewness / self.kurtosis

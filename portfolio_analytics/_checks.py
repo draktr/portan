@@ -18,9 +18,7 @@ def _check_rate_arguments(
 
     if annual is not None and compounding is not None:
         if not annual and compounding:
-            raise ValueError(
-                "Mean returns cannot be compounded if `annual` is `False`."
-            )
+            warnings.warn("`compounding` argument is ignored because `annual=False`")
 
 
 def _check_plot_arguments(show, save):
