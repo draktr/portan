@@ -69,16 +69,16 @@ class PortfolioAnalytics:
         self.state["Portfolio"] = self.state.sum(axis=1)
 
         if len(weights) == 1:
-            self.returns = pd.Series(
+            self.returns = pd.DataFrame(
                 np.dot(self.assets_returns.to_numpy(), self.weights[0]),
                 index=self.assets_returns.index,
-                name=self.name,
+                columns=[self.name],
             )
         elif len(weights) > 1:
-            self.returns = pd.Series(
+            self.returns = pd.DataFrame(
                 np.dot(self.assets_returns.to_numpy(), self.weights),
                 index=self.assets_returns.index,
-                name=self.name,
+                columns=[self.name],
             )
 
         self.cumulative_returns = (self.returns + 1).cumprod()
