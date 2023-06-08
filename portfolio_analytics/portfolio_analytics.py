@@ -1712,3 +1712,21 @@ class PortfolioAnalytics:
         down_percentage = corresponding_returns.shape[0] / negative_benchmark_returns
 
         return down_percentage
+
+    def drawdowns(self):
+        cumulative_concatenated = pd.concat(
+            [
+                pd.DataFrame([1], columns=[self.name]),
+                self.cumulative_returns,
+            ]
+        ).rename(index={0: self.prices.index[0]})
+        cummax = cumulative_concatenated.cummax()
+
+        drawdowns = cumulative_concatenated / cummax - 1
+
+        return drawdowns
+
+    def maximum_drawdown(self):
+        drawdowns = self.drawdowns()
+
+        return drawdowns.min()[0]
