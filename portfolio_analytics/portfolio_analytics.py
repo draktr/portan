@@ -1732,8 +1732,10 @@ class PortfolioAnalytics:
         return -drawdowns.min()[0]
 
     def maximum_drawdown(self):
-        peak_value = max(self.state["Portfolio"])
-        trough_value = min(self.state["Portfolio"][self.state["Portfolio"].idxmax() :])
+        latest_high_idx = self.state["Portfolio"].idxmax()
+        trough_idx = self.state["Portfolio"][:latest_high_idx].idxmin()
+        peak_value = max(self.state["Portfolio"][:trough_idx])
+        trough_value = self.state["Portfolio"][trough_idx]
 
         maximum_drawdown = (trough_value - peak_value) / peak_value
         return -maximum_drawdown
