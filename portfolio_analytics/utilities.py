@@ -48,6 +48,18 @@ def rate_conversion(given_rate, periods=252):
 
 
 def fill_nan(returns, method="adjacent"):
+    """
+    Fills NaN (not a number) values of a returns array
+
+    :param returns: Returns array
+    :type returns: pd.DataFrame, pd.Series
+    :param method: Fill method, defaults to "adjacent"
+    :type method: str, optional
+    :raises ValueError: Raises error if Fill method is unsupported
+    :return: Returns array with filled NaNs
+    :rtype: pd.DataFrame or pd.Series
+    """
+
     if method == "adjacent":
         returns = returns.interpolate(method="linear", inplace=True)
     elif method == "column":
@@ -63,14 +75,37 @@ def fill_nan(returns, method="adjacent"):
 
 
 def fill_inf(returns, method="adjacent"):
+    """
+    Fills inf (-inf and +inf) values of a returns array
+
+
+    :param returns: Returns array
+    :type returns: pd.DataFrame, pd.Series
+    :param method: Fill method, defaults to "adjacent"
+    :type method: str, optional
+    :return: Returns array with filled infs
+    :rtype: pd.DataFrame or pd.Series
+    """
+
     returns.replace([np.inf, -np.inf], np.nan)
     returns = fill_nan(returns=returns, method=method)
 
     return returns
 
 
-def multiple_portfolios(tickers, weights, **kwargs):
-    data = GetData(tickers, weights, **kwargs).data["Adj Close"]
+def multi_returns(tickers, weights, **kwargs):
+    """
+    Calculates returns of multiple assets
+
+    :param tickers: Array of tickers
+    :type tickers: list, np.ndarray
+    :param weights: Array of weights
+    :type weights: list, np.ndarray
+    :return: Returns array of assets
+    :rtype: pd.DataFrame
+    """
+
+    data = GetData(tickers, weights, **kwargs).data["Close"]
     returns = data.pct_change().drop(data.index[0])
 
     return returns
