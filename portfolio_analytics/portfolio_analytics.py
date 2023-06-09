@@ -917,7 +917,7 @@ class PortfolioAnalytics:
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        maximum_drawdown = self.maximum_drawdown(periods=periods, percentage=True)
+        maximum_drawdown = self.maximum_drawdown()
 
         if annual and compounding:
             calmar_ratio = 100 * (self.geometric_mean - annual_rfr) / maximum_drawdown
@@ -1726,7 +1726,14 @@ class PortfolioAnalytics:
 
         return drawdowns
 
-    def maximum_drawdown(self):
+    def largest_individual_drawdown(self):
         drawdowns = self.drawdowns()
 
-        return drawdowns.min()[0]
+        return -drawdowns.min()[0]
+
+    def maximum_drawdown(self):
+        peak_value = max(self.state["Portfolio"])
+        trough_value = min(self.state["Portfolio"][self.state["Portfolio"].idxmax() :])
+
+        maximum_drawdown = (trough_value - peak_value) / peak_value
+        return -maximum_drawdown
