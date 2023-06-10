@@ -1332,7 +1332,7 @@ class PortfolioAnalytics:
 
     def herfindahl_index(self):
         acf = stattools.acf(self.returns)
-        positive_acf = np.where(acf >= 0, acf)[1:]
+        positive_acf = acf[acf >= 0][1:].dropna()
         scaled_acf = positive_acf / np.sum(positive_acf)
         herfindahl_index = np.sum(scaled_acf**2)
 
@@ -1347,7 +1347,7 @@ class PortfolioAnalytics:
             self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
         )
 
-        return appraisal_ratio
+        return appraisal_ratio[0]
 
     def burke(self, annual_rfr=0.02, annual=True, compounding=True, modified=False):
         _checks._check_rate_arguments(
@@ -1370,18 +1370,19 @@ class PortfolioAnalytics:
 
         if modified:
             burke_ratio = burke_ratio * np.sqrt(self.returns.shape[0])
-        return burke_ratio
+
+        return burke_ratio[0]
 
     def hurst_index(self):
-        m = (np.maximum(self.returns) - np.minimum(self.returns)) / np.std(self.returns)
+        m = (np.max(self.returns) - np.min(self.returns)) / np.std(self.returns)
         n = self.returns.shape[0]
         hurst_index = np.log(m) / np.log(n)
 
         return hurst_index
 
     def bernardo_ledoit(self):
-        positive_returns = np.where(self.returns > 0, self.returns)
-        negative_returns = np.where(self.returns < 0, self.returns)
+        positive_returns = self.returns[self.returns > 0].dropna()
+        negative_returns = self.returns[self.returns < 0].dropna()
 
         bernardo_ledoit_ratio = np.sum(positive_returns) / -np.sum(negative_returns)
 
@@ -1393,8 +1394,8 @@ class PortfolioAnalytics:
         return skewness_kurtosis_ratio
 
     def d(self):
-        positive_returns = np.where(self.returns > 0, self.returns)
-        negative_returns = np.where(self.returns < 0, self.returns)
+        positive_returns = self.returns[self.returns > 0].dropna()
+        negative_returns = self.returns[self.returns < 0].dropna()
 
         d_ratio = (negative_returns.shape[0] * np.sum(negative_returns)) / (
             positive_returns.shape[0] * np.sum(positive_returns)
@@ -1412,7 +1413,7 @@ class PortfolioAnalytics:
         if half:
             kelly_criterion = kelly_criterion / 2
 
-        return kelly_criterion
+        return kelly_criterion[0]
 
     def modigliani(
         self,
@@ -1477,9 +1478,9 @@ class PortfolioAnalytics:
                 "Benchmark is not set. Provide benchmark prices and benchmark weights"
             )
 
-        fama_beta = np.var(self.returns) / np.var(self.benchmark_returns)
+        fama_beta = np.var(self.returns) - np.var(self.benchmark_returns.to_numpy())
 
-        return fama_beta
+        return fama_beta[0]
 
     def diversification(
         self,
@@ -1529,7 +1530,7 @@ class PortfolioAnalytics:
 
         mar = self._rate_conversion(annual_mar)
         excess_returns = self.returns - mar
-        losing = excess_returns[excess_returns <= 0]
+        losing = excess_returns[excess_returns <= 0].dropna()
 
         downside_frequency = losing.shape[0] / self.returns.shape[0]
 
@@ -1540,7 +1541,7 @@ class PortfolioAnalytics:
 
         mar = self._rate_conversion(annual_mar)
         excess_returns = self.returns - mar
-        winning = excess_returns[excess_returns > 0]
+        winning = excess_returns[excess_returns > 0].dropna()
 
         upside_frequency = winning.shape[0] / self.returns.shape[0]
 
@@ -1555,7 +1556,7 @@ class PortfolioAnalytics:
         upside = upside[upside > 0].sum()
         upside_potential_ratio = upside / downside_volatility
 
-        return upside_potential_ratio
+        return upside_potential_ratio[0]
 
     def up_capture(
         self,
@@ -1574,7 +1575,9 @@ class PortfolioAnalytics:
                 "Benchmark is not set. Provide benchmark prices and benchmark weights"
             )
 
-        positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
+        positive_benchmark_returns = self.benchmark_returns[
+            self.benchmark_returns > 0
+        ].dropna()
         corresponding_returns = np.mean(self.returns[positive_benchmark_returns.index])
 
         up_capture_indicator = corresponding_returns / positive_benchmark_returns.mean()
@@ -1598,7 +1601,9 @@ class PortfolioAnalytics:
                 "Benchmark is not set. Provide benchmark prices and benchmark weights"
             )
 
-        negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
+        negative_benchmark_returns = self.benchmark_returns[
+            self.benchmark_returns <= 0
+        ].dropna()
         corresponding_returns = np.mean(self.returns[negative_benchmark_returns.index])
 
         down_capture_indicator = (
@@ -1624,7 +1629,9 @@ class PortfolioAnalytics:
                 "Benchmark is not set. Provide benchmark prices and benchmark weights"
             )
 
-        positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
+        positive_benchmark_returns = self.benchmark_returns[
+            self.benchmark_returns > 0
+        ].dropna()
         corresponding_returns = self.returns[positive_benchmark_returns.index]
 
         up_number_ratio = (
@@ -1650,7 +1657,9 @@ class PortfolioAnalytics:
                 "Benchmark is not set. Provide benchmark prices and benchmark weights"
             )
 
-        negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
+        negative_benchmark_returns = self.benchmark_returns[
+            self.benchmark_returns <= 0
+        ].dropna()
         corresponding_returns = self.returns[negative_benchmark_returns.index]
 
         down_number_ratio = (
@@ -1676,10 +1685,12 @@ class PortfolioAnalytics:
                 "Benchmark is not set. Provide benchmark prices and benchmark weights"
             )
 
-        positive_benchmark_returns = self.benchmark_returns[self.benchmark_returns > 0]
+        positive_benchmark_returns = self.benchmark_returns[
+            self.benchmark_returns > 0
+        ].dropna()
         corresponding_returns = self.returns[
             (self.returns > self.benchmark_returns) & self.benchmark_returns > 0
-        ]
+        ].dropna()
 
         up_percentage = (
             corresponding_returns.shape[0] / positive_benchmark_returns.shape[0]
@@ -1704,10 +1715,12 @@ class PortfolioAnalytics:
                 "Benchmark is not set. Provide benchmark prices and benchmark weights"
             )
 
-        negative_benchmark_returns = self.benchmark_returns[self.benchmark_returns <= 0]
+        negative_benchmark_returns = self.benchmark_returns[
+            self.benchmark_returns <= 0
+        ].dropna()
         corresponding_returns = self.returns[
             (self.returns > self.benchmark_returns) & self.benchmark_returns <= 0
-        ]
+        ].dropna()
 
         down_percentage = corresponding_returns.shape[0] / negative_benchmark_returns
 
@@ -1738,4 +1751,5 @@ class PortfolioAnalytics:
         trough_value = self.state["Portfolio"][trough_idx]
 
         maximum_drawdown = (trough_value - peak_value) / peak_value
+
         return -maximum_drawdown
