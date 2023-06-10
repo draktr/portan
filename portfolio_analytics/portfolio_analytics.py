@@ -1332,7 +1332,8 @@ class PortfolioAnalytics:
 
     def herfindahl_index(self):
         acf = stattools.acf(self.returns)
-        positive_acf = acf[acf >= 0][1:].dropna()
+        positive_acf = acf[acf >= 0][1:]
+        positive_acf = positive_acf[~np.isnan(positive_acf)]
         scaled_acf = positive_acf / np.sum(positive_acf)
         herfindahl_index = np.sum(scaled_acf**2)
 
@@ -1341,7 +1342,7 @@ class PortfolioAnalytics:
     def appraisal(self, annual_rfr=0.02, annual=True, compounding=True):
         capm = self.capm(annual_rfr=annual_rfr)
         specific_risk = np.sqrt(
-            np.sum((capm[3] - np.mean(capm[3])) ** 2) / capm[3].shape[0]
+            np.sum((capm[3] - capm[3].mean()) ** 2) / capm[3].shape[0]
         ) * np.sqrt(self.returns.shape[0] - 1)
         appraisal_ratio = (
             self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
@@ -1374,11 +1375,11 @@ class PortfolioAnalytics:
         return burke_ratio[0]
 
     def hurst_index(self):
-        m = (np.max(self.returns) - np.min(self.returns)) / np.std(self.returns)
+        m = (self.returns.max() - self.returns.min()) / np.std(self.returns)
         n = self.returns.shape[0]
         hurst_index = np.log(m) / np.log(n)
 
-        return hurst_index
+        return hurst_index[0]
 
     def bernardo_ledoit(self):
         positive_returns = self.returns[self.returns > 0].dropna()
@@ -1386,7 +1387,7 @@ class PortfolioAnalytics:
 
         bernardo_ledoit_ratio = np.sum(positive_returns) / -np.sum(negative_returns)
 
-        return bernardo_ledoit_ratio
+        return bernardo_ledoit_ratio[0]
 
     def skewness_kurtosis_ratio(self):
         skewness_kurtosis_ratio = self.skewness / self.kurtosis
@@ -1401,14 +1402,14 @@ class PortfolioAnalytics:
             positive_returns.shape[0] * np.sum(positive_returns)
         )
 
-        return d_ratio
+        return d_ratio[0]
 
     def kelly_criterion(self, annual_rfr=0.02, half=False):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
         _checks._check_booleans(argument=half)
 
         excess_returns = self.returns - annual_rfr
-        kelly_criterion = np.mean(excess_returns) / np.std(self.returns)
+        kelly_criterion = excess_returns.mean() / np.std(self.returns)
 
         if half:
             kelly_criterion = kelly_criterion / 2
