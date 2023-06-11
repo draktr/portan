@@ -25,6 +25,10 @@ class GetData:
     def data(self):
         return self._data
 
+    @property
+    def close(self):
+        return self._data["Close"]
+
     def save_all_long(self):
         data_long = (
             self.data.stack(level=1)
@@ -38,8 +42,7 @@ class GetData:
         self.data.to_csv("all_tickers_data_wide.csv")
 
     def save_close_only(self):
-        close_only = self.data["Close"]
-        close_only.to_csv("close_only.csv")
+        self.close.to_csv("close_only.csv")
 
     def save_separately(self):
         os.mkdir("tickers_data")
