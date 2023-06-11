@@ -5,15 +5,20 @@ import yfinance as yf
 
 class GetData:
     def __init__(
-        self, tickers, start="1970-01-02", end=str(datetime.now())[0:10], interval="1d"
+        self,
+        tickers,
+        start="1970-01-02",
+        end=str(datetime.now())[0:10],
+        interval="1d",
+        **kwargs
     ):
         if len(tickers) == 1:
-            self._data = yf.Ticker(tickers).history(
-                start=start, end=end, interval=interval
+            self._data = yf.Ticker(tickers[0]).history(
+                start=start, end=end, interval=interval, **kwargs
             )
-        else:
+        elif len(tickers) > 1:
             self._data = yf.Tickers(tickers).history(
-                start=start, end=end, interval=interval
+                start=start, end=end, interval=interval, **kwargs
             )
 
     @property
