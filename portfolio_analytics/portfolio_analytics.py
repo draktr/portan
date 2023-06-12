@@ -1579,9 +1579,11 @@ class PortfolioAnalytics:
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
         ].dropna()
-        corresponding_returns = np.mean(self.returns[positive_benchmark_returns.index])
+        corresponding_returns = self.returns.loc[positive_benchmark_returns.index]
 
-        up_capture_indicator = corresponding_returns / positive_benchmark_returns.mean()
+        up_capture_indicator = (
+            corresponding_returns.mean()[0] / positive_benchmark_returns.mean()[0]
+        )
 
         return up_capture_indicator
 
@@ -1605,10 +1607,10 @@ class PortfolioAnalytics:
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
         ].dropna()
-        corresponding_returns = np.mean(self.returns[negative_benchmark_returns.index])
+        corresponding_returns = self.returns.loc[negative_benchmark_returns.index]
 
         down_capture_indicator = (
-            corresponding_returns / negative_benchmark_returns.mean()
+            corresponding_returns.mean()[0] / negative_benchmark_returns.mean()[0]
         )
 
         return down_capture_indicator
@@ -1633,7 +1635,9 @@ class PortfolioAnalytics:
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
         ].dropna()
-        corresponding_returns = self.returns[positive_benchmark_returns.index]
+        corresponding_returns = self.returns.loc[positive_benchmark_returns.index][
+            self.returns > 0
+        ].dropna()
 
         up_number_ratio = (
             corresponding_returns.shape[0] / positive_benchmark_returns.shape[0]
@@ -1661,7 +1665,9 @@ class PortfolioAnalytics:
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
         ].dropna()
-        corresponding_returns = self.returns[negative_benchmark_returns.index]
+        corresponding_returns = self.returns.loc[negative_benchmark_returns.index][
+            self.returns < 0
+        ].dropna()
 
         down_number_ratio = (
             corresponding_returns.shape[0] / negative_benchmark_returns.shape[0]
@@ -1690,7 +1696,8 @@ class PortfolioAnalytics:
             self.benchmark_returns > 0
         ].dropna()
         corresponding_returns = self.returns[
-            (self.returns > self.benchmark_returns) & self.benchmark_returns > 0
+            (self.returns[self.name] > self.benchmark_returns[self.benchmark_name])
+            & (self.benchmark_returns[self.benchmark_name] > 0)
         ].dropna()
 
         up_percentage = (
@@ -1719,11 +1726,13 @@ class PortfolioAnalytics:
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
         ].dropna()
-        corresponding_returns = self.returns[
-            (self.returns > self.benchmark_returns) & self.benchmark_returns <= 0
-        ].dropna()
+        corresponding_returns = self.returns[(
+            self.returns[self.name] > self.benchmark_returns[self.benchmark_name])&
+        (self.benchmark_returns[self.benchmark_name] <= 0)].dropna()
 
-        down_percentage = corresponding_returns.shape[0] / negative_benchmark_returns
+        down_percentage = (
+            corresponding_returns.shape[0] / negative_benchmark_returns.shape[0]
+        )
 
         return down_percentage
 
