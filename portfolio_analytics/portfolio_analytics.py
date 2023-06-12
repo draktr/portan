@@ -83,7 +83,7 @@ class PortfolioAnalytics:
 
         self.cumulative_returns = (self.returns + 1).cumprod()
 
-        self.mean = self.returns.mean()[0]
+        self.mean = self.returns.mean(axis=0)[0]
         self.arithmetic_mean = self.mean * self.frequency
         self.geometric_mean = (
             (1 + self.returns).prod() ** (self.frequency / self.returns.shape[0]) - 1
@@ -97,7 +97,7 @@ class PortfolioAnalytics:
 
         self.min_aum = self.state["Portfolio"].min()
         self.max_aum = self.state["Portfolio"].max()
-        self.mean_aum = self.state["Portfolio"].mean()
+        self.mean_aum = self.state["Portfolio"].mean(axis=0)
         self.final_aum = self.state.iloc[-1, -1]
 
         if benchmark_prices is None and benchmark_weights is None:
@@ -139,7 +139,7 @@ class PortfolioAnalytics:
                     columns=[self.benchmark_name],
                 )
 
-            self.benchmark_mean = self.benchmark_returns.mean()[0]
+            self.benchmark_mean = self.benchmark_returns.mean(axis=0)[0]
             self.benchmark_arithmetic_mean = self.benchmark_mean * self.frequency
             self.benchmark_geometric_mean = (
                 (1 + self.benchmark_returns).prod()
@@ -175,7 +175,7 @@ class PortfolioAnalytics:
                 columns=[self.benchmark_name],
             )
 
-        self.benchmark_mean = self.benchmark_returns.mean()[0]
+        self.benchmark_mean = self.benchmark_returns.mean(axis=0)[0]
         self.benchmark_arithmetic_mean = self.benchmark_mean * self.frequency
         self.benchmark_geometric_mean = (
             (1 + self.benchmark_returns).prod()
@@ -246,16 +246,16 @@ class PortfolioAnalytics:
         if annual and compounding:
             mean = (
                 1
-                + self.returns.ewm(com, span, halflife, alpha, **kwargs).mean().iloc[-1]
+                + self.returns.ewm(com, span, halflife, alpha, **kwargs).mean(axis=0).iloc[-1]
             ) ** self.frequency - 1
         elif annual and not compounding:
             mean = (
-                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean().iloc[-1]
+                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean(axis=0).iloc[-1]
                 * self.frequency
             )
         elif not annual:
             mean = (
-                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean().iloc[-1]
+                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean(axis=0).iloc[-1]
             )
 
         return mean[0]
@@ -1342,7 +1342,7 @@ class PortfolioAnalytics:
     def appraisal(self, annual_rfr=0.02, annual=True, compounding=True):
         capm = self.capm(annual_rfr=annual_rfr)
         specific_risk = np.sqrt(
-            np.sum((capm[3] - capm[3].mean()) ** 2) / capm[3].shape[0]
+            np.sum((capm[3] - capm[3].mean(axis=0)) ** 2) / capm[3].shape[0]
         ) * np.sqrt(self.returns.shape[0] - 1)
         appraisal_ratio = (
             self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
@@ -1409,7 +1409,7 @@ class PortfolioAnalytics:
         _checks._check_booleans(argument=half)
 
         excess_returns = self.returns - annual_rfr
-        kelly_criterion = excess_returns.mean() / np.std(self.returns)
+        kelly_criterion = excess_returns.mean(axis=0) / np.std(self.returns)
 
         if half:
             kelly_criterion = kelly_criterion / 2
@@ -1582,7 +1582,7 @@ class PortfolioAnalytics:
         corresponding_returns = self.returns.loc[positive_benchmark_returns.index]
 
         up_capture_indicator = (
-            corresponding_returns.mean()[0] / positive_benchmark_returns.mean()[0]
+            corresponding_returns.mean(axis=0)[0] / positive_benchmark_returns.mean(axis=0)[0]
         )
 
         return up_capture_indicator
@@ -1610,7 +1610,7 @@ class PortfolioAnalytics:
         corresponding_returns = self.returns.loc[negative_benchmark_returns.index]
 
         down_capture_indicator = (
-            corresponding_returns.mean()[0] / negative_benchmark_returns.mean()[0]
+            corresponding_returns.mean(axis=0)[0] / negative_benchmark_returns.mean(axis=0)[0]
         )
 
         return down_capture_indicator
