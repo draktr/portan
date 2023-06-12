@@ -246,16 +246,22 @@ class PortfolioAnalytics:
         if annual and compounding:
             mean = (
                 1
-                + self.returns.ewm(com, span, halflife, alpha, **kwargs).mean(axis=0).iloc[-1]
+                + self.returns.ewm(com, span, halflife, alpha, **kwargs)
+                .mean(axis=0)
+                .iloc[-1]
             ) ** self.frequency - 1
         elif annual and not compounding:
             mean = (
-                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean(axis=0).iloc[-1]
+                self.returns.ewm(com, span, halflife, alpha, **kwargs)
+                .mean(axis=0)
+                .iloc[-1]
                 * self.frequency
             )
         elif not annual:
             mean = (
-                self.returns.ewm(com, span, halflife, alpha, **kwargs).mean(axis=0).iloc[-1]
+                self.returns.ewm(com, span, halflife, alpha, **kwargs)
+                .mean(axis=0)
+                .iloc[-1]
             )
 
         return mean[0]
@@ -1582,7 +1588,8 @@ class PortfolioAnalytics:
         corresponding_returns = self.returns.loc[positive_benchmark_returns.index]
 
         up_capture_indicator = (
-            corresponding_returns.mean(axis=0)[0] / positive_benchmark_returns.mean(axis=0)[0]
+            corresponding_returns.mean(axis=0)[0]
+            / positive_benchmark_returns.mean(axis=0)[0]
         )
 
         return up_capture_indicator
@@ -1610,7 +1617,8 @@ class PortfolioAnalytics:
         corresponding_returns = self.returns.loc[negative_benchmark_returns.index]
 
         down_capture_indicator = (
-            corresponding_returns.mean(axis=0)[0] / negative_benchmark_returns.mean(axis=0)[0]
+            corresponding_returns.mean(axis=0)[0]
+            / negative_benchmark_returns.mean(axis=0)[0]
         )
 
         return down_capture_indicator
@@ -1726,9 +1734,10 @@ class PortfolioAnalytics:
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
         ].dropna()
-        corresponding_returns = self.returns[(
-            self.returns[self.name] > self.benchmark_returns[self.benchmark_name])&
-        (self.benchmark_returns[self.benchmark_name] <= 0)].dropna()
+        corresponding_returns = self.returns[
+            (self.returns[self.name] > self.benchmark_returns[self.benchmark_name])
+            & (self.benchmark_returns[self.benchmark_name] <= 0)
+        ].dropna()
 
         down_percentage = (
             corresponding_returns.shape[0] / negative_benchmark_returns.shape[0]
