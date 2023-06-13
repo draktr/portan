@@ -409,16 +409,13 @@ class PortfolioAnalytics:
         benchmark_name="Benchmark Portfolio",
     ):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -538,16 +535,13 @@ class PortfolioAnalytics:
         benchmark_name="Benchmark Portfolio",
     ):
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         if annual and compounding:
             excess_return = self.geometric_mean - self.benchmark_geometric_mean
@@ -564,16 +558,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         tracking_error = np.std(self.returns - self.benchmark_returns.to_numpy())
 
@@ -649,16 +640,13 @@ class PortfolioAnalytics:
         benchmark_name="Benchmark Portfolio",
     ):
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
@@ -711,16 +699,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
 
@@ -779,16 +764,13 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -827,16 +809,13 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -1434,16 +1413,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         sharpe_ratio = self.sharpe(
             annual_rfr=annual_rfr,
@@ -1474,16 +1450,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         fama_beta = np.var(self.returns) - np.var(self.benchmark_returns.to_numpy())
 
@@ -1571,16 +1544,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
@@ -1600,16 +1570,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
@@ -1629,16 +1596,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
@@ -1659,16 +1623,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
@@ -1689,16 +1650,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
@@ -1720,16 +1678,13 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        if benchmark_prices is not None and benchmark_weights is not None:
-            self.set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
-        elif benchmark_prices is not None and self.benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        elif benchmark_prices is None and self.benchmark_prices is None:
-            raise ValueError(
-                "Benchmark is not set. Provide benchmark prices and benchmark weights"
-            )
+        _checks._check_benchmark(
+            set_fn=self.set_benchmark,
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0

@@ -214,3 +214,18 @@ def _check_sharpe(adjusted, probabilistic):
 def _check_booleans(argument):
     if not isinstance(argument, bool):
         raise ValueError("Argument should be a boolean")
+
+
+def _check_benchmark(
+    set_fn, slf_benchmark_prices, benchmark_prices, benchmark_weights, benchmark_name
+):
+    if benchmark_prices is not None and benchmark_weights is not None:
+        set_fn(benchmark_prices, benchmark_weights, benchmark_name)
+    elif benchmark_prices is not None and slf_benchmark_prices is not None:
+        warnings.warn(
+            "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+        )
+    elif benchmark_prices is None and slf_benchmark_prices is None:
+        raise ValueError(
+            "Benchmark is not set. Provide benchmark prices and benchmark weights"
+        )
