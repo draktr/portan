@@ -1010,18 +1010,21 @@ class PortfolioAnalytics:
 
         if annual and compounding:
             mean_return = self.geometric_mean
+            volatility = self.annual_volatility
         elif annual and not compounding:
             mean_return = self.arithmetic_mean
+            volatility = self.annual_volatility
         elif not annual:
             mean_return = self.mean
+            volatility = self.volatility
 
         if distribution == "normal":
-            var = stats.norm(mean_return, self.annual_volatility).cdf(value)
+            var = stats.norm(mean_return, volatility).cdf(value)
             expected_loss = (
-                stats.norm(mean_return, self.annual_volatility).pdf(
-                    stats.norm(mean_return, self.annual_volatility).ppf((1 - var))
+                stats.norm(mean_return, volatility).pdf(
+                    stats.norm(mean_return, volatility).ppf((1 - var))
                 )
-                * self.annual_volatility
+                * volatility
             ) / (1 - var) - mean_return
         elif distribution == "t":
             var = stats.t(dof).cdf(value)
@@ -1032,7 +1035,7 @@ class PortfolioAnalytics:
                 * (1 - dof) ** (-1)
                 * (dof - 2 + percent_point_function**2)
                 * stats.t(dof).pdf(percent_point_function)
-                * self.annual_volatility
+                * volatility
                 - mean_return
             )
         else:
@@ -1062,19 +1065,22 @@ class PortfolioAnalytics:
 
         if annual and compounding:
             mean_return = self.geometric_mean
+            volatility = self.annual_volatility
         elif annual and not compounding:
             mean_return = self.arithmetic_mean
+            volatility = self.annual_volatility
         elif not annual:
             mean_return = self.mean
+            volatility = self.volatility
 
         x = np.linspace(
-            mean_return - z * self.annual_volatility,
-            mean_return + z * self.annual_volatility,
+            mean_return - z * volatility,
+            mean_return + z * volatility,
             100,
         )
 
         if distribution == "normal":
-            pdf = stats.norm(mean_return, self.annual_volatility).pdf(x)
+            pdf = stats.norm(mean_return, volatility).pdf(x)
         elif distribution == "t":
             pdf = stats.t(dof).pdf(x)
         else:
