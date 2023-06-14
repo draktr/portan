@@ -7,10 +7,10 @@ import numbers
 def _check_rate_arguments(
     annual_mar=None, annual_rfr=None, annual=None, compounding=None
 ):
-    if not isinstance(annual_mar, (float, type(None))):
-        raise ValueError("`annual_mar` should be of type `float`")
-    if not isinstance(annual_rfr, (float, type(None))):
-        raise ValueError("`annual_rfr` should be of type `float`")
+    if not isinstance(annual_mar, (int, float, type(None))):
+        raise ValueError("`annual_mar` should be of type `int` or `float`")
+    if not isinstance(annual_rfr, (int, float, type(None))):
+        raise ValueError("`annual_rfr` should be of type `int` or `float`")
     if not isinstance(annual, (bool, type(None))):
         raise ValueError("`annual` should be of type `bool`")
     if not isinstance(compounding, (bool, type(None))):
