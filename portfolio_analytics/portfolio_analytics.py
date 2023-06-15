@@ -837,7 +837,7 @@ class PortfolioAnalytics:
         days = self.returns.shape[0]
 
         higher_partial_moment = (1 / days) * np.sum(
-            np.power(np.max(self.returns - mar, 0), moment)
+            np.power(np.maximum(self.returns - mar, 0), moment)
         )
 
         return higher_partial_moment
@@ -850,7 +850,7 @@ class PortfolioAnalytics:
         days = self.returns.shape[0]
 
         lower_partial_moment = (1 / days) * np.sum(
-            np.power(np.max(mar - self.returns, 0), moment)
+            np.power(np.maximum(mar - self.returns, 0), moment)
         )
 
         return lower_partial_moment
