@@ -1720,3 +1720,16 @@ class PortfolioAnalytics:
             mdd = drawdowns[-periods:].min()[0]
 
         return mdd
+
+    def average_drawdown(self, periods=0, largest=0, inverse=True):
+        drawdowns = self.drawdowns()
+        drawdowns = drawdowns[-periods:].sort_values(by=self.name, ascending=False)[
+            -largest:
+        ]
+
+        if inverse:
+            add = -drawdowns.mean()[0]
+        else:
+            add = drawdowns.mean()[0]
+
+        return add
