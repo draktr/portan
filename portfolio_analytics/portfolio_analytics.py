@@ -675,16 +675,6 @@ class PortfolioAnalytics:
 
         return omega_excess_return[0]
 
-    def upside_potential(self, annual_mar=0.03, annual=True):
-        mar = self._rate_conversion(annual_mar)
-
-        downside_volatility = self.downside_volatility(annual_mar, annual)
-        upside = self.returns - mar
-        upside = upside[upside > 0].sum()
-        upside_potential_ratio = upside / downside_volatility
-
-        return upside_potential_ratio[0]
-
     def downside_volatility_ratio(
         self,
         annual_mar=0.03,
@@ -840,7 +830,7 @@ class PortfolioAnalytics:
             np.power(np.maximum(self.returns - mar, 0), moment)
         )
 
-        return higher_partial_moment
+        return higher_partial_moment[0]
 
     def lpm(self, annual_mar=0.03, moment=3):
         _checks._check_rate_arguments(annual_mar=annual_mar)
@@ -853,7 +843,7 @@ class PortfolioAnalytics:
             np.power(np.maximum(mar - self.returns, 0), moment)
         )
 
-        return lower_partial_moment
+        return lower_partial_moment[0]
 
     def kappa(self, annual_mar=0.03, moment=3, annual=True, compounding=True):
         _checks._check_rate_arguments(
@@ -891,12 +881,14 @@ class PortfolioAnalytics:
 
         return gain_loss_ratio
 
-    def calmar(self, periods=1000, annual_rfr=0.02, annual=True, compounding=True):
+    def calmar(
+        self, periods=0, inverse=True, annual_rfr=0.02, annual=True, compounding=True
+    ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        maximum_drawdown = self.maximum_drawdown()
+        maximum_drawdown = self.maximum_drawdown(periods=periods, inverse=inverse)
 
         if annual and compounding:
             calmar_ratio = 100 * (self.geometric_mean - annual_rfr) / maximum_drawdown
@@ -970,12 +962,16 @@ class PortfolioAnalytics:
         ulcer_index = self.ulcer(periods)
 
         if annual and compounding:
-            martin_ratio = 100 * (self.geometric_mean - annual_rfr) / ulcer_index[-1]
+            martin_ratio = (
+                100 * (self.geometric_mean - annual_rfr) / ulcer_index.iloc[-1]
+            )
         elif annual and not compounding:
-            martin_ratio = 100 * (self.arithmetic_mean - annual_rfr) / ulcer_index[-1]
+            martin_ratio = (
+                100 * (self.arithmetic_mean - annual_rfr) / ulcer_index.iloc[-1]
+            )
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            martin_ratio = 100 * (self.mean - rfr) / ulcer_index[-1]
+            martin_ratio = 100 * (self.mean - rfr) / ulcer_index.iloc[-1]
 
         return martin_ratio
 
@@ -1519,17 +1515,6 @@ class PortfolioAnalytics:
 
         return upside_frequency
 
-    def upside_potential_ratio(self, annual_mar=0.03, annual=True):
-        _checks._check_rate_arguments(annual_mar=annual_mar)
-        mar = self._rate_conversion(annual_mar)
-
-        downside_volatility = self.downside_volatility(annual_mar, annual)
-        upside = self.returns - mar
-        upside = upside[upside > 0].sum()
-        upside_potential_ratio = upside / downside_volatility
-
-        return upside_potential_ratio[0]
-
     def up_capture(
         self,
         benchmark_prices=None,
@@ -1704,7 +1689,7 @@ class PortfolioAnalytics:
         return drawdowns
 
     def maximum_drawdown(self, periods=0, inverse=True):
-        _checks._check_posints(periods=periods)
+        _checks._check_nonnegints(periods=periods)
         _checks._check_booleans(argument=inverse)
 
         drawdowns = self.drawdowns()
@@ -1717,7 +1702,7 @@ class PortfolioAnalytics:
         return mdd
 
     def average_drawdown(self, periods=0, largest=0, inverse=True):
-        _checks._check_posints(periods=periods, largest=largest)
+        _checks._check_nonnegints(periods=periods, largest=largest)
         _checks._check_booleans(argument=inverse)
 
         drawdowns = self.drawdowns()
