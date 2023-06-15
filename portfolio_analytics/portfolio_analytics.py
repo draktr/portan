@@ -1733,3 +1733,9 @@ class PortfolioAnalytics:
             add = drawdowns.mean()[0]
 
         return add
+
+    def sorted_drawdowns(self, **kwargs):
+        drawdowns = self.drawdowns()
+        sorted_drawdowns = drawdowns.sort_values(by=self.name, **kwargs)
+
+        return sorted_drawdowns
