@@ -1768,3 +1768,18 @@ class PortfolioAnalytics:
         upside_variance = self.lpm(annual_mar=annual_mar, moment=2)
 
         return upside_variance
+
+    def downside_risk(self, annual_mar=0.03):
+        downside_risk = np.sqrt(self.downside_variance(annual_mar=annual_mar))
+
+        return downside_risk
+
+    def downside_potential(self, annual_mar=0.03):
+        downside_potential = self.lpm(annual_mar=annual_mar, moment=1)
+
+        return downside_potential
+
+    def downside_variance(self, annual_mar=0.03):
+        downside_variance = self.lpm(annual_mar=annual_mar, moment=2)
+
+        return downside_variance
