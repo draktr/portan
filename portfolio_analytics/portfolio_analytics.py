@@ -231,7 +231,7 @@ class PortfolioAnalytics:
 
         return result
 
-    def ewm_return(
+    def ewm(
         self,
         com=None,
         span=None,
