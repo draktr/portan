@@ -908,27 +908,32 @@ class PortfolioAnalytics:
 
         return calmar_ratio
 
-    def sterling(self, annual_rfr=0.02, drawdowns=3, annual=True, compounding=True):
+    def sterling(
+        self,
+        annual_rfr=0.02,
+        periods=0,
+        largest=0,
+        inverse=True,
+        annual=True,
+        compounding=True,
+    ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        _checks._check_posints(drawdowns=drawdowns)
 
-        portfolio_drawdowns = self.drawdowns()
-        sorted_drawdowns = np.sort(portfolio_drawdowns)
-        d_average_drawdown = np.mean(sorted_drawdowns[-drawdowns:])
+        average_drawdown = self.average_drawdown(
+            periods=periods, largest=largest, inverse=inverse
+        )
 
         if annual and compounding:
-            sterling_ratio = (
-                100 * (self.geometric_mean - annual_rfr) / np.abs(d_average_drawdown)
-            )
+            sterling_ratio = 100 * (self.geometric_mean - annual_rfr) / average_drawdown
         elif annual and not compounding:
             sterling_ratio = (
-                100 * (self.arithmetic_mean - annual_rfr) / np.abs(d_average_drawdown)
+                100 * (self.arithmetic_mean - annual_rfr) / average_drawdown
             )
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            sterling_ratio = 100 * (self.mean - rfr) / np.abs(d_average_drawdown)
+            sterling_ratio = 100 * (self.mean - rfr) / average_drawdown
 
         return sterling_ratio
 
@@ -1712,6 +1717,9 @@ class PortfolioAnalytics:
         return drawdowns
 
     def maximum_drawdown(self, periods=0, inverse=True):
+        _checks._check_posints(periods=periods)
+        _checks._check_booleans(argument=inverse)
+
         drawdowns = self.drawdowns()
 
         if inverse:
@@ -1722,6 +1730,9 @@ class PortfolioAnalytics:
         return mdd
 
     def average_drawdown(self, periods=0, largest=0, inverse=True):
+        _checks._check_posints(periods=periods, largest=largest)
+        _checks._check_booleans(argument=inverse)
+
         drawdowns = self.drawdowns()
         drawdowns = drawdowns[-periods:].sort_values(by=self.name, ascending=False)[
             -largest:
