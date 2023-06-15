@@ -937,27 +937,24 @@ class PortfolioAnalytics:
 
         return sterling_ratio
 
-    def ulcer(self, periods=14, start=1):
+    def ulcer(self, periods=14):
         periods = _checks._check_periods(periods=periods, state=self.state)
-        _checks._check_posints(start=start)
 
-        close = np.empty(periods)
-        percentage_drawdown = np.empty(periods)
+        ulcer = pd.DataFrame(columns=["Ulcer Index"], index=self.state.index)
+        period_high_close = (
+            self.state["Portfolio"]
+            .rolling(periods + 1)
+            .apply(lambda x: np.amax(x), raw=True)
+        )
+        percentage_drawdown_squared = (
+            (self.state["Portfolio"] - period_high_close) / period_high_close * 100
+        ) ** 2
+        squared_average = (
+            percentage_drawdown_squared.rolling(periods + 1).sum() / periods
+        )
+        ulcer["Ulcer Index"] = np.sqrt(squared_average)
 
-        if start == 1:
-            periods_high = np.max(self.state.iloc[-periods:]["Portfolio"])
-        else:
-            periods_high = np.max(
-                self.state.iloc[-periods - start + 1 : -start + 1]["Portfolio"]
-            )
-
-        for i in range(periods):
-            close[i] = self.state.iloc[-i - start + 1]["Portfolio"]
-            percentage_drawdown[i] = 100 * ((close[i] - periods_high)) / periods_high
-
-        ulcer_index = np.sqrt(np.mean(np.square(percentage_drawdown)))
-
-        return ulcer_index
+        return ulcer
 
     def martin(
         self,
@@ -969,37 +966,27 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        periods = _checks._check_periods(periods=periods, state=self.state)
 
         ulcer_index = self.ulcer(periods)
 
         if annual and compounding:
-            martin_ratio = 100 * (self.geometric_mean - annual_rfr) / ulcer_index
+            martin_ratio = 100 * (self.geometric_mean - annual_rfr) / ulcer_index[-1]
         elif annual and not compounding:
-            martin_ratio = 100 * (self.arithmetic_mean - annual_rfr) / ulcer_index
+            martin_ratio = 100 * (self.arithmetic_mean - annual_rfr) / ulcer_index[-1]
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            martin_ratio = 100 * (self.mean - rfr) / ulcer_index
+            martin_ratio = 100 * (self.mean - rfr) / ulcer_index[-1]
 
         return martin_ratio
-
-    def ulcer_series(self, periods=14):
-        periods = _checks._check_periods(periods=periods, state=self.state)
-
-        ulcer_series = pd.DataFrame(columns=["Ulcer Index"], index=self.state.index)
-        for i in range(self.state.shape[0] - periods):
-            ulcer_series.iloc[-i]["Ulcer Index"] = self.ulcer(periods, start=i)
-
-        return ulcer_series
 
     def plot_ulcer(self, periods=14, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
 
-        ulcer_series = self.ulcer_series(periods)
+        ulcer = self.ulcer(periods)
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        ulcer_series["Ulcer Index"].plot(ax=ax)
+        ulcer["Ulcer Index"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Ulcer Index")
         ax.set_title("Portfolio Ulcer Index")
