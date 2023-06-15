@@ -1711,17 +1711,12 @@ class PortfolioAnalytics:
 
         return drawdowns
 
-    def largest_individual_drawdown(self):
+    def maximum_drawdown(self, periods=0, inverse=True):
         drawdowns = self.drawdowns()
 
-        return -drawdowns.min()[0]
+        if inverse:
+            mdd = -drawdowns[-periods:].min()[0]
+        else:
+            mdd = drawdowns[-periods:].min()[0]
 
-    def maximum_drawdown(self):
-        latest_high_idx = self.state["Portfolio"].idxmax()
-        trough_idx = self.state["Portfolio"][:latest_high_idx].idxmin()
-        peak_value = max(self.state["Portfolio"][:trough_idx])
-        trough_value = self.state["Portfolio"][trough_idx]
-
-        maximum_drawdown = (trough_value - peak_value) / peak_value
-
-        return -maximum_drawdown
+        return mdd
