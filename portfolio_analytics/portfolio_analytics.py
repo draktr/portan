@@ -1753,3 +1753,18 @@ class PortfolioAnalytics:
             plt.savefig("drawdowns.png", dpi=300)
         if show:
             plt.show()
+
+    def upside_risk(self, annual_mar=0.03):
+        upside_risk = np.sqrt(self.upside_variance(annual_mar=annual_mar))
+
+        return upside_risk
+
+    def upside_potential(self, annual_mar=0.03):
+        upside_potential = self.lpm(annual_mar=annual_mar, moment=1)
+
+        return upside_potential
+
+    def upside_variance(self, annual_mar=0.03):
+        upside_variance = self.lpm(annual_mar=annual_mar, moment=2)
+
+        return upside_variance
