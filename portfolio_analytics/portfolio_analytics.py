@@ -1739,3 +1739,19 @@ class PortfolioAnalytics:
         sorted_drawdowns = drawdowns.sort_values(by=self.name, **kwargs)
 
         return sorted_drawdowns
+
+    def plot_drawdowns(self, show=True, save=False):
+        _checks._check_plot_arguments(show=show, save=save)
+
+        drawdowns = self.drawdowns()
+
+        fig = plt.figure()
+        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        drawdowns.plot(ax=ax)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Drawdowns")
+        ax.set_title("Portfolio Drawdowns")
+        if save:
+            plt.savefig("drawdowns.png", dpi=300)
+        if show:
+            plt.show()
