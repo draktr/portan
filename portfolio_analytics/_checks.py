@@ -49,6 +49,14 @@ def _check_posints(**kwargs):
             raise ValueError(f"`{name}` should be positive")
 
 
+def _check_nonnegints(**kwargs):
+    for name, value in kwargs.items():
+        if not isinstance(value, int):
+            raise ValueError(f"`{name}` should be of type `int`")
+        if value < 0:
+            raise ValueError(f"`{name}` should be positive")
+
+
 def _check_percentage(percentage):
     if not isinstance(percentage, bool):
         raise ValueError("`percentage`  should be of type `bool`.")
