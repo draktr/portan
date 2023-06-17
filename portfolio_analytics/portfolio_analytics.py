@@ -589,40 +589,12 @@ class PortfolioAnalytics:
 
         return information_ratio
 
-    def upside_volatility(self, annual_mar=0.03, annual=True):
-        _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
+    def volatility_skewness(self, annual_mar=0.03):
+        upside = self.hpm(annual_mar=annual_mar, moment=2)
+        downside = self.lpm(annual_mar=annual_mar, moment=2)
+        skewness = upside / downside
 
-        mar = self._rate_conversion(annual_mar)
-
-        positive_returns = self.returns - mar
-        positive_returns = positive_returns[positive_returns > 0]
-        if annual:
-            upside_volatility = np.std(positive_returns, ddof=1) * self.frequency
-        else:
-            upside_volatility = np.std(positive_returns, ddof=1)
-
-        return upside_volatility[0]
-
-    def downside_volatility(self, annual_mar=0.03, annual=True):
-        _checks._check_rate_arguments(annual_mar=annual_mar, annual=annual)
-
-        mar = self._rate_conversion(annual_mar)
-
-        negative_returns = self.returns - mar
-        negative_returns = negative_returns[negative_returns < 0]
-        if annual:
-            downside_volatility = np.std(negative_returns, ddof=1) * self.frequency
-        else:
-            downside_volatility = np.std(negative_returns, ddof=1)
-
-        return downside_volatility[0]
-
-    def volatility_skewness(self, annual_mar=0.03, annual=True):
-        upside = self.upside_volatility(annual_mar, annual)
-        downside = self.downside_volatility(annual_mar, annual)
-        skew = upside / downside
-
-        return skew
+        return skewness
 
     def omega_excess_return(
         self,
@@ -674,43 +646,6 @@ class PortfolioAnalytics:
             )
 
         return omega_excess_return[0]
-
-    def downside_volatility_ratio(
-        self,
-        annual_mar=0.03,
-        annual=True,
-        benchmark_prices=None,
-        benchmark_weights=None,
-        benchmark_name="Benchmark Portfolio",
-    ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
-            slf_benchmark_prices=self.benchmark_prices,
-            benchmark_prices=benchmark_prices,
-            benchmark_weights=benchmark_weights,
-            benchmark_name=benchmark_name,
-        )
-
-        portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
-
-        mar = self._rate_conversion(annual_mar)
-
-        negative_benchmark_returns = self.benchmark_returns - mar
-        negative_benchmark_returns = negative_benchmark_returns[
-            negative_benchmark_returns < 0
-        ]
-        if annual:
-            benchmark_downside_volatility = (
-                np.std(negative_benchmark_returns, ddof=1) * self.frequency
-            )
-        else:
-            benchmark_downside_volatility = np.std(negative_benchmark_returns, ddof=1)
-
-        downside_volatility_ratio = (
-            portfolio_downside_volatility / benchmark_downside_volatility
-        )
-
-        return downside_volatility_ratio[0]
 
     def sortino(self, annual_mar=0.03, annual_rfr=0.02, annual=True, compounding=True):
         _checks._check_rate_arguments(
@@ -1740,22 +1675,22 @@ class PortfolioAnalytics:
             plt.show()
 
     def upside_risk(self, annual_mar=0.03):
-        upside_risk = np.sqrt(self.upside_variance(annual_mar=annual_mar))
+        upside_risk = np.sqrt(self.hpm(annual_mar=annual_mar, moment=2))
 
         return upside_risk
 
     def upside_potential(self, annual_mar=0.03):
-        upside_potential = self.lpm(annual_mar=annual_mar, moment=1)
+        upside_potential = self.hpm(annual_mar=annual_mar, moment=1)
 
         return upside_potential
 
     def upside_variance(self, annual_mar=0.03):
-        upside_variance = self.lpm(annual_mar=annual_mar, moment=2)
+        upside_variance = self.hpm(annual_mar=annual_mar, moment=2)
 
         return upside_variance
 
     def downside_risk(self, annual_mar=0.03):
-        downside_risk = np.sqrt(self.downside_variance(annual_mar=annual_mar))
+        downside_risk = np.sqrt(self.lpm(annual_mar=annual_mar, moment=2))
 
         return downside_risk
 
