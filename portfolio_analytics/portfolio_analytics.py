@@ -926,98 +926,35 @@ class PortfolioAnalytics:
         if show:
             plt.show()
 
-    def analytical_var(
-        self, value, dof, annual=True, compounding=True, distribution="normal"
-    ):
-        _checks._check_rate_arguments(annual=annual, compounding=compounding)
+    def parametric_var(self, ci=0.95, periods=1):
+        return stats.norm.ppf(1 - ci, self.mean, self.volatility) * np.sqrt(periods)
 
-        if annual and compounding:
-            mean_return = self.geometric_mean
-            volatility = self.annual_volatility
-        elif annual and not compounding:
-            mean_return = self.arithmetic_mean
-            volatility = self.annual_volatility
-        elif not annual:
-            mean_return = self.mean
-            volatility = self.volatility
+    def historical_var(self, ci=0.95, periods=1):
+        return np.percentile(self.returns, 100 * (1 - ci)) * np.sqrt(periods)
 
-        if distribution == "normal":
-            var = stats.norm(mean_return, volatility).cdf(value)
-            expected_loss = (
-                stats.norm(mean_return, volatility).pdf(
-                    stats.norm(mean_return, volatility).ppf((1 - var))
-                )
-                * volatility
-            ) / (1 - var) - mean_return
-        elif distribution == "t":
-            var = stats.t(dof).cdf(value)
-            percent_point_function = stats.t(dof).ppf((1 - var))
-            expected_loss = (
-                -1
-                / (1 - var)
-                * (1 - dof) ** (-1)
-                * (dof - 2 + percent_point_function**2)
-                * stats.t(dof).pdf(percent_point_function)
-                * volatility
-                - mean_return
-            )
-        else:
-            raise ValueError("Probability distribution unavailable.")
-
-        return var, expected_loss
-
-    def historical_var(self, value):
-        returns_below_value = self.returns[self.returns < value]
-        var = returns_below_value.shape[0] / self.returns.shape[0]
-
-        return var
-
-    def plot_analytical_var(
+    def plot_parametric_var(
         self,
-        value,
-        dof,
-        annual=True,
-        compounding=True,
-        z=3,
-        distribution="normal",
+        ci=0.95,
+        periods=1,
+        plot_z=3,
         show=True,
         save=False,
     ):
-        _checks._check_rate_arguments(annual=annual, compounding=compounding)
-        _checks._check_plot_arguments(show=show, save=save)
-
-        if annual and compounding:
-            mean_return = self.geometric_mean
-            volatility = self.annual_volatility
-        elif annual and not compounding:
-            mean_return = self.arithmetic_mean
-            volatility = self.annual_volatility
-        elif not annual:
-            mean_return = self.mean
-            volatility = self.volatility
-
+        var = self.parametric_var(ci, periods)
         x = np.linspace(
-            mean_return - z * volatility,
-            mean_return + z * volatility,
+            self.mean - plot_z * self.volatility,
+            self.mean + plot_z * self.volatility,
             100,
         )
+        pdf = stats.norm(self.mean, self.volatility).pdf(x)
 
-        if distribution == "normal":
-            pdf = stats.norm(mean_return, volatility).pdf(x)
-        elif distribution == "t":
-            pdf = stats.t(dof).pdf(x)
-        else:
-            raise ValueError("Probability distribution unavailable.")
-
-        cutoff = (np.abs(x - value)).argmin()
+        cutoff = (np.abs(x - var)).argmin()
 
         fig = plt.figure()
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         ax.plot(
             x,
             pdf,
-            linewidth=2,
-            color="b",
             label="Analytical Distribution",
         )
         ax.fill_between(
@@ -1028,23 +965,22 @@ class PortfolioAnalytics:
         )
         ax.set_xlabel("Returns")
         ax.set_ylabel("Density of Returns")
-        ax.set_title(
-            "Analytical (Theoretical, "
-            + distribution
-            + ") Return Distribution and VaR Plot"
-        )
+        ax.set_title("Parametric VaR Plot")
         if save:
-            plt.savefig("analytical_var.png", dpi=300)
+            plt.savefig("parametric_var.png", dpi=300)
         if show:
             plt.show()
 
-    def plot_historical_var(self, value, number_of_bins=100, show=True, save=False):
+    def plot_historical_var(
+        self, ci=0.95, periods=1, number_of_bins=100, show=True, save=False
+    ):
         _checks._check_plot_arguments(show=show, save=save)
 
-        sorted_returns = np.sort(self.returns)
+        var = self.historical_var(ci, periods)
+        sorted_returns = np.sort(self.returns, axis=0)
         bins = np.linspace(
             sorted_returns[0],
-            sorted_returns[-1] + 1,
+            sorted_returns[-1],
             number_of_bins,
         )[:, 0]
 
@@ -1055,11 +991,11 @@ class PortfolioAnalytics:
             bins,
             label="Historical Distribution",
         )
-        ax.axvline(x=value, ymin=0, color="r", label="Value-At-Risk Cutoff")
+        ax.axvline(x=var, ymin=0, color="r", label="Value-At-Risk Cutoff")
         ax.legend()
         ax.set_xlabel("Returns")
         ax.set_ylabel("Frequency of Returns")
-        ax.set_title("Historical Return Distribution and VaR Plot")
+        ax.set_title("Historical VaR Plot")
         if save:
             plt.savefig("historical_var.png", dpi=300)
         if show:
