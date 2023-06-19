@@ -601,48 +601,41 @@ class PortfolioAnalytics:
         annual_mar=0.03,
         annual=True,
         compounding=True,
-        benchmark_prices=None,
-        benchmark_weights=None,
-        benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_rate_arguments(annual=annual, compounding=compounding)
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
-            slf_benchmark_prices=self.benchmark_prices,
-            benchmark_prices=benchmark_prices,
-            benchmark_weights=benchmark_weights,
-            benchmark_name=benchmark_name,
+        _checks._check_rate_arguments(
+            annual_mar=annual_mar, annual=annual, compounding=compounding
         )
 
-        portfolio_downside_volatility = self.downside_volatility(annual_mar, annual)
-
         mar = self._rate_conversion(annual_mar)
+        days = self.benchmark_returns.shape[0]
 
-        negative_benchmark_returns = self.benchmark_returns - mar
-        negative_benchmark_returns = negative_benchmark_returns[
-            negative_benchmark_returns < 0
-        ]
-        if annual:
-            benchmark_downside_volatility = (
-                np.std(negative_benchmark_returns, ddof=1) * self.frequency
-            )
-        else:
-            benchmark_downside_volatility = np.std(negative_benchmark_returns, ddof=1)
+        portfolio_downside_risk = self.downside_risk(annual_mar)
+        benchmark_downside_risk = np.sqrt(
+            (1 / days)
+            * np.sum(np.power(np.maximum(mar - self.benchmark_returns, 0), 2))
+        )
 
         if annual and compounding:
             omega_excess_return = (
                 self.geometric_mean
-                - 3 * portfolio_downside_volatility * benchmark_downside_volatility
+                - 3
+                * portfolio_downside_risk
+                * np.sqrt(self.frequency)
+                * benchmark_downside_risk
+                * np.sqrt(self.frequency)
             )
         elif annual and not compounding:
             omega_excess_return = (
                 self.arithmetic_mean
-                - 3 * portfolio_downside_volatility * benchmark_downside_volatility
+                - 3
+                * portfolio_downside_risk
+                * np.sqrt(self.frequency)
+                * benchmark_downside_risk
+                * np.sqrt(self.frequency)
             )
         elif not annual:
             omega_excess_return = (
-                self.mean
-                - 3 * portfolio_downside_volatility * benchmark_downside_volatility
+                self.mean - 3 * portfolio_downside_risk * benchmark_downside_risk
             )
 
         return omega_excess_return[0]
