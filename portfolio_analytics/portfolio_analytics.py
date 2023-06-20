@@ -261,7 +261,11 @@ class PortfolioAnalytics:
         return mean[0]
 
     def plot_aum(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -278,7 +282,11 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_returns(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -295,7 +303,11 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_returns_distribution(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -312,7 +324,11 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_cumulative_returns(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -329,7 +345,11 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_piechart(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -363,7 +383,11 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_assets_cumulative_returns(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -454,7 +478,7 @@ class PortfolioAnalytics:
     def plot_capm(
         self,
         annual_rfr=0.02,
-        style="dark_background",
+        style="portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -927,7 +951,7 @@ class PortfolioAnalytics:
     def plot_ulcer(
         self,
         periods=14,
-        style="dark_background",
+        style="portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -959,7 +983,7 @@ class PortfolioAnalytics:
         ci=0.95,
         periods=1,
         plot_z=3,
-        style="dark_background",
+        style="portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1001,7 +1025,7 @@ class PortfolioAnalytics:
         ci=0.95,
         periods=1,
         number_of_bins=100,
-        style="dark_background",
+        style="portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1040,7 +1064,11 @@ class PortfolioAnalytics:
         return matrix
 
     def plot_correlation(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -1112,7 +1140,7 @@ class PortfolioAnalytics:
         self,
         method="regular",
         annual=False,
-        style="dark_background",
+        style="portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1187,7 +1215,7 @@ class PortfolioAnalytics:
         returns=None,
         annual_mar_lower_bound=0,
         annual_mar_upper_bound=0.1,
-        style="dark_background",
+        style="portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1649,7 +1677,11 @@ class PortfolioAnalytics:
         return sorted_drawdowns
 
     def plot_drawdowns(
-        self, style="dark_background", rcParams_update={}, show=True, save=False
+        self,
+        style="portfolio_analytics_style.mplstyle",
+        rcParams_update={},
+        show=True,
+        save=False,
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
