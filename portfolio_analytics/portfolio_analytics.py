@@ -263,8 +263,7 @@ class PortfolioAnalytics:
     def plot_aum(self, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         self.state["Portfolio"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM ($)")
@@ -277,8 +276,7 @@ class PortfolioAnalytics:
     def plot_returns(self, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         self.returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Returns")
@@ -291,8 +289,7 @@ class PortfolioAnalytics:
     def plot_returns_distribution(self, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         self.returns.plot.hist(ax=ax, bins=90)
         ax.set_xlabel("Returns")
         ax.set_ylabel("Frequency")
@@ -305,8 +302,7 @@ class PortfolioAnalytics:
     def plot_cumulative_returns(self, show=True, save=False):
         _checks._check_plot_arguments(show=show, save=save)
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         self.cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
@@ -322,8 +318,7 @@ class PortfolioAnalytics:
         wp = {"linewidth": 1, "edgecolor": "black"}
         explode = tuple(repeat(0.05, len(self.tickers)))
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         pie = ax.pie(
             self.allocation_funds,
             autopct=lambda pct: self._ap(pct, self.allocation_funds),
@@ -352,8 +347,7 @@ class PortfolioAnalytics:
 
         assets_cumulative_returns = (self.assets_returns + 1).cumprod()
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         assets_cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
@@ -451,8 +445,7 @@ class PortfolioAnalytics:
             benchmark_name=benchmark_name,
         )
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         ax.scatter(capm[5], capm[4], color="b")
         ax.plot(capm[5], capm[0] + capm[1] * capm[5], color="r")
         empty_patch = mpatches.Patch(color="none", visible=False)
@@ -908,8 +901,7 @@ class PortfolioAnalytics:
 
         ulcer = self.ulcer(periods)
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         ulcer["Ulcer Index"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Ulcer Index")
@@ -943,8 +935,7 @@ class PortfolioAnalytics:
 
         cutoff = (np.abs(x - var)).argmin()
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         ax.plot(
             x,
             pdf,
@@ -977,8 +968,7 @@ class PortfolioAnalytics:
             number_of_bins,
         )[:, 0]
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         ax.hist(
             sorted_returns,
             bins,
@@ -1592,8 +1582,7 @@ class PortfolioAnalytics:
 
         drawdowns = self.drawdowns()
 
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        fig, ax = plt.subplots()
         drawdowns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Drawdowns")
