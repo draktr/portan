@@ -262,7 +262,7 @@ class PortfolioAnalytics:
 
     def plot_aum(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -283,7 +283,7 @@ class PortfolioAnalytics:
 
     def plot_returns(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -304,7 +304,7 @@ class PortfolioAnalytics:
 
     def plot_returns_distribution(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -325,7 +325,7 @@ class PortfolioAnalytics:
 
     def plot_cumulative_returns(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -346,7 +346,7 @@ class PortfolioAnalytics:
 
     def plot_piechart(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -384,7 +384,7 @@ class PortfolioAnalytics:
 
     def plot_assets_cumulative_returns(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -478,7 +478,7 @@ class PortfolioAnalytics:
     def plot_capm(
         self,
         annual_rfr=0.02,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -951,7 +951,7 @@ class PortfolioAnalytics:
     def plot_ulcer(
         self,
         periods=14,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -983,7 +983,7 @@ class PortfolioAnalytics:
         ci=0.95,
         periods=1,
         plot_z=3,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1025,7 +1025,7 @@ class PortfolioAnalytics:
         ci=0.95,
         periods=1,
         number_of_bins=100,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1065,7 +1065,7 @@ class PortfolioAnalytics:
 
     def plot_correlation(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1140,7 +1140,7 @@ class PortfolioAnalytics:
         self,
         method="regular",
         annual=False,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1215,7 +1215,7 @@ class PortfolioAnalytics:
         returns=None,
         annual_mar_lower_bound=0,
         annual_mar_upper_bound=0.1,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
@@ -1678,7 +1678,7 @@ class PortfolioAnalytics:
 
     def plot_drawdowns(
         self,
-        style="portfolio_analytics_style.mplstyle",
+        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
         save=False,
