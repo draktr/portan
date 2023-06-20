@@ -994,7 +994,9 @@ class PortfolioAnalytics:
 
         matrix = self.correlation()
 
-        sns.heatmap(matrix, annot=True, vmin=-1, vmax=1, center=0, cmap="vlag")
+        fig, ax = plt.subplots()
+        sns.heatmap(matrix, vmin=-1, vmax=1, cmap="vlag", center=0, annot=True, ax=ax)
+        ax.set_title("Correlation Matrix")
         if save:
             plt.savefig("correlation.png", dpi=300)
         if show:
@@ -1059,7 +1061,9 @@ class PortfolioAnalytics:
 
         matrix = self.covariance(method, annual, **kwargs)
 
-        sns.heatmap(matrix, annot=True, center=0, cmap="vlag")
+        fig, ax = plt.subplots()
+        sns.heatmap(matrix, vmin=0, cmap="vlag", center=0, annot=True, ax=ax)
+        ax.set_title("Covariance Matrix")
         if save:
             plt.savefig("covariance.png", dpi=300)
         if show:
@@ -1147,11 +1151,11 @@ class PortfolioAnalytics:
                 omega_values.append(value)
             all_values[portfolio] = omega_values
 
-        all_values.plot(
-            title="Omega Curve",
-            xlabel="Minimum Acceptable Return (%)",
-            ylabel="Omega Ratio",
-        )
+        fig, ax = plt.subplots()
+        all_values.plot(ax=ax)
+        ax.set_xlabel("Minimum Acceptable Return (%)")
+        ax.set_ylabel("Omega Ratio")
+        ax.set_title("Omega Curve")
         if save:
             plt.savefig("omega_curves.png", dpi=300)
         if show:
