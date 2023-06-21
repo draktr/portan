@@ -266,12 +266,13 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         self.state["Portfolio"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM ($)")
@@ -287,12 +288,13 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         self.returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Returns")
@@ -308,12 +310,13 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         self.returns.plot.hist(ax=ax, bins=90)
         ax.set_xlabel("Returns")
         ax.set_ylabel("Frequency")
@@ -329,12 +332,13 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         self.cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
@@ -350,6 +354,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -358,7 +363,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         pie = ax.pie(
             self.allocation_funds,
             autopct=lambda pct: self._ap(pct, self.allocation_funds),
@@ -388,6 +393,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -395,7 +401,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         assets_cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Returns")
@@ -485,6 +491,7 @@ class PortfolioAnalytics:
         benchmark_prices=None,
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -497,7 +504,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         ax.scatter(capm[5], capm[4], color="b")
         ax.plot(capm[5], capm[0] + capm[1] * capm[5], color="r")
         empty_patch = mpatches.Patch(color="none", visible=False)
@@ -955,6 +962,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -962,7 +970,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         ulcer["Ulcer Index"].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Ulcer Index")
@@ -987,6 +995,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         var = self.parametric_var(ci, periods)
         x = np.linspace(
@@ -1000,7 +1009,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         ax.plot(
             x,
             pdf,
@@ -1029,6 +1038,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -1042,7 +1052,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         ax.hist(
             sorted_returns,
             bins,
@@ -1069,6 +1079,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -1076,7 +1087,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         sns.heatmap(matrix, vmin=-1, vmax=1, cmap="vlag", center=0, annot=True, ax=ax)
         ax.set_title("Correlation Matrix")
         if save:
@@ -1084,47 +1095,49 @@ class PortfolioAnalytics:
         if show:
             plt.show()
 
-    def covariance(self, method="regular", annual=False, **kwargs):
+    def covariance(self, method="regular", annual=False, cov_kwargs={}):
         if method == "regular":
             matrix = self.assets_returns.cov().round(5)
         elif method == "empirical":
             matrix = (
-                covariance.EmpiricalCovariance(**kwargs)
+                covariance.EmpiricalCovariance(**cov_kwargs)
                 .fit(self.assets_returns)
                 .covariance_.round(5)
             )
         elif method == "graphical_lasso":
             matrix = (
-                covariance.GraphicalLasso(**kwargs)
+                covariance.GraphicalLasso(**cov_kwargs)
                 .fit(self.assets_returns)
                 .covariance_.round(5)
             )
         elif method == "elliptic_envelope":
             matrix = (
-                covariance.EllipticEnvelope(**kwargs)
+                covariance.EllipticEnvelope(**cov_kwargs)
                 .fit(self.assets_returns)
                 .covariance_.round(5)
             )
         elif method == "ledoit_wolf":
             matrix = (
-                covariance.LedoitWolf(**kwargs)
+                covariance.LedoitWolf(**cov_kwargs)
                 .fit(self.assets_returns)
                 .covariance_.round(5)
             )
 
         elif method == "mcd":
             matrix = (
-                covariance.MinCovDet(**kwargs)
+                covariance.MinCovDet(**cov_kwargs)
                 .fit(self.assets_returns)
                 .covariance_.round(5)
             )
         elif method == "oas":
             matrix = (
-                covariance.OAS(**kwargs).fit(self.assets_returns).covariance_.round(5)
+                covariance.OAS(**cov_kwargs)
+                .fit(self.assets_returns)
+                .covariance_.round(5)
             )
         elif method == "shrunk_covariance":
             matrix = (
-                covariance.ShrunkCovariance(**kwargs)
+                covariance.ShrunkCovariance(**cov_kwargs)
                 .fit(self.assets_returns)
                 .covariance_.round(5)
             )
@@ -1144,15 +1157,16 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
-        **kwargs
+        cov_kwargs={},
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
-        matrix = self.covariance(method, annual, **kwargs)
+        matrix = self.covariance(method, annual, **cov_kwargs)
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         sns.heatmap(matrix, vmin=0, cmap="vlag", center=0, annot=True, ax=ax)
         ax.set_title("Covariance Matrix")
         if save:
@@ -1219,6 +1233,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         if returns is None:
             returns = self.returns
@@ -1246,7 +1261,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         all_values.plot(ax=ax)
         ax.set_xlabel("Minimum Acceptable Return (%)")
         ax.set_ylabel("Omega Ratio")
@@ -1682,6 +1697,7 @@ class PortfolioAnalytics:
         rcParams_update={},
         show=True,
         save=False,
+        **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -1689,7 +1705,7 @@ class PortfolioAnalytics:
 
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(**fig_kw)
         drawdowns.plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("Drawdowns")
