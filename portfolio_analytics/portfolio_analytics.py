@@ -1088,7 +1088,7 @@ class PortfolioAnalytics:
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
-        sns.heatmap(matrix, vmin=-1, vmax=1, cmap="vlag", center=0, annot=True, ax=ax)
+        sns.heatmap(matrix, vmin=-1, vmax=1, center=0, annot=True, ax=ax)
         ax.set_title("Correlation Matrix")
         if save:
             plt.savefig("correlation.png", dpi=300)
@@ -1167,7 +1167,7 @@ class PortfolioAnalytics:
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
-        sns.heatmap(matrix, vmin=0, cmap="vlag", center=0, annot=True, ax=ax)
+        sns.heatmap(matrix, vmin=0, center=0, annot=True, ax=ax)
         ax.set_title("Covariance Matrix")
         if save:
             plt.savefig("covariance.png", dpi=300)
