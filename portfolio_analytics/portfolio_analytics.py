@@ -65,7 +65,7 @@ class PortfolioAnalytics:
             index=self.prices.index,
             columns=self.tickers,
         )
-        self.state["Portfolio"] = self.state.sum(axis=1)
+        self.state[self.name] = self.state.sum(axis=1)
 
         if len(weights) == 1:
             self.returns = pd.DataFrame(
@@ -94,9 +94,9 @@ class PortfolioAnalytics:
         self.skewness = stats.skew(self.returns)[0]
         self.kurtosis = stats.kurtosis(self.returns)[0]
 
-        self.min_aum = self.state["Portfolio"].min()
-        self.max_aum = self.state["Portfolio"].max()
-        self.mean_aum = self.state["Portfolio"].mean()
+        self.min_aum = self.state[self.name].min()
+        self.max_aum = self.state[self.name].max()
+        self.mean_aum = self.state[self.name].mean()
         self.final_aum = self.state.iloc[-1, -1]
 
         if benchmark_prices is None and benchmark_weights is None:
@@ -270,7 +270,7 @@ class PortfolioAnalytics:
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
-        self.state["Portfolio"].plot(ax=ax)
+        self.state[self.name].plot(ax=ax)
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM ($)")
         ax.set_title("Assets Under Management")
@@ -916,12 +916,12 @@ class PortfolioAnalytics:
 
         ulcer = pd.DataFrame(columns=["Ulcer Index"], index=self.state.index)
         period_high_close = (
-            self.state["Portfolio"]
+            self.state[self.name]
             .rolling(periods + 1)
             .apply(lambda x: np.amax(x), raw=True)
         )
         percentage_drawdown_squared = (
-            (self.state["Portfolio"] - period_high_close) / period_high_close * 100
+            (self.state[self.name] - period_high_close) / period_high_close * 100
         ) ** 2
         squared_average = (
             percentage_drawdown_squared.rolling(periods + 1).sum() / periods
