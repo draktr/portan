@@ -120,37 +120,44 @@ def _check_init(
             "`weights` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
         )
 
-    if not isinstance(benchmark_prices, (list, np.ndarray, pd.DataFrame, pd.Series)):
+    if not isinstance(
+        benchmark_prices, (list, np.ndarray, pd.DataFrame, pd.Series, type(None))
+    ):
         raise ValueError(
             "`benchmark_prices` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
         )
     if isinstance(benchmark_prices, (list, np.ndarray)):
         benchmark_prices = pd.DataFrame(benchmark_prices)
-    if np.any(np.isnan(benchmark_prices)):
-        raise ValueError(
-            "`benchmark_prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
+    if isinstance(benchmark_prices, type(None)):
+        warnings.warn(
+            "Benchmark is not set. To calculate analytics that require benchmark (e.g. capm()) you will need to set it through the method. Set benchmark would be saved and used for other analytics without the need to set it again."
         )
-    if np.any(np.isinf(benchmark_prices)):
-        raise ValueError(
-            "`benchmark_prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
-        )
+    else:
+        if np.any(np.isnan(benchmark_prices)):
+            raise ValueError(
+                "`benchmark_prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
+            )
+        if np.any(np.isinf(benchmark_prices)):
+            raise ValueError(
+                "`benchmark_prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
+            )
 
     if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
         benchmark_weights = benchmark_weights.to_numpy()
     elif isinstance(benchmark_weights, list):
         benchmark_weights = np.array(benchmark_weights)
-    elif isinstance(benchmark_weights, np.ndarray):
+    elif isinstance(benchmark_weights, (np.ndarray, type(None))):
         pass
     else:
         raise ValueError(
-            "`benchmark_weights` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
+            "`benchmark_weights` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
         )
 
     if not isinstance(name, str):
         raise ValueError("`name` should be of type `str`")
 
-    if not isinstance(benchmark_name, str):
-        raise ValueError("`benchmark_name` should be of type `str`")
+    if not isinstance(benchmark_name, (str, type(None))):
+        raise ValueError("`benchmark_name` should be of type `str` or `NoneType`")
 
     if not isinstance(initial_aum, numbers.Number):
         raise ValueError("`initial_aum` should be a number")
@@ -174,10 +181,6 @@ def _check_init(
     elif benchmark_prices is None and benchmark_weights is not None:
         raise ValueError(
             "`benchmark_prices` is not provided, while `benchmark_weights` is provided. Please provide either both arguments (to access all methods) or none of the two arguments (to access only methods that do not require benchmark). Note that benchmark can also be set by providing `benchmark_prices` and `benchmark_weights` to any relevant method."
-        )
-    elif benchmark_prices is None and benchmark_weights is None:
-        warnings.warn(
-            "`benchmark_prices` and `benchmark_weights` arguments are not provided. You will only be able to use methods that do not require benchmark. Alternatively, you can set benchmark by providing `benchmark_prices` and `benchmark_weights` to any method requiring benchmark"
         )
 
     if benchmark_prices is not None:
@@ -225,15 +228,20 @@ def _check_booleans(argument):
 
 
 def _check_benchmark(
-    set_fn, slf_benchmark_prices, benchmark_prices, benchmark_weights, benchmark_name
+    slf_benchmark_prices, benchmark_prices, benchmark_weights, benchmark_name
 ):
     if benchmark_prices is not None and benchmark_weights is not None:
-        set_fn(benchmark_prices, benchmark_weights, benchmark_name)
-    elif benchmark_prices is not None and slf_benchmark_prices is not None:
+        set_benchmark = True
+    elif (
+        benchmark_prices is not None
+        and benchmark_weights is not None
+        and slf_benchmark_prices is not None
+    ):
         warnings.warn(
             "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
         )
-    elif benchmark_prices is None and slf_benchmark_prices is None:
-        raise ValueError(
-            "Benchmark is not set. Provide benchmark prices and benchmark weights"
-        )
+        set_benchmark = True
+    else:
+        set_benchmark = False
+
+    return set_benchmark

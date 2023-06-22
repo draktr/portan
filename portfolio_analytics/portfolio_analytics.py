@@ -10,7 +10,6 @@ from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
 from statsmodels.tsa import stattools
 from itertools import repeat
-import warnings
 from portfolio_analytics import _checks
 
 
@@ -147,7 +146,7 @@ class PortfolioAnalytics:
                 - 1
             )[0]
 
-    def set_benchmark(self, benchmark_prices, benchmark_weights, benchmark_name):
+    def _set_benchmark(self, benchmark_prices, benchmark_weights, benchmark_name):
         self.benchmark_prices = benchmark_prices
         self.benchmark_weights = benchmark_weights
         self.benchmark_name = benchmark_name
@@ -182,8 +181,6 @@ class PortfolioAnalytics:
             ** (self.frequency / self.benchmark_returns.shape[0])
             - 1
         )[0]
-
-        warnings.warn()
 
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
@@ -451,13 +448,14 @@ class PortfolioAnalytics:
         benchmark_name="Benchmark Portfolio",
     ):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -581,13 +579,14 @@ class PortfolioAnalytics:
         benchmark_name="Benchmark Portfolio",
     ):
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         if annual and compounding:
             excess_return = self.geometric_mean - self.benchmark_geometric_mean
@@ -604,13 +603,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         tracking_error = np.std(self.returns - self.benchmark_returns.to_numpy())
 
@@ -728,13 +728,14 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -773,13 +774,14 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         rfr = self._rate_conversion(annual_rfr)
 
@@ -1369,13 +1371,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         sharpe_ratio = self.sharpe(
             annual_rfr=annual_rfr,
@@ -1406,13 +1409,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         fama_beta = np.var(self.returns) - np.var(self.benchmark_returns.to_numpy())
 
@@ -1489,13 +1493,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
@@ -1514,13 +1519,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
@@ -1539,13 +1545,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
@@ -1566,13 +1573,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
@@ -1593,13 +1601,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         positive_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns > 0
@@ -1621,13 +1630,14 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        _checks._check_benchmark(
-            set_fn=self.set_benchmark,
+        set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         negative_benchmark_returns = self.benchmark_returns[
             self.benchmark_returns <= 0
