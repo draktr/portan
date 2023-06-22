@@ -700,19 +700,15 @@ class PortfolioAnalytics:
             compounding=compounding,
         )
 
-        downside_volatility = self.downside_volatility(annual_mar, annual)
+        downside_risk = self.downside_risk(annual_mar)
 
         if annual and compounding:
-            sortino_ratio = (
-                100 * (self.geometric_mean - annual_rfr) / downside_volatility
-            )
+            sortino_ratio = 100 * (self.geometric_mean - annual_rfr) / downside_risk
         elif annual and not compounding:
-            sortino_ratio = (
-                100 * (self.arithmetic_mean - annual_rfr) / downside_volatility
-            )
+            sortino_ratio = 100 * (self.arithmetic_mean - annual_rfr) / downside_risk
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            sortino_ratio = 100 * (self.mean - rfr) / downside_volatility
+            sortino_ratio = 100 * (self.mean - rfr) / downside_risk
 
         return sortino_ratio
 
