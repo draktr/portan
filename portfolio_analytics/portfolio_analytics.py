@@ -624,7 +624,7 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        excess_return = self.excess_return(
+        excess_return = self.excess_benchmark(
             annual=annual,
             compounding=compounding,
             benchmark_prices=benchmark_prices,
