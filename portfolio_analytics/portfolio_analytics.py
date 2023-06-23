@@ -416,7 +416,7 @@ class PortfolioAnalytics:
 
     def capm_return(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         annual=True,
         compounding=True,
         benchmark_prices=None,
@@ -442,7 +442,7 @@ class PortfolioAnalytics:
 
     def capm(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         benchmark_prices=None,
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
@@ -481,7 +481,7 @@ class PortfolioAnalytics:
 
     def plot_capm(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
         show=True,
@@ -523,7 +523,7 @@ class PortfolioAnalytics:
 
     def sharpe(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         annual=True,
         compounding=True,
         adjusted=False,
@@ -692,7 +692,7 @@ class PortfolioAnalytics:
 
         return omega_excess_return[0]
 
-    def sortino(self, annual_mar=0.03, annual_rfr=0.02, annual=True, compounding=True):
+    def sortino(self, annual_mar=0.03, annual_rfr=0.03, annual=True, compounding=True):
         _checks._check_rate_arguments(
             annual_mar=annual_mar,
             annual_rfr=annual_rfr,
@@ -714,7 +714,7 @@ class PortfolioAnalytics:
 
     def jensen_alpha(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         annual=True,
         compounding=True,
         benchmark_prices=None,
@@ -760,7 +760,7 @@ class PortfolioAnalytics:
 
     def treynor(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         annual=True,
         compounding=True,
         benchmark_prices=None,
@@ -860,7 +860,7 @@ class PortfolioAnalytics:
         return gain_loss_ratio
 
     def calmar(
-        self, periods=0, inverse=True, annual_rfr=0.02, annual=True, compounding=True
+        self, periods=0, inverse=True, annual_rfr=0.03, annual=True, compounding=True
     ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
@@ -880,7 +880,7 @@ class PortfolioAnalytics:
 
     def sterling(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         periods=0,
         largest=0,
         inverse=True,
@@ -928,7 +928,7 @@ class PortfolioAnalytics:
 
     def martin(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         annual=True,
         compounding=True,
         periods=14,
@@ -1278,7 +1278,7 @@ class PortfolioAnalytics:
 
         return herfindahl_index
 
-    def appraisal(self, annual_rfr=0.02, annual=True, compounding=True):
+    def appraisal(self, annual_rfr=0.03, annual=True, compounding=True):
         capm = self.capm(annual_rfr=annual_rfr)
         specific_risk = np.sqrt(
             np.sum((capm[3] - capm[3].mean()) ** 2) / capm[3].shape[0]
@@ -1289,7 +1289,7 @@ class PortfolioAnalytics:
 
         return appraisal_ratio[0]
 
-    def burke(self, annual_rfr=0.02, annual=True, compounding=True, modified=False):
+    def burke(self, annual_rfr=0.03, annual=True, compounding=True, modified=False):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -1343,7 +1343,7 @@ class PortfolioAnalytics:
 
         return d_ratio[0]
 
-    def kelly_criterion(self, annual_rfr=0.02, half=False):
+    def kelly_criterion(self, annual_rfr=0.03, half=False):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
         _checks._check_booleans(argument=half)
 
@@ -1357,7 +1357,7 @@ class PortfolioAnalytics:
 
     def modigliani(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         annual=True,
         compounding=True,
         adjusted=False,
@@ -1420,7 +1420,7 @@ class PortfolioAnalytics:
 
     def diversification(
         self,
-        annual_rfr=0.02,
+        annual_rfr=0.03,
         annual=True,
         compounding=True,
         benchmark_prices=None,
@@ -1453,7 +1453,7 @@ class PortfolioAnalytics:
 
         return diversification
 
-    def net_selectivity(self, annual_rfr=0.02, annual=True, compounding=True):
+    def net_selectivity(self, annual_rfr=0.03, annual=True, compounding=True):
         jensen_alpha = self.jensen_alpha(annual_rfr, annual, compounding)
         diversification = self.diversification(annual_rfr, annual, compounding)
 
