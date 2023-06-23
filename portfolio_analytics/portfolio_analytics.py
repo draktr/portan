@@ -185,7 +185,7 @@ class PortfolioAnalytics:
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
 
-    def excess_return_above_mar(self, annual_mar=0.03, annual=True, compounding=True):
+    def excess_mar(self, annual_mar=0.03, annual=True, compounding=True):
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         if annual and compounding:
@@ -570,7 +570,7 @@ class PortfolioAnalytics:
 
         return sharpe_ratio
 
-    def excess_return(
+    def excess_benchmark(
         self,
         annual=True,
         compounding=True,
