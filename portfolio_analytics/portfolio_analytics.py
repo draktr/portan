@@ -1699,9 +1699,14 @@ class PortfolioAnalytics:
 
         return add
 
-    def sorted_drawdowns(self, **kwargs):
+    def sorted_drawdowns(self, largest=0, ascending=False, **kwargs):
+        _checks._check_nonnegints(largest=largest)
+        _checks._check_booleans(argument=ascending)
+
         drawdowns = self.drawdowns()
-        sorted_drawdowns = drawdowns.sort_values(by=self.name, **kwargs)
+        sorted_drawdowns = drawdowns.sort_values(
+            by=self.name, ascending=ascending, **kwargs
+        )[-largest:]
 
         return sorted_drawdowns
 
