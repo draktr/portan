@@ -1298,13 +1298,24 @@ class PortfolioAnalytics:
 
         return appraisal_ratio[0]
 
-    def burke(self, annual_rfr=0.03, annual=True, compounding=True, modified=False):
+    def burke(
+        self,
+        annual_rfr=0.03,
+        largest=0,
+        ascending=False,
+        annual=True,
+        compounding=True,
+        modified=False,
+        **kwargs
+    ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
         _checks._check_booleans(argument=modified)
 
-        drawdowns = self.drawdowns()
+        drawdowns = self.sorted_drawdowns(
+            largest=largest, ascending=ascending, **kwargs
+        )
         if annual and compounding:
             burke_ratio = (self.geometric_mean - annual_rfr) / np.sqrt(
                 np.sum(drawdowns**2)
