@@ -466,9 +466,7 @@ class PortfolioAnalytics:
         alpha = model.intercept_[0]
         beta = model.coef_[0][0]
         r_squared = model.score(excess_benchmark_returns, excess_returns)
-        epsilon = np.subtract(
-            excess_returns.to_numpy(), alpha - beta * excess_benchmark_returns
-        )
+        epsilon = excess_returns.to_numpy() - alpha - beta * excess_benchmark_returns
 
         return (
             alpha,
@@ -536,16 +534,12 @@ class PortfolioAnalytics:
         _checks._check_sharpe(adjusted=adjusted, probabilistic=probabilistic)
 
         if annual and compounding:
-            sharpe_ratio = (
-                100 * (self.geometric_mean - annual_rfr) / self.annual_volatility
-            )
+            sharpe_ratio = (self.geometric_mean - annual_rfr) / self.annual_volatility
         elif annual and not compounding:
-            sharpe_ratio = (
-                100 * (self.arithmetic_mean - annual_rfr) / self.annual_volatility
-            )
+            sharpe_ratio = (self.arithmetic_mean - annual_rfr) / self.annual_volatility
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            sharpe_ratio = 100 * (self.mean - rfr) / self.volatility
+            sharpe_ratio = (self.mean - rfr) / self.volatility
 
         if adjusted:
             sharpe_ratio = sharpe_ratio * (
@@ -599,10 +593,12 @@ class PortfolioAnalytics:
 
     def tracking_error(
         self,
+        annual=True,
         benchmark_prices=None,
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
+        _checks._check_rate_arguments(annual=annual)
         set_benchmark = _checks._check_benchmark(
             slf_benchmark_prices=self.benchmark_prices,
             benchmark_prices=benchmark_prices,
@@ -614,7 +610,10 @@ class PortfolioAnalytics:
 
         tracking_error = np.std(self.returns - self.benchmark_returns.to_numpy())
 
-        return tracking_error[0]
+        if annual:
+            return tracking_error[0] * np.sqrt(self.frequency)
+        else:
+            return tracking_error[0]
 
     def information_ratio(
         self,
@@ -632,6 +631,7 @@ class PortfolioAnalytics:
             benchmark_name=benchmark_name,
         )
         tracking_error = self.tracking_error(
+            annual=annual,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
@@ -703,12 +703,12 @@ class PortfolioAnalytics:
         downside_risk = self.downside_risk(annual_mar)
 
         if annual and compounding:
-            sortino_ratio = 100 * (self.geometric_mean - annual_rfr) / downside_risk
+            sortino_ratio = (self.geometric_mean - annual_rfr) / downside_risk
         elif annual and not compounding:
-            sortino_ratio = 100 * (self.arithmetic_mean - annual_rfr) / downside_risk
+            sortino_ratio = (self.arithmetic_mean - annual_rfr) / downside_risk
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            sortino_ratio = 100 * (self.mean - rfr) / downside_risk
+            sortino_ratio = (self.mean - rfr) / downside_risk
 
         return sortino_ratio
 
@@ -733,30 +733,30 @@ class PortfolioAnalytics:
         if set_benchmark:
             self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
-        rfr = self._rate_conversion(annual_rfr)
-
-        excess_returns = self.returns - rfr
-        excess_benchmark_returns = self.benchmark_returns - rfr
-
-        model = LinearRegression().fit(excess_benchmark_returns, excess_returns)
-        beta = model.coef_[0]
+        capm = self.capm(
+            annual_rfr=annual_rfr,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         if annual and compounding:
             jensen_alpha = (
                 self.geometric_mean
                 - annual_rfr
-                - beta * (self.benchmark_geometric_mean - annual_rfr)
+                - capm[1] * (self.benchmark_geometric_mean - annual_rfr)
             )
         elif annual and not compounding:
             jensen_alpha = (
                 self.arithmetic_mean
                 - annual_rfr
-                - beta * (self.benchmark_arithmetic_mean - annual_rfr)
+                - capm[1] * (self.benchmark_arithmetic_mean - annual_rfr)
             )
         elif not annual:
-            jensen_alpha = self.mean - rfr - beta * (self.benchmark_mean - rfr)
+            rfr = self._rate_conversion(annual_rfr)
+            jensen_alpha = self.mean - rfr - capm[1] * (self.benchmark_mean - rfr)
 
-        return jensen_alpha[0]
+        return jensen_alpha
 
     def treynor(
         self,
@@ -781,20 +781,21 @@ class PortfolioAnalytics:
 
         rfr = self._rate_conversion(annual_rfr)
 
-        excess_returns = self.returns - rfr
-        excess_benchmark_returns = self.benchmark_returns - rfr
-
-        model = LinearRegression().fit(excess_benchmark_returns, excess_returns)
-        beta = model.coef_[0]
+        capm = self.capm(
+            annual_rfr=annual_rfr,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
+        )
 
         if annual and compounding:
-            treynor_ratio = 100 * (self.geometric_mean - annual_rfr) / beta
+            treynor_ratio = (self.geometric_mean - annual_rfr) / capm[1]
         elif annual and not compounding:
-            treynor_ratio = 100 * (self.arithmetic_mean - annual_rfr) / beta
+            treynor_ratio = (self.arithmetic_mean - annual_rfr) / capm[1]
         elif not annual:
-            treynor_ratio = 100 * (self.mean - rfr) / beta
+            treynor_ratio = (self.mean - rfr) / capm[1]
 
-        return treynor_ratio[0]
+        return treynor_ratio
 
     def hpm(self, annual_mar=0.03, moment=3):
         _checks._check_rate_arguments(annual_mar=annual_mar)
@@ -845,15 +846,15 @@ class PortfolioAnalytics:
             )
         elif not annual:
             mar = self._rate_conversion(annual_mar)
-            kappa_ratio = (
-                100 * (self.mean - mar) / np.power(lower_partial_moment, (1 / moment))
+            kappa_ratio = (self.mean - mar) / np.power(
+                lower_partial_moment, (1 / moment)
             )
 
         return kappa_ratio
 
-    def gain_loss(self, annual_mar=0.03, moment=1):
-        higher_partial_moment = self.hpm(annual_mar, moment)
-        lower_partial_moment = self.lpm(annual_mar, moment)
+    def gain_loss(self):
+        higher_partial_moment = self.hpm(annual_mar=0, moment=1)
+        lower_partial_moment = self.lpm(annual_mar=0, moment=1)
 
         gain_loss_ratio = higher_partial_moment / lower_partial_moment
 
@@ -869,41 +870,53 @@ class PortfolioAnalytics:
         maximum_drawdown = self.maximum_drawdown(periods=periods, inverse=inverse)
 
         if annual and compounding:
-            calmar_ratio = 100 * (self.geometric_mean - annual_rfr) / maximum_drawdown
+            calmar_ratio = (self.geometric_mean - annual_rfr) / maximum_drawdown
         elif annual and not compounding:
-            calmar_ratio = 100 * (self.arithmetic_mean - annual_rfr) / maximum_drawdown
+            calmar_ratio = (self.arithmetic_mean - annual_rfr) / maximum_drawdown
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            calmar_ratio = 100 * (self.mean - rfr) / maximum_drawdown
+            calmar_ratio = (self.mean - rfr) / maximum_drawdown
 
         return calmar_ratio
 
     def sterling(
         self,
         annual_rfr=0.03,
+        annual_excess=0.1,
         periods=0,
         largest=0,
         inverse=True,
         annual=True,
         compounding=True,
+        original=True,
     ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        average_drawdown = self.average_drawdown(
-            periods=periods, largest=largest, inverse=inverse
-        )
+        average_drawdown = self.average_drawdown(largest=largest, inverse=inverse)
 
-        if annual and compounding:
-            sterling_ratio = 100 * (self.geometric_mean - annual_rfr) / average_drawdown
-        elif annual and not compounding:
-            sterling_ratio = (
-                100 * (self.arithmetic_mean - annual_rfr) / average_drawdown
-            )
-        elif not annual:
-            rfr = self._rate_conversion(annual_rfr)
-            sterling_ratio = 100 * (self.mean - rfr) / average_drawdown
+        if original:
+            if annual and compounding:
+                sterling_ratio = self.geometric_mean / (
+                    average_drawdown + annual_excess
+                )
+            elif annual and not compounding:
+                sterling_ratio = self.arithmetic_mean / (
+                    average_drawdown + annual_excess
+                )
+            elif not annual:
+                excess = self._rate_conversion(annual_excess)
+                sterling_ratio = self.mean / (average_drawdown + excess)
+
+        else:
+            if annual and compounding:
+                sterling_ratio = (self.geometric_mean - annual_rfr) / average_drawdown
+            elif annual and not compounding:
+                sterling_ratio = (self.arithmetic_mean - annual_rfr) / average_drawdown
+            elif not annual:
+                rfr = self._rate_conversion(annual_rfr)
+                sterling_ratio = (self.mean - rfr) / average_drawdown
 
         return sterling_ratio
 
@@ -940,16 +953,12 @@ class PortfolioAnalytics:
         ulcer_index = self.ulcer(periods)
 
         if annual and compounding:
-            martin_ratio = (
-                100 * (self.geometric_mean - annual_rfr) / ulcer_index.iloc[-1]
-            )
+            martin_ratio = (self.geometric_mean - annual_rfr) / ulcer_index.iloc[-1]
         elif annual and not compounding:
-            martin_ratio = (
-                100 * (self.arithmetic_mean - annual_rfr) / ulcer_index.iloc[-1]
-            )
+            martin_ratio = (self.arithmetic_mean - annual_rfr) / ulcer_index.iloc[-1]
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            martin_ratio = 100 * (self.mean - rfr) / ulcer_index.iloc[-1]
+            martin_ratio = (self.mean - rfr) / ulcer_index.iloc[-1]
 
         return martin_ratio
 
@@ -1282,7 +1291,7 @@ class PortfolioAnalytics:
         capm = self.capm(annual_rfr=annual_rfr)
         specific_risk = np.sqrt(
             np.sum((capm[3] - capm[3].mean()) ** 2) / capm[3].shape[0]
-        ) * np.sqrt(self.returns.shape[0] - 1)
+        ) * np.sqrt(self.frequency)
         appraisal_ratio = (
             self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
         )
@@ -1341,14 +1350,15 @@ class PortfolioAnalytics:
             positive_returns.shape[0] * np.sum(positive_returns)
         )
 
-        return d_ratio[0]
+        return -d_ratio[0]
 
-    def kelly_criterion(self, annual_rfr=0.03, half=False):
+    def kelly_criterion(self, annual_rfr=0.03, half=True):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
         _checks._check_booleans(argument=half)
 
-        excess_returns = self.returns - annual_rfr
-        kelly_criterion = excess_returns.mean() / np.std(self.returns)
+        rfr = self._rate_conversion(annual_rfr)
+        excess_returns = self.returns - rfr
+        kelly_criterion = excess_returns.mean() / np.var(self.returns)
 
         if half:
             kelly_criterion = kelly_criterion / 2
@@ -1387,17 +1397,19 @@ class PortfolioAnalytics:
 
         if annual and compounding:
             modigliani_measure = (
-                sharpe_ratio * self.benchmark_geometric_mean + annual_rfr
+                sharpe_ratio * np.std(self.benchmark_returns) * np.sqrt(self.frequency)
+                + annual_rfr
             )
         elif annual and not compounding:
             modigliani_measure = (
-                sharpe_ratio * self.benchmark_arithmetic_mean + annual_rfr
+                sharpe_ratio * np.std(self.benchmark_returns) * np.sqrt(self.frequency)
+                + annual_rfr
             )
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            modigliani_measure = sharpe_ratio * self.benchmark_mean + rfr
+            modigliani_measure = sharpe_ratio * np.std(self.benchmark_returns) + rfr
 
-        return modigliani_measure
+        return modigliani_measure[0]
 
     def fama_beta(
         self,
@@ -1414,7 +1426,7 @@ class PortfolioAnalytics:
         if set_benchmark:
             self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
-        fama_beta = np.var(self.returns) - np.var(self.benchmark_returns.to_numpy())
+        fama_beta = np.std(self.returns) / np.std(self.benchmark_returns.to_numpy())
 
         return fama_beta[0]
 
@@ -1433,7 +1445,7 @@ class PortfolioAnalytics:
 
         fama_beta = self.fama_beta()
         capm = self.capm(
-            annual_rfr,
+            annual_rfr=annual_rfr,
             benchmark_prices=benchmark_prices,
             benchmark_weights=benchmark_weights,
             benchmark_name=benchmark_name,
@@ -1465,8 +1477,7 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
-        excess_returns = self.returns - mar
-        losing = excess_returns[excess_returns <= 0].dropna()
+        losing = self.returns[self.returns <= mar].dropna()
 
         downside_frequency = losing.shape[0] / self.returns.shape[0]
 
@@ -1476,8 +1487,7 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
-        excess_returns = self.returns - mar
-        winning = excess_returns[excess_returns > 0].dropna()
+        winning = self.returns[self.returns > mar].dropna()
 
         upside_frequency = winning.shape[0] / self.returns.shape[0]
 
@@ -1675,14 +1685,12 @@ class PortfolioAnalytics:
 
         return mdd
 
-    def average_drawdown(self, periods=0, largest=0, inverse=True):
-        _checks._check_nonnegints(periods=periods, largest=largest)
+    def average_drawdown(self, largest=0, inverse=True):
+        _checks._check_nonnegints(largest=largest)
         _checks._check_booleans(argument=inverse)
 
         drawdowns = self.drawdowns()
-        drawdowns = drawdowns[-periods:].sort_values(by=self.name, ascending=False)[
-            -largest:
-        ]
+        drawdowns = drawdowns.sort_values(by=self.name, ascending=False)[-largest:]
 
         if inverse:
             add = -drawdowns.mean()[0]
