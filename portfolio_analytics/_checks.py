@@ -222,9 +222,10 @@ def _check_sharpe(adjusted, probabilistic):
         )
 
 
-def _check_booleans(argument):
-    if not isinstance(argument, bool):
-        raise ValueError("Argument should be a boolean")
+def _check_booleans(**kwargs):
+    for name, value in kwargs.items():
+        if not isinstance(value, bool):
+            raise ValueError(f"`{name}` should be a boolean")
 
 
 def _check_benchmark(

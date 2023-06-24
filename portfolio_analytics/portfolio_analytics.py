@@ -1311,7 +1311,7 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
-        _checks._check_booleans(argument=modified)
+        _checks._check_booleans(modified=modified)
 
         drawdowns = self.sorted_drawdowns(
             largest=largest, ascending=ascending, **kwargs
@@ -1365,7 +1365,7 @@ class PortfolioAnalytics:
 
     def kelly_criterion(self, annual_rfr=0.03, half=True):
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
-        _checks._check_booleans(argument=half)
+        _checks._check_booleans(half=half)
 
         rfr = self._rate_conversion(annual_rfr)
         excess_returns = self.returns - rfr
@@ -1685,7 +1685,7 @@ class PortfolioAnalytics:
 
     def maximum_drawdown(self, periods=0, inverse=True):
         _checks._check_nonnegints(periods=periods)
-        _checks._check_booleans(argument=inverse)
+        _checks._check_booleans(inverse=inverse)
 
         drawdowns = self.drawdowns()
 
@@ -1698,7 +1698,7 @@ class PortfolioAnalytics:
 
     def average_drawdown(self, largest=0, inverse=True):
         _checks._check_nonnegints(largest=largest)
-        _checks._check_booleans(argument=inverse)
+        _checks._check_booleans(inverse=inverse)
 
         drawdowns = self.drawdowns()
         drawdowns = drawdowns.sort_values(by=self.name, ascending=False)[-largest:]
@@ -1712,7 +1712,7 @@ class PortfolioAnalytics:
 
     def sorted_drawdowns(self, largest=0, ascending=False, **kwargs):
         _checks._check_nonnegints(largest=largest)
-        _checks._check_booleans(argument=ascending)
+        _checks._check_booleans(ascending=ascending)
 
         drawdowns = self.drawdowns()
         sorted_drawdowns = drawdowns.sort_values(
