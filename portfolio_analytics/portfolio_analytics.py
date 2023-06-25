@@ -151,6 +151,11 @@ class PortfolioAnalytics:
         self.benchmark_weights = benchmark_weights
         self.benchmark_name = benchmark_name
 
+        if self.prices.shape[0] != benchmark_prices.shape[0]:
+            raise ValueError(
+                "Benchmark not set. `benchmark_prices` should have the same number of datapoints as `prices`"
+            )
+
         self.benchmark_assets_returns = self.benchmark_prices.pct_change().drop(
             self.benchmark_prices.index[0]
         )
@@ -199,7 +204,7 @@ class PortfolioAnalytics:
         return excess_return
 
     def net_return(self, percentage=False):
-        _checks._check_percentage(percentage=percentage)
+        _checks._check_booleans(percentage=percentage)
 
         final_aum = self.final_aum
 
@@ -881,7 +886,6 @@ class PortfolioAnalytics:
         self,
         annual_rfr=0.03,
         annual_excess=0.1,
-        periods=0,
         largest=0,
         inverse=True,
         annual=True,
@@ -985,16 +989,16 @@ class PortfolioAnalytics:
         if show:
             plt.show()
 
-    def parametric_var(self, ci=0.95, periods=1):
-        return stats.norm.ppf(1 - ci, self.mean, self.volatility) * np.sqrt(periods)
+    def parametric_var(self, ci=0.95, frequency=1):
+        return stats.norm.ppf(1 - ci, self.mean, self.volatility) * np.sqrt(frequency)
 
-    def historical_var(self, ci=0.95, periods=1):
-        return np.percentile(self.returns, 100 * (1 - ci)) * np.sqrt(periods)
+    def historical_var(self, ci=0.95, frequency=1):
+        return np.percentile(self.returns, 100 * (1 - ci)) * np.sqrt(frequency)
 
     def plot_parametric_var(
         self,
         ci=0.95,
-        periods=1,
+        frequency=1,
         plot_z=3,
         style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
@@ -1002,7 +1006,7 @@ class PortfolioAnalytics:
         save=False,
         **fig_kw
     ):
-        var = self.parametric_var(ci, periods)
+        var = self.parametric_var(ci, frequency)
         x = np.linspace(
             self.mean - plot_z * self.volatility,
             self.mean + plot_z * self.volatility,
@@ -1037,7 +1041,7 @@ class PortfolioAnalytics:
     def plot_historical_var(
         self,
         ci=0.95,
-        periods=1,
+        frequency=1,
         number_of_bins=100,
         style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
         rcParams_update={},
@@ -1047,7 +1051,7 @@ class PortfolioAnalytics:
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
-        var = self.historical_var(ci, periods)
+        var = self.historical_var(ci, frequency)
         sorted_returns = np.sort(self.returns, axis=0)
         bins = np.linspace(
             sorted_returns[0],
@@ -1232,7 +1236,7 @@ class PortfolioAnalytics:
         if returns is None:
             returns = self.returns
 
-        _checks._check_multiple_returns(returns=returns)
+        _checks._check_omega_multiple_returns(returns)
         _checks._check_plot_arguments(show=show, save=save)
         _checks._check_mar_bounds(
             annual_mar_lower_bound=annual_mar_lower_bound,
@@ -1283,14 +1287,9 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
     ):
-        set_benchmark = _checks._check_benchmark(
-            slf_benchmark_prices=self.benchmark_prices,
-            benchmark_prices=benchmark_prices,
-            benchmark_weights=benchmark_weights,
-            benchmark_name=benchmark_name,
+        capm = self.capm(
+            annual_rfr, benchmark_prices, benchmark_weights, benchmark_name
         )
-        if set_benchmark:
-            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         if annual and compounding:
             specific_risk = np.sqrt(
@@ -1702,7 +1701,7 @@ class PortfolioAnalytics:
         return drawdowns
 
     def maximum_drawdown(self, periods=0, inverse=True):
-        _checks._check_nonnegints(periods=periods)
+        _checks._check_periods(periods=periods)
         _checks._check_booleans(inverse=inverse)
 
         drawdowns = self.drawdowns()
