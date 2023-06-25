@@ -458,24 +458,16 @@ class PortfolioAnalytics:
             self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
         rfr = self._rate_conversion(annual_rfr)
-
         excess_returns = self.returns - rfr
         excess_benchmark_returns = self.benchmark_returns - rfr
 
         model = LinearRegression().fit(excess_benchmark_returns, excess_returns)
         alpha = model.intercept_[0]
         beta = model.coef_[0][0]
-        r_squared = model.score(excess_benchmark_returns, excess_returns)
         epsilon = excess_returns.to_numpy() - alpha - beta * excess_benchmark_returns
+        r_squared = model.score(excess_benchmark_returns, excess_returns)
 
-        return (
-            alpha,
-            beta,
-            r_squared,
-            epsilon,
-            excess_returns,
-            excess_benchmark_returns,
-        )
+        return alpha, beta, epsilon, r_squared
 
     def plot_capm(
         self,
@@ -498,11 +490,19 @@ class PortfolioAnalytics:
             benchmark_name=benchmark_name,
         )
 
+        rfr = self._rate_conversion(annual_rfr)
+        excess_returns = self.returns - rfr
+        excess_benchmark_returns = self.benchmark_returns - rfr
+
         plt.style.use(style)
         plt.rcParams.update(rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
-        ax.scatter(capm[5], capm[4], color="b")
-        ax.plot(capm[5], capm[0] + capm[1] * capm[5], color="r")
+        ax.scatter(excess_benchmark_returns, excess_returns, color="b")
+        ax.plot(
+            excess_benchmark_returns,
+            capm[0] + capm[1] * excess_benchmark_returns,
+            color="r",
+        )
         empty_patch = mpatches.Patch(color="none", visible=False)
         ax.legend(
             handles=[empty_patch, empty_patch],
@@ -779,8 +779,6 @@ class PortfolioAnalytics:
         if set_benchmark:
             self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
 
-        rfr = self._rate_conversion(annual_rfr)
-
         capm = self.capm(
             annual_rfr=annual_rfr,
             benchmark_prices=benchmark_prices,
@@ -793,6 +791,7 @@ class PortfolioAnalytics:
         elif annual and not compounding:
             treynor_ratio = (self.arithmetic_mean - annual_rfr) / capm[1]
         elif not annual:
+            rfr = self._rate_conversion(annual_rfr)
             treynor_ratio = (self.mean - rfr) / capm[1]
 
         return treynor_ratio
@@ -802,7 +801,6 @@ class PortfolioAnalytics:
         _checks._check_posints(moment=moment)
 
         mar = self._rate_conversion(annual_mar)
-
         days = self.returns.shape[0]
 
         higher_partial_moment = (1 / days) * np.sum(
@@ -960,7 +958,7 @@ class PortfolioAnalytics:
             rfr = self._rate_conversion(annual_rfr)
             martin_ratio = (self.mean - rfr) / ulcer_index.iloc[-1]
 
-        return martin_ratio
+        return martin_ratio[0]
 
     def plot_ulcer(
         self,
@@ -1197,7 +1195,6 @@ class PortfolioAnalytics:
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
-
         excess_returns = returns - mar
         winning = excess_returns[excess_returns > 0].sum()
         losing = -(excess_returns[excess_returns <= 0].sum())
@@ -1209,27 +1206,17 @@ class PortfolioAnalytics:
 
         return omega
 
-    def omega_sharpe_ratio(self, annual_mar=0.03, annual=True, compounding=True):
-        _checks._check_rate_arguments(
-            annual_mar=annual_mar, annual=annual, compounding=compounding
-        )
+    def omega_sharpe_ratio(self, annual_mar=0.03):
+        _checks._check_rate_arguments(annual_mar=annual_mar)
 
-        mar = self._rate_conversion(annual_mar)
-        excess_returns = self.returns - mar
-        losing = (1 / excess_returns.shape[0]) * (
-            -(excess_returns[excess_returns <= 0].sum())
-        )
+        upside_potential = self.upside_potential(annual_mar)
+        downside_potential = self.downside_potential(annual_mar)
 
-        if annual and compounding:
-            annual_losing = self._rate_conversion(losing)
-            omega_sharpe_ratio = (self.geometric_mean - annual_mar) / annual_losing
-        elif annual and not compounding:
-            annual_losing = self._rate_conversion(losing)
-            omega_sharpe_ratio = (self.arithmetic_mean - annual_mar) / annual_losing
-        elif not annual:
-            omega_sharpe_ratio = (self.mean - mar) / losing
+        omega_sharpe_ratio = (
+            upside_potential - downside_potential
+        ) / downside_potential
 
-        return omega_sharpe_ratio[0]
+        return omega_sharpe_ratio
 
     def plot_omega_curve(
         self,
@@ -1287,14 +1274,48 @@ class PortfolioAnalytics:
 
         return herfindahl_index
 
-    def appraisal(self, annual_rfr=0.03, annual=True, compounding=True):
-        capm = self.capm(annual_rfr=annual_rfr)
-        specific_risk = np.sqrt(
-            np.sum((capm[3] - capm[3].mean()) ** 2) / capm[3].shape[0]
-        ) * np.sqrt(self.frequency)
-        appraisal_ratio = (
-            self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+    def appraisal(
+        self,
+        annual_rfr=0.03,
+        annual=True,
+        compounding=True,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+    ):
+        set_benchmark = _checks._check_benchmark(
+            slf_benchmark_prices=self.benchmark_prices,
+            benchmark_prices=benchmark_prices,
+            benchmark_weights=benchmark_weights,
+            benchmark_name=benchmark_name,
         )
+        if set_benchmark:
+            self._set_benchmark(benchmark_prices, benchmark_weights, benchmark_name)
+
+        if annual and compounding:
+            specific_risk = np.sqrt(
+                np.sum((capm[2] - capm[2].mean()) ** 2) / capm[2].shape[0]
+            ) * np.sqrt(self.frequency)
+
+            appraisal_ratio = (
+                self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+            )
+        elif annual and not compounding:
+            specific_risk = np.sqrt(
+                np.sum((capm[2] - capm[2].mean()) ** 2) / capm[2].shape[0]
+            ) * np.sqrt(self.frequency)
+
+            appraisal_ratio = (
+                self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+            )
+        elif not annual:
+            specific_risk = np.sqrt(
+                np.sum((capm[2] - capm[2].mean()) ** 2) / capm[2].shape[0]
+            )
+
+            appraisal_ratio = (
+                self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+            )
 
         return appraisal_ratio[0]
 
@@ -1302,7 +1323,6 @@ class PortfolioAnalytics:
         self,
         annual_rfr=0.03,
         largest=0,
-        ascending=False,
         annual=True,
         compounding=True,
         modified=False,
@@ -1313,9 +1333,7 @@ class PortfolioAnalytics:
         )
         _checks._check_booleans(modified=modified)
 
-        drawdowns = self.sorted_drawdowns(
-            largest=largest, ascending=ascending, **kwargs
-        )
+        drawdowns = self.sorted_drawdowns(largest=largest, **kwargs)
         if annual and compounding:
             burke_ratio = (self.geometric_mean - annual_rfr) / np.sqrt(
                 np.sum(drawdowns**2)
@@ -1710,13 +1728,12 @@ class PortfolioAnalytics:
 
         return add
 
-    def sorted_drawdowns(self, largest=0, ascending=False, **kwargs):
+    def sorted_drawdowns(self, largest=0, **kwargs):
         _checks._check_nonnegints(largest=largest)
-        _checks._check_booleans(ascending=ascending)
 
         drawdowns = self.drawdowns()
         sorted_drawdowns = drawdowns.sort_values(
-            by=self.name, ascending=ascending, **kwargs
+            by=self.name, ascending=False, **kwargs
         )[-largest:]
 
         return sorted_drawdowns
