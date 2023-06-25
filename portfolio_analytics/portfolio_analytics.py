@@ -13,6 +13,9 @@ from itertools import repeat
 from portfolio_analytics import _checks
 
 
+STYLE = "./portfolio_analytics/portfolio_analytics_style.mplstyle"
+
+
 class PortfolioAnalytics:
     def __init__(
         self,
@@ -263,17 +266,12 @@ class PortfolioAnalytics:
         return mean[0]
 
     def plot_aum(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         self.state[self.name].plot(ax=ax)
         ax.set_xlabel("Date")
@@ -285,17 +283,12 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_returns(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         self.returns.plot(ax=ax)
         ax.set_xlabel("Date")
@@ -307,17 +300,12 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_returns_distribution(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         self.returns.plot.hist(ax=ax, bins=90)
         ax.set_xlabel("Returns")
@@ -329,17 +317,12 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_cumulative_returns(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         self.cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
@@ -351,12 +334,7 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_piechart(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
@@ -364,7 +342,7 @@ class PortfolioAnalytics:
         explode = tuple(repeat(0.05, len(self.tickers)))
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         pie = ax.pie(
             self.allocation_funds,
@@ -390,19 +368,14 @@ class PortfolioAnalytics:
             plt.show()
 
     def plot_assets_cumulative_returns(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         assets_cumulative_returns = (self.assets_returns + 1).cumprod()
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         assets_cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
@@ -477,7 +450,7 @@ class PortfolioAnalytics:
     def plot_capm(
         self,
         annual_rfr=0.03,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
+        style=STYLE,
         rcParams_update={},
         show=True,
         save=False,
@@ -500,7 +473,7 @@ class PortfolioAnalytics:
         excess_benchmark_returns = self.benchmark_returns - rfr
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         ax.scatter(excess_benchmark_returns, excess_returns, color="b")
         ax.plot(
@@ -967,7 +940,7 @@ class PortfolioAnalytics:
     def plot_ulcer(
         self,
         periods=14,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
+        style=STYLE,
         rcParams_update={},
         show=True,
         save=False,
@@ -978,7 +951,7 @@ class PortfolioAnalytics:
         ulcer = self.ulcer(periods)
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         ulcer["Ulcer Index"].plot(ax=ax)
         ax.set_xlabel("Date")
@@ -1000,7 +973,7 @@ class PortfolioAnalytics:
         ci=0.95,
         frequency=1,
         plot_z=3,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
+        style=STYLE,
         rcParams_update={},
         show=True,
         save=False,
@@ -1017,7 +990,7 @@ class PortfolioAnalytics:
         cutoff = (np.abs(x - var)).argmin()
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         ax.plot(
             x,
@@ -1043,7 +1016,7 @@ class PortfolioAnalytics:
         ci=0.95,
         frequency=1,
         number_of_bins=100,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
+        style=STYLE,
         rcParams_update={},
         show=True,
         save=False,
@@ -1060,7 +1033,7 @@ class PortfolioAnalytics:
         )[:, 0]
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         ax.hist(
             sorted_returns,
@@ -1083,19 +1056,14 @@ class PortfolioAnalytics:
         return matrix
 
     def plot_correlation(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         matrix = self.correlation()
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         sns.heatmap(matrix, vmin=-1, vmax=1, center=0, annot=True, ax=ax)
         ax.set_title("Correlation Matrix")
@@ -1162,7 +1130,7 @@ class PortfolioAnalytics:
         self,
         method="regular",
         annual=False,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
+        style=STYLE,
         rcParams_update={},
         show=True,
         save=False,
@@ -1174,7 +1142,7 @@ class PortfolioAnalytics:
         matrix = self.covariance(method, annual, **cov_kwargs)
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         sns.heatmap(matrix, vmin=0, center=0, annot=True, ax=ax)
         ax.set_title("Covariance Matrix")
@@ -1227,7 +1195,7 @@ class PortfolioAnalytics:
         returns=None,
         annual_mar_lower_bound=0,
         annual_mar_upper_bound=0.1,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
+        style=STYLE,
         rcParams_update={},
         show=True,
         save=False,
@@ -1236,7 +1204,7 @@ class PortfolioAnalytics:
         if returns is None:
             returns = self.returns
 
-        _checks._check_omega_multiple_returns(returns)
+        _checks._check_omega_multiple_returns(returns=returns)
         _checks._check_plot_arguments(show=show, save=save)
         _checks._check_mar_bounds(
             annual_mar_lower_bound=annual_mar_lower_bound,
@@ -1258,7 +1226,7 @@ class PortfolioAnalytics:
             all_values[portfolio] = omega_values
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         all_values.plot(ax=ax)
         ax.set_xlabel("Minimum Acceptable Return (%)")
@@ -1701,7 +1669,7 @@ class PortfolioAnalytics:
         return drawdowns
 
     def maximum_drawdown(self, periods=0, inverse=True):
-        _checks._check_periods(periods=periods)
+        _checks._check_periods(periods=periods, state=self.state)
         _checks._check_booleans(inverse=inverse)
 
         drawdowns = self.drawdowns()
@@ -1738,19 +1706,14 @@ class PortfolioAnalytics:
         return sorted_drawdowns
 
     def plot_drawdowns(
-        self,
-        style="./portfolio_analytics/portfolio_analytics_style.mplstyle",
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         _checks._check_plot_arguments(show=show, save=save)
 
         drawdowns = self.drawdowns()
 
         plt.style.use(style)
-        plt.rcParams.update(rcParams_update)
+        plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         drawdowns.plot(ax=ax)
         ax.set_xlabel("Date")
