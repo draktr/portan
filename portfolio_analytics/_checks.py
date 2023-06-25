@@ -44,43 +44,12 @@ def _check_init(
             "`weights` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
         )
 
-    if not isinstance(
-        benchmark_prices, (list, np.ndarray, pd.DataFrame, pd.Series, type(None))
-    ):
-        raise ValueError(
-            "`benchmark_prices` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
-        )
-    if isinstance(benchmark_prices, (list, np.ndarray)):
-        benchmark_prices = pd.DataFrame(benchmark_prices)
-    if isinstance(benchmark_prices, type(None)):
-        warnings.warn(
-            "Benchmark is not set. To calculate analytics that require benchmark (e.g. `capm()`) you will need to set it through the method. Once set, benchmark would be saved and used for other analytics without the need to set it again."
-        )
-    if np.any(np.isnan(benchmark_prices)):
-        raise ValueError(
-            "`benchmark_prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
-        )
-    if np.any(np.isinf(benchmark_prices)):
-        raise ValueError(
-            "`benchmark_prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
-        )
-
-    if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
-        benchmark_weights = benchmark_weights.to_numpy()
-    elif isinstance(benchmark_weights, list):
-        benchmark_weights = np.array(benchmark_weights)
-    elif isinstance(benchmark_weights, (np.ndarray, type(None))):
-        pass
-    else:
-        raise ValueError(
-            "`benchmark_weights` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
-        )
+    benchmark_prices, benchmark_weights = _check_benchmark_arguments(
+        benchmark_prices, benchmark_weights, benchmark_name
+    )
 
     if not isinstance(name, str):
         raise ValueError("`name` should be of type `str`")
-
-    if not isinstance(benchmark_name, (str, type(None))):
-        raise ValueError("`benchmark_name` should be of type `str` or `NoneType`")
 
     if not isinstance(initial_aum, numbers.Real):
         raise ValueError("`initial_aum` should be a positive real number")
@@ -123,11 +92,18 @@ def _check_benchmark(
     slf_benchmark_prices, benchmark_prices, benchmark_weights, benchmark_name
 ):
     if benchmark_prices is not None and benchmark_weights is not None:
-        set_benchmark = True
+        benchmark_prices, benchmark_weights = _check_benchmark_arguments(
+            benchmark_prices, benchmark_weights, benchmark_name
+        )
         if slf_benchmark_prices is not None:
             warnings.warn(
                 "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
             )
+        if benchmark_prices.shape[1] != benchmark_weights.shape[0]:
+            raise ValueError(
+                "Number of benchmark prices doesn't match the number of benchmark weights provided"
+            )
+        set_benchmark = True
     elif benchmark_prices is None and benchmark_weights is not None:
         warnings.warn(
             "`benchmark_prices` not provided. Both `benchmark_prices` and `benchmark_weights` need to be provided for benchmark to be set/reset."
@@ -141,15 +117,46 @@ def _check_benchmark(
     else:
         set_benchmark = False
 
-    if benchmark_prices.shape[1] != benchmark_weights.shape[0]:
-        raise ValueError(
-            "Number of benchmark prices doesn't match the number of benchmark weights provided"
-        )
-
     return set_benchmark
 
 
-####
+def _check_benchmark_arguments(benchmark_prices, benchmark_weights, benchmark_name):
+    if not isinstance(
+        benchmark_prices, (list, np.ndarray, pd.DataFrame, pd.Series, type(None))
+    ):
+        raise ValueError(
+            "`benchmark_prices` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
+        )
+    if isinstance(benchmark_prices, (list, np.ndarray)):
+        benchmark_prices = pd.DataFrame(benchmark_prices)
+    if isinstance(benchmark_prices, type(None)):
+        warnings.warn(
+            "Benchmark is not set. To calculate analytics that require benchmark (e.g. `capm()`) you will need to set it through the method. Once set, benchmark would be saved and used for other analytics without the need to set it again."
+        )
+    if np.any(np.isnan(benchmark_prices)):
+        raise ValueError(
+            "`benchmark_prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
+        )
+    if np.any(np.isinf(benchmark_prices)):
+        raise ValueError(
+            "`benchmark_prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
+        )
+
+    if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
+        benchmark_weights = benchmark_weights.to_numpy()
+    elif isinstance(benchmark_weights, list):
+        benchmark_weights = np.array(benchmark_weights)
+    elif isinstance(benchmark_weights, (np.ndarray, type(None))):
+        pass
+    else:
+        raise ValueError(
+            "`benchmark_weights` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
+        )
+
+    if not isinstance(benchmark_name, (str, type(None))):
+        raise ValueError("`benchmark_name` should be of type `str` or `NoneType`")
+
+    return benchmark_prices, benchmark_weights
 
 
 def _check_rate_arguments(
@@ -173,14 +180,15 @@ def _check_plot_arguments(show, save):
 
 
 def _check_omega_multiple_returns(returns):
-    if not isinstance(returns, (np.ndarray, pd.DataFrame)):
-        raise ValueError("`returns` should be of type `np.ndarray` or `pd.DataFrame`")
-    if isinstance(returns, np.ndarray):
+    if not isinstance(returns, (list, np.ndarray, pd.DataFrame)):
+        raise ValueError(
+            "`returns` should be of type `list`, `np.ndarray` or `pd.DataFrame`"
+        )
+    if isinstance(returns, (list, np.ndarray)):
         returns = pd.DataFrame(returns)
     if returns.shape[1] == 1:
         warnings.warn(
-            "Returns are provided for only one portfolio. Only one curve will be plotted.",
-            UserWarning,
+            "Returns are provided for only one portfolio. Only one curve will be plotted."
         )
     if np.any(np.isnan(returns)):
         raise ValueError(
@@ -193,8 +201,7 @@ def _check_omega_multiple_returns(returns):
 def _check_array_lengths(array_one, array_two):
     if len(array_one) != len(array_two):
         warnings.warn(
-            "Two arrays to be concatenated are not of the same length. Note that this will result in some `NaN` values",
-            UserWarning,
+            "Two arrays to be concatenated are not of the same length. Note that this will result in some `NaN` values"
         )
 
 
