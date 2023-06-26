@@ -2,6 +2,33 @@ import numpy as np
 import pandas as pd
 import warnings
 import numbers
+from portfolio_analytics.get_data import GetData
+
+
+def _check_tickers(tickers, prices, weights, start, end, interval, **kwargs):
+    if weights is None:
+        raise ValueError("Portfolio weights are not provided.")
+
+    if tickers is None and prices is None:
+        raise ValueError("Provide either `tickers` or `prices` argument.")
+    elif tickers is not None and prices is not None:
+        raise ValueError(
+            "Both `tickers` and `prices` arguments were provided. Provide only one to avoid clashes. If only `prices` is provided, tickers will be inferred from column names"
+        )
+    elif tickers is not None and prices is None:
+        prices = GetData(tickers, start, end, interval, **kwargs).close
+
+    if np.any(np.isnan(prices.fillna(method="bfill"))):
+        raise ValueError(
+            "`prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
+        )
+    if np.any(np.isnan(prices.fillna(method="ffill"))):
+        prices = prices.fillna(method="ffill").dropna()
+        warnings.warn(
+            "Leading rows containing `NaN` values were removed. This is likely due to different assets being listed for different periods of time. Alternatively, you can interpolate those values using `fill_nan()` function or change `start` and `end` arguments if providing `tickers`, or provide a specific `prices` dataframe"
+        )
+
+    return prices
 
 
 def _check_init(

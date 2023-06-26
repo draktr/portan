@@ -10,6 +10,7 @@ from sklearn.linear_model import LinearRegression
 from statsmodels.stats.diagnostic import lilliefors
 from statsmodels.tsa import stattools
 from itertools import repeat
+from datetime import datetime
 from portfolio_analytics import _checks
 
 
@@ -19,15 +20,23 @@ STYLE = "./portfolio_analytics/portfolio_analytics_style.mplstyle"
 class PortfolioAnalytics:
     def __init__(
         self,
-        prices,
-        weights,
+        tickers=None,
+        prices=None,
+        weights=None,
         benchmark_prices=None,
         benchmark_weights=None,
         name="Investment Portfolio",
         benchmark_name="Benchmark Portfolio",
         initial_aum=10000,
         frequency=252,
+        start="1970-01-02",
+        end=str(datetime.now())[0:10],
+        interval="1d",
+        **kwargs
     ) -> None:
+        prices = _checks._check_tickers(
+            tickers, prices, weights, start, end, interval, **kwargs
+        )
         prices, weights, benchmark_prices, benchmark_weights = _checks._check_init(
             prices=prices,
             weights=weights,
