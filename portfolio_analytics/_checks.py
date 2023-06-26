@@ -6,6 +6,17 @@ from portfolio_analytics.get_data import GetData
 
 
 def _check_tickers(tickers, prices, weights, start, end, interval, **kwargs):
+    if isinstance(tickers, (pd.DataFrame, pd.Series)):
+        tickers = tickers.to_numpy()
+    elif isinstance(tickers, list):
+        tickers = np.array(tickers)
+    elif isinstance(tickers, np.ndarray):
+        pass
+    else:
+        raise ValueError(
+            "`tickers` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
+        )
+
     if weights is None:
         raise ValueError("Portfolio weights are not provided.")
 
