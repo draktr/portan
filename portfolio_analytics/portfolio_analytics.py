@@ -162,13 +162,13 @@ class PortfolioAnalytics:
 
     def _set_benchmark(
         self,
-        benchmark_tickers,
-        benchmark_prices,
-        benchmark_weights,
-        benchmark_name,
-        start,
-        end,
-        interval,
+        benchmark_tickers=None,
+        benchmark_prices=None,
+        benchmark_weights=None,
+        benchmark_name="Benchmark Portfolio",
+        start="1970-01-02",
+        end=str(datetime.now())[0:10],
+        interval="1d",
     ):
         benchmark_prices, benchmark_weights, prices = _checks._check_benchmark(
             benchmark_tickers,

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import warnings
 import numbers
+from datetime import datetime
 from portfolio_analytics.get_data import GetData
 
 
@@ -27,10 +28,10 @@ def _check_init(
 
     # tickers
     if isinstance(tickers, (pd.DataFrame, pd.Series)):
-        tickers = tickers.to_numpy()
-    elif isinstance(tickers, list):
-        tickers = np.array(tickers)
-    elif isinstance(tickers, (np.ndarray, type(None))):
+        tickers = tickers[0].values.tolist()
+    elif isinstance(tickers, np.ndarray):
+        tickers = tickers.tolist()
+    elif isinstance(tickers, (list, type(None))):
         pass
     else:
         raise ValueError(
@@ -59,10 +60,10 @@ def _check_init(
 
     # benchmark tickers
     if isinstance(benchmark_tickers, (pd.DataFrame, pd.Series)):
-        benchmark_tickers = benchmark_tickers.to_numpy()
-    elif isinstance(benchmark_tickers, list):
-        benchmark_tickers = np.array(benchmark_tickers)
-    elif isinstance(benchmark_tickers, (np.ndarray, type(None))):
+        benchmark_tickers = benchmark_tickers[0].values.tolist()
+    elif isinstance(benchmark_tickers, np.ndarray):
+        benchmark_tickers = benchmark_tickers.tolist()
+    elif isinstance(benchmark_tickers, (list, type(None))):
         pass
     else:
         raise ValueError(
@@ -78,10 +79,6 @@ def _check_init(
         )
     if isinstance(benchmark_prices, (list, np.ndarray)):
         benchmark_prices = pd.DataFrame(benchmark_prices)
-    elif isinstance(benchmark_prices, type(None)):
-        warnings.warn(
-            "Benchmark is not set. To calculate analytics that require benchmark (e.g. `capm()`) you will need to set it through the method. Once set, benchmark would be saved and used for other analytics without the need to set it again."
-        )
 
     # benchmark weights
     if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
@@ -225,12 +222,79 @@ def _check_init(
         #####
         if benchmark_prices is not None:
             if prices.shape[0] != benchmark_prices.shape[0]:
-                benchmark_prices = benchmark_prices.iloc[-prices.shape[0] :]
-                prices = prices.iloc[-benchmark_prices.shape[0] :]
+                inner = prices.index.intersection(benchmark_prices.index)
+                if inner.to_numpy().size == 0:
+                    raise ValueError(
+                        "`prices` and `benchmark_prices` dataframes couldn't be aligned. If using `tickers` approach ensure `start` and `end arguments match. If using `prices` approach align dataframes manually (ensuring matching dates) or ensure that the two dataframes have the same index type"
+                    )
+                prices = prices.loc[inner]
+                benchmark_prices = benchmark_prices.loc[inner]
                 warnings.warn(
-                    "`prices` and `benchmark_prices` row lengths didn't match so the longer dataframe was shoretened by removing the excess leading rows."
+                    "`prices` and `benchmark_prices` row lengths didn't match so the intersection between the two dataframes was taken"
                 )
         return prices, weights, benchmark_prices, benchmark_weights
+
+
+def _whether_to_set(
+    slf_benchmark_prices,
+    benchmark_tickers=None,
+    benchmark_prices=None,
+    benchmark_weights=None,
+    benchmark_name="Benchmark Portfolio",
+    start="1970-01-02",
+    end=str(datetime.now())[0:10],
+    interval="1d",
+):
+    if (
+        benchmark_tickers is None
+        and benchmark_prices is None
+        and slf_benchmark_prices is None
+    ):
+        raise ValueError(
+            "This method cannot be used as benchmark is not set. Set the benchmark by passing the relevant arguments to the method. Once set, benchmark doesn't need to be set again (but can be reset/changed)."
+        )
+    if benchmark_tickers is not None and benchmark_weights is not None:
+        if slf_benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        if len(benchmark_tickers) != len(benchmark_weights):
+            raise ValueError(
+                "Number of benchmark assets doesn't match the number of benchmark weights provided"
+            )
+        set_benchmark = True
+    elif benchmark_prices is not None and benchmark_weights is not None:
+        if slf_benchmark_prices is not None:
+            warnings.warn(
+                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
+            )
+        if benchmark_prices.shape[1] != len(benchmark_weights):
+            raise ValueError(
+                "Number of benchmark assets doesn't match the number of benchmark weights provided"
+            )
+        set_benchmark = True
+
+    elif (
+        benchmark_tickers is None
+        and benchmark_prices is None
+        and benchmark_weights is not None
+    ):
+        raise ValueError(
+            "Benchmark assets aren't provided, but benchmark weights are. To use the methods that require benchmark, provide benchmark tickers or benchmark prices."
+        )
+    elif (
+        benchmark_tickers is not None
+        or benchmark_prices is not None
+        and benchmark_weights is None
+    ):
+        raise ValueError(
+            "Benchmark weights are not provided, but benchmark assets are. To use the methods that require benchmark, provide benchmark weights."
+        )
+
+    else:
+        set_benchmark = False
+
+    return set_benchmark
 
 
 def _check_benchmark(
@@ -249,10 +313,10 @@ def _check_benchmark(
 
     # benchmark tickers
     if isinstance(benchmark_tickers, (pd.DataFrame, pd.Series)):
-        benchmark_tickers = benchmark_tickers.to_numpy()
-    elif isinstance(benchmark_tickers, list):
-        benchmark_tickers = np.array(benchmark_tickers)
-    elif isinstance(benchmark_tickers, (np.ndarray, type(None))):
+        benchmark_tickers = benchmark_tickers[0].values.tolist()
+    elif isinstance(benchmark_tickers, np.ndarray):
+        benchmark_tickers = benchmark_tickers.tolist()
+    elif isinstance(benchmark_tickers, (list, type(None))):
         pass
     else:
         raise ValueError(
@@ -268,10 +332,6 @@ def _check_benchmark(
         )
     if isinstance(benchmark_prices, (list, np.ndarray)):
         benchmark_prices = pd.DataFrame(benchmark_prices)
-    elif isinstance(benchmark_prices, type(None)):
-        warnings.warn(
-            "Benchmark is not set. To calculate analytics that require benchmark (e.g. `capm()`) you will need to set it through the method. Once set, benchmark would be saved and used for other analytics without the need to set it again."
-        )
 
     # benchmark weights
     if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
@@ -338,71 +398,18 @@ def _check_benchmark(
         #####
         if benchmark_prices is not None:
             if prices.shape[0] != benchmark_prices.shape[0]:
-                benchmark_prices = benchmark_prices.iloc[-prices.shape[0] :]
-                prices = prices.iloc[-benchmark_prices.shape[0] :]
+                inner = prices.index.intersection(benchmark_prices.index)
+                if inner.to_numpy().size == 0:
+                    raise ValueError(
+                        "`prices` and `benchmark_prices` dataframes couldn't be aligned. If using `tickers` approach ensure `start` and `end arguments match. If using `prices` approach align dataframes manually (ensuring matching dates) or ensure that the two dataframes have the same index type"
+                    )
+                prices = prices.loc[inner]
+                benchmark_prices = benchmark_prices.loc[inner]
                 warnings.warn(
-                    "`prices` and `benchmark_prices` row lengths didn't match so the longer dataframe was shoretened by removing the excess leading rows."
+                    "`prices` and `benchmark_prices` row lengths didn't match so the intersection between the two dataframes was taken"
                 )
 
         return benchmark_prices, benchmark_weights, prices
-
-
-def _whether_to_set(
-    slf_benchmark_prices,
-    benchmark_tickers,
-    benchmark_prices,
-    benchmark_weights,
-    benchmark_name,
-    start,
-    end,
-    interval,
-):
-    if (
-        benchmark_tickers is None
-        and benchmark_prices is None
-        and slf_benchmark_prices is None
-    ):
-        raise ValueError(
-            "This method cannot be used as benchmark is not set. Set the benchmark by passing the relevant arguments to the method. Once set, benchmark doesn't need to be set again (but can be reset/changed)."
-        )
-    if (
-        benchmark_tickers is not None
-        or benchmark_prices is not None
-        and benchmark_weights is not None
-    ):
-        if slf_benchmark_prices is not None:
-            warnings.warn(
-                "By providing `benchmark_prices` and `benchmark_weights` you are resetting the benchmark"
-            )
-        if (
-            benchmark_tickers.shape[0] != benchmark_weights.shape[0]
-            or benchmark_prices.shape[1] != benchmark_weights.shape[0]
-        ):
-            raise ValueError(
-                "Number of benchmark assets doesn't match the number of benchmark weights provided"
-            )
-        set_benchmark = True
-    elif (
-        benchmark_tickers is None
-        and benchmark_prices is None
-        and benchmark_weights is not None
-    ):
-        raise ValueError(
-            "Benchmark assets aren't provided, but benchmark weights are. To use the methods that require benchmark, provide benchmark tickers or benchmark prices."
-        )
-    elif (
-        benchmark_tickers is not None
-        or benchmark_prices is not None
-        and benchmark_weights is None
-    ):
-        raise ValueError(
-            "Benchmark weights are not provided, but benchmark assets are. To use the methods that require benchmark, provide benchmark weights."
-        )
-
-    else:
-        set_benchmark = False
-
-    return set_benchmark
 
 
 def _check_rate_arguments(
