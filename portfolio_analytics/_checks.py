@@ -242,7 +242,6 @@ def _check_benchmark(
     start,
     end,
     interval,
-    **kwargs,
 ):
     #####
     # checking datatypes
@@ -305,9 +304,7 @@ def _check_benchmark(
                 "Both `benchmark_tickers` and `benchmark_prices` arguments were provided. Provide only one to avoid clashes. If only `benchmark_prices` is provided, tickers will be inferred from column names"
             )
         if benchmark_tickers is not None and benchmark_prices is None:
-            benchmark_prices = GetData(
-                benchmark_tickers, start, end, interval, **kwargs
-            ).close
+            benchmark_prices = GetData(benchmark_tickers, start, end, interval).close
         if benchmark_weights is None:
             if benchmark_tickers.shape[0] == 1 or benchmark_prices.shape[1] == 1:
                 benchmark_weights = np.array([1])
@@ -351,7 +348,14 @@ def _check_benchmark(
 
 
 def _whether_to_set(
-    slf_benchmark_prices, benchmark_tickers, benchmark_prices, benchmark_weights
+    slf_benchmark_prices,
+    benchmark_tickers,
+    benchmark_prices,
+    benchmark_weights,
+    benchmark_name,
+    start,
+    end,
+    interval,
 ):
     if (
         benchmark_tickers is None
