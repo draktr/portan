@@ -33,7 +33,3 @@ def test_martin(portfolio):
     m = portfolio.martin()
 
     assert np.abs(m - -0.0152203607354951) < 0.01
-
-
-portfolio.ulcer()
-portfolio.martin()

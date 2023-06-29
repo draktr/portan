@@ -10,6 +10,8 @@ def portfolio():
         weights=[0.3, 0.7],
         benchmark_tickers=["ITOT", "IEF"],
         benchmark_weights=[0.6, 0.4],
+        start="2012-01-01",
+        end="2020-01-01",
     )
 
     return portfolio

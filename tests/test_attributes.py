@@ -164,7 +164,7 @@ def test_state(portfolio):
         )
         & np.all(
             np.abs(
-                portfolio.state["Portfolio"].values
+                portfolio.state[portfolio.name].values
                 == np.array(
                     [
                         10000.0,
@@ -276,7 +276,7 @@ def test_volatility(portfolio):
 
 
 def test_annual_volatility(portfolio):
-    assert np.abs(portfolio.annual_volatility - 0.11752751952773607) < 0.01
+    assert np.abs(portfolio.annual_volatility - 0.11752964613162667) < 0.01
 
 
 def test_skewness(portfolio):

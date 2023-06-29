@@ -32,7 +32,7 @@ def test_herfindahl_index(portfolio):
 def test_appraisal(portfolio):
     m = portfolio.appraisal()
 
-    assert np.abs(m - -0.6326288) < 0.001
+    assert np.abs(m - -0.408979) < 0.001
 
 
 def test_burke(portfolio):

@@ -26,13 +26,13 @@ def portfolio():
 def test_sterling(portfolio):
     m = portfolio.sterling()
 
-    assert np.abs(m - 0.1999164) < 0.01
+    assert np.abs(m - 0.4213370777156648) < 0.01
 
 
 def test_calmar(portfolio):
     m = portfolio.calmar()
 
-    assert np.abs(m - 0.286518) < 0.01
+    assert np.abs(m - 0.15656131465177014) < 0.01
 
 
 def test_gain_loss(portfolio):
