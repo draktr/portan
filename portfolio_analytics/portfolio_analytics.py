@@ -925,72 +925,35 @@ class PortfolioAnalytics:
 
         return sterling_ratio
 
-    def ulcer(self, periods=14):
-        periods = _checks._check_periods(periods=periods, state=self.state)
+    def ulcer(self):
+        ss_drawdowns = (
+            (100 * (self.state[self.name] / self.state[self.name].cummax() - 1)) ** 2
+        ).sum()
+        ulcer_index = np.sqrt(ss_drawdowns / self.state.shape[0])
 
-        ulcer = pd.DataFrame(columns=["Ulcer Index"], index=self.state.index)
-        period_high_close = (
-            self.state[self.name]
-            .rolling(periods + 1)
-            .apply(lambda x: np.amax(x), raw=True)
-        )
-        percentage_drawdown_squared = (
-            (self.state[self.name] - period_high_close) / period_high_close * 100
-        ) ** 2
-        squared_average = (
-            percentage_drawdown_squared.rolling(periods + 1).sum() / periods
-        )
-        ulcer["Ulcer Index"] = np.sqrt(squared_average)
-
-        return ulcer
+        return ulcer_index
 
     def martin(
         self,
         annual_rfr=0.03,
         annual=True,
         compounding=True,
-        periods=14,
     ):
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        ulcer_index = self.ulcer(periods)
+        ulcer_index = self.ulcer()
 
         if annual and compounding:
-            martin_ratio = (self.geometric_mean - annual_rfr) / ulcer_index.iloc[-1]
+            martin_ratio = (self.geometric_mean - annual_rfr) / ulcer_index
         elif annual and not compounding:
-            martin_ratio = (self.arithmetic_mean - annual_rfr) / ulcer_index.iloc[-1]
+            martin_ratio = (self.arithmetic_mean - annual_rfr) / ulcer_index
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            martin_ratio = (self.mean - rfr) / ulcer_index.iloc[-1]
+            martin_ratio = (self.mean - rfr) / ulcer_index
 
-        return martin_ratio[0]
-
-    def plot_ulcer(
-        self,
-        periods=14,
-        style=STYLE,
-        rcParams_update={},
-        show=True,
-        save=False,
-        **fig_kw,
-    ):
-        _checks._check_plot_arguments(show=show, save=save)
-
-        ulcer = self.ulcer(periods)
-
-        plt.style.use(style)
-        plt.rcParams.update(**rcParams_update)
-        fig, ax = plt.subplots(**fig_kw)
-        ulcer["Ulcer Index"].plot(ax=ax)
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Ulcer Index")
-        ax.set_title("Portfolio Ulcer Index")
-        if save:
-            plt.savefig("ulcer.png", dpi=300)
-        if show:
-            plt.show()
+        return martin_ratio
 
     def parametric_var(self, ci=0.95, frequency=1):
         return stats.norm.ppf(1 - ci, self.mean, self.volatility) * np.sqrt(frequency)
