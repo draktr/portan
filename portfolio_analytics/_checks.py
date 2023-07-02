@@ -22,11 +22,6 @@ def _check_init(
     interval,
     **kwargs,
 ):
-    #####
-    # datatype checks
-    #####
-
-    # tickers
     if isinstance(tickers, (pd.DataFrame, pd.Series)):
         tickers = tickers[0].values.tolist()
     elif isinstance(tickers, np.ndarray):
@@ -38,7 +33,6 @@ def _check_init(
             "`tickers` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
         )
 
-    # prices
     if not isinstance(prices, (list, np.ndarray, pd.DataFrame, pd.Series, type(None))):
         raise ValueError(
             "`prices` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
@@ -46,7 +40,6 @@ def _check_init(
     if isinstance(prices, (list, np.ndarray)):
         prices = pd.DataFrame(prices)
 
-    # weights
     if isinstance(weights, (pd.DataFrame, pd.Series)):
         weights = weights.to_numpy()
     elif isinstance(weights, list):
@@ -58,7 +51,6 @@ def _check_init(
             "`weights` should be of type `list`, `np.ndarray`, `pd.DataFrame` or `pd.Series`"
         )
 
-    # benchmark tickers
     if isinstance(benchmark_tickers, (pd.DataFrame, pd.Series)):
         benchmark_tickers = benchmark_tickers[0].values.tolist()
     elif isinstance(benchmark_tickers, np.ndarray):
@@ -70,7 +62,6 @@ def _check_init(
             "`benchmark_tickers` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
         )
 
-    # benchmark prices
     if not isinstance(
         benchmark_prices, (list, np.ndarray, pd.DataFrame, pd.Series, type(None))
     ):
@@ -80,7 +71,6 @@ def _check_init(
     if isinstance(benchmark_prices, (list, np.ndarray)):
         benchmark_prices = pd.DataFrame(benchmark_prices)
 
-    # benchmark weights
     if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
         benchmark_weights = benchmark_weights.to_numpy()
     elif isinstance(benchmark_weights, list):
@@ -92,29 +82,21 @@ def _check_init(
             "`benchmark_weights` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
         )
 
-    # name
     if not isinstance(name, str):
         raise ValueError("`name` should be of type `str`")
 
-    # benchmark name
     if not isinstance(benchmark_name, (str, type(None))):
         raise ValueError("`benchmark_name` should be of type `str` or `NoneType`")
 
-    # initial aum
     if not isinstance(initial_aum, numbers.Real):
         raise ValueError("`initial_aum` should be a positive real number")
     if initial_aum <= 0:
         raise ValueError("`initial_aum` should be positive")
 
-    # frequency
     if not isinstance(frequency, numbers.Real):
         raise ValueError("`frequency` should be a positive real number")
     if frequency <= 0:
         raise ValueError("`frequency` should be positive")
-
-    #####
-    # important checks
-    #####
 
     if weights is None:
         raise ValueError("Portfolio weights are not provided.")
@@ -132,10 +114,6 @@ def _check_init(
         raise ValueError(
             "Number of assets prices doesn't match the number of weights provided"
         )
-
-    #####
-    # content checks
-    #####
 
     if prices.shape[1] == 1:
         warnings.warn(
@@ -156,10 +134,6 @@ def _check_init(
         raise ValueError(
             "`prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
         )
-
-    #####
-    # benchmark checks
-    #####
 
     if (
         benchmark_tickers is None
@@ -200,9 +174,7 @@ def _check_init(
             raise ValueError(
                 "Number of benchmark asset prices doesn't match the number of benchmark weights provided"
             )
-        #####
-        # benchmark content
-        #####
+
         if np.any(np.isnan(benchmark_prices.fillna(method="bfill"))):
             raise ValueError(
                 "`benchmark_prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
@@ -217,9 +189,7 @@ def _check_init(
             raise ValueError(
                 "`benchmark_prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
             )
-        #####
-        # matching checks
-        #####
+
         if benchmark_prices is not None:
             if prices.shape[0] != benchmark_prices.shape[0]:
                 inner = prices.index.intersection(benchmark_prices.index)
@@ -307,11 +277,6 @@ def _check_benchmark(
     end,
     interval,
 ):
-    #####
-    # checking datatypes
-    #####
-
-    # benchmark tickers
     if isinstance(benchmark_tickers, (pd.DataFrame, pd.Series)):
         benchmark_tickers = benchmark_tickers[0].values.tolist()
     elif isinstance(benchmark_tickers, np.ndarray):
@@ -323,7 +288,6 @@ def _check_benchmark(
             "`benchmark_tickers` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
         )
 
-    # benchmark prices
     if not isinstance(
         benchmark_prices, (list, np.ndarray, pd.DataFrame, pd.Series, type(None))
     ):
@@ -333,7 +297,6 @@ def _check_benchmark(
     if isinstance(benchmark_prices, (list, np.ndarray)):
         benchmark_prices = pd.DataFrame(benchmark_prices)
 
-    # benchmark weights
     if isinstance(benchmark_weights, (pd.DataFrame, pd.Series)):
         benchmark_weights = benchmark_weights.to_numpy()
     elif isinstance(benchmark_weights, list):
@@ -345,11 +308,9 @@ def _check_benchmark(
             "`benchmark_weights` should be of type `list`, `np.ndarray`, `pd.DataFrame`, `pd.Series` or `NoneType`"
         )
 
-    # benchmark name
     if not isinstance(benchmark_name, (str, type(None))):
         raise ValueError("`benchmark_name` should be of type `str` or `NoneType`")
 
-    ###
     if (
         benchmark_tickers is None
         and benchmark_prices is None
@@ -376,9 +337,7 @@ def _check_benchmark(
             raise ValueError(
                 "Number of benchmark asset prices doesn't match the number of benchmark weights provided"
             )
-        #####
-        # benchmark content
-        #####
+
         if np.any(np.isnan(benchmark_prices.fillna(method="bfill"))):
             raise ValueError(
                 "`benchmark_prices` contains `NaN` values. Use `fill_nan()` from `utilities` module to interpolate these."
@@ -393,9 +352,7 @@ def _check_benchmark(
             raise ValueError(
                 "`benchmark_prices` contains `inf` values. Use `fill_inf()` from `utilities` module to interpolate these."
             )
-        #####
-        # matching checks
-        #####
+
         if benchmark_prices is not None:
             if prices.shape[0] != benchmark_prices.shape[0]:
                 inner = prices.index.intersection(benchmark_prices.index)

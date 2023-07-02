@@ -63,17 +63,14 @@ class PortfolioAnalytics:
         self.initial_aum = initial_aum
         self.frequency = frequency
 
-        # funds allocated to each asset
         self.allocation_funds = pd.Series(
             np.multiply(self.initial_aum, self.weights), index=self.tickers
         )
 
-        # number of assets bought at t0
         self.allocation_assets = pd.Series(
             np.divide(self.allocation_funds, self.prices.iloc[0].T), index=self.tickers
         )
 
-        # absolute (dollar) value of each asset in portfolio (i.e. state of the portfolio, not rebalanced)
         self.state = pd.DataFrame(
             np.multiply(self.prices, self.allocation_assets),
             index=self.prices.index,
@@ -185,11 +182,6 @@ class PortfolioAnalytics:
         self.benchmark_weights = benchmark_weights
         self.benchmark_name = benchmark_name
         self.prices = prices
-
-        if self.prices.shape[0] != benchmark_prices.shape[0]:
-            raise ValueError(
-                "Benchmark not set. `benchmark_prices` should have the same number of datapoints as `prices`"
-            )
 
         self.benchmark_assets_returns = self.benchmark_prices.pct_change().drop(
             self.benchmark_prices.index[0]
