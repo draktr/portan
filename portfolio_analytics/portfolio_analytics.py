@@ -15,6 +15,7 @@ from portfolio_analytics import _checks
 
 
 STYLE = "./portfolio_analytics/portfolio_analytics_style.mplstyle"
+CURRENT_DATE = str(datetime.now())[0:10]
 
 
 class PortfolioAnalytics:
@@ -31,7 +32,7 @@ class PortfolioAnalytics:
         initial_aum=10000,
         frequency=252,
         start="1970-01-02",
-        end=str(datetime.now())[0:10],
+        end=CURRENT_DATE,
         interval="1d",
     ) -> None:
         prices, weights, benchmark_prices, benchmark_weights = _checks._check_init(
@@ -164,7 +165,7 @@ class PortfolioAnalytics:
         benchmark_weights=None,
         benchmark_name="Benchmark Portfolio",
         start="1970-01-02",
-        end=str(datetime.now())[0:10],
+        end=CURRENT_DATE,
         interval="1d",
     ):
         benchmark_prices, benchmark_weights, prices = _checks._check_benchmark(
@@ -433,7 +434,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -458,7 +459,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -494,7 +495,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
         **fig_kw,
@@ -587,7 +588,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -616,7 +617,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -644,7 +645,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -737,7 +738,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -776,7 +777,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1242,7 +1243,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1364,7 +1365,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1407,7 +1408,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1432,7 +1433,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1493,7 +1494,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1522,7 +1523,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1551,7 +1552,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1582,7 +1583,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1613,7 +1614,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
@@ -1645,7 +1646,7 @@ class PortfolioAnalytics:
             "benchmark_weights": None,
             "benchmark_name": "Benchmark Portfolio",
             "start": "1970-01-02",
-            "end": str(datetime.now())[0:10],
+            "end": CURRENT_DATE,
             "interval": "1d",
         },
     ):
