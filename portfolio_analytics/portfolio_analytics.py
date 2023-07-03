@@ -219,6 +219,19 @@ class PortfolioAnalytics:
         return (annual_rate + 1) ** (1 / self.frequency) - 1
 
     def excess_mar(self, annual_mar=0.03, annual=True, compounding=True):
+        """
+        Calculates excess mean return above Minimum Accepted Return (MAR)
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Excess mean return above MAR
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         if annual and compounding:
@@ -232,6 +245,15 @@ class PortfolioAnalytics:
         return excess_return
 
     def net_return(self, percentage=False):
+        """
+        Calculates net investment return
+
+        :param percentage: Whether to calculate in percentage or absolute terms, defaults to False
+        :type percentage: bool, optional
+        :return: Net investment return
+        :rtype: float
+        """
+
         _checks._check_booleans(percentage=percentage)
 
         final_aum = self.final_aum
@@ -244,6 +266,22 @@ class PortfolioAnalytics:
         return net_return
 
     def distribution_test(self, test="dagostino-pearson", distribution="norm"):
+        """
+        Tests for the probability distribution of the investment returns
+
+        :param test: Statistical test to be used. Available are `"dagostino-pearson"`,
+                     `"kolomogorov-smirnov"`, `"lilliefors"`, `"shapiro-wilk"`,
+                     `"jarque-barre"`, `"anderson-darling"`,
+                     defaults to "dagostino-pearson"
+        :type test: str, optional
+        :param distribution: Probability distribution hypothesized,
+                             defaults to "norm"
+        :type distribution: str, optional
+        :raises ValueError: If statistical test is unavailable
+        :return: Result of the tests (e.g. test statistic value, p-value, etc.)
+        :rtype: TestResult object or tuple
+        """
+
         if test == "dagostino-pearson":
             result = stats.normaltest(self.returns)
         elif test == "kolomogorov-smirnov":
@@ -271,6 +309,34 @@ class PortfolioAnalytics:
         compounding=True,
         **ewm_kwargs,
     ):
+        """
+        Calculates exponentially weighted mean return
+
+        :param com: Specify decay in terms of center of mass
+                    .. math::
+                        \alpha = \frac{1}{1+com}
+                    for com >= 0, defaults to None
+        :type com: float, optional
+        :param span: Specify decay in terms of span
+                     .. math::
+                        \alpha = \frac{2}{span+1}
+                     for span >= 1, defaults to None
+        :type span: float, optional
+        :param halflife: Specify decay in terms of halflife
+                         .. math::
+                            \alpha = 1-\exp(\frac{-\ln(2)}{halflife}
+                         for halflife > 0, defaults to None
+        :type halflife: float, optional
+        :param alpha: Specify smoothing factor directly, defaults to None
+        :type alpha: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Exponentially weighted mean return
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
 
         if annual and compounding:
@@ -592,6 +658,19 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates excess mean return above benchmark mean return
+
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Excess mean return above benchmark
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual=annual, compounding=compounding)
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
@@ -621,6 +700,17 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates tracking error
+
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Tracking error
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual=annual)
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
@@ -649,6 +739,19 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates information ratio
+
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Information ratio
+        :rtype: float
+        """
+
         excess_return = self.excess_benchmark(annual, compounding, benchmark)
         tracking_error = self.tracking_error(annual, benchmark)
 
@@ -657,6 +760,15 @@ class PortfolioAnalytics:
         return information_ratio
 
     def volatility_skewness(self, annual_mar=0.03):
+        """
+        Calculates volatility skewness
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Volatility skewness
+        :rtype: float
+        """
+
         upside = self.hpm(annual_mar=annual_mar, moment=2)
         downside = self.lpm(annual_mar=annual_mar, moment=2)
         skewness = upside / downside
@@ -669,6 +781,19 @@ class PortfolioAnalytics:
         annual=True,
         compounding=True,
     ):
+        """
+        Calculates omega excess return
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Omega excess return
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_mar=annual_mar, annual=annual, compounding=compounding
         )
@@ -708,6 +833,21 @@ class PortfolioAnalytics:
         return omega_excess_return[0]
 
     def sortino(self, annual_mar=0.03, annual_rfr=0.03, annual=True, compounding=True):
+        """
+        Calculates Sortino ratio
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Sortino ratio
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_mar=annual_mar,
             annual_rfr=annual_rfr,
@@ -742,6 +882,21 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Jensen alpha
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Jensen alpha
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -781,6 +936,21 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Treynor ratio
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Treynor ratio
+        :rtype: Treynor ratio
+        """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -798,6 +968,17 @@ class PortfolioAnalytics:
         return treynor_ratio
 
     def hpm(self, annual_mar=0.03, moment=3):
+        """
+        Calculates Higher Partial Moment
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :param moment: Moment for calculation, defaults to 3
+        :type moment: int, optional
+        :return: Higher Partial Moment
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual_mar=annual_mar)
         _checks._check_posints(moment=moment)
 
@@ -811,6 +992,17 @@ class PortfolioAnalytics:
         return higher_partial_moment[0]
 
     def lpm(self, annual_mar=0.03, moment=3):
+        """
+        Calculates Lower Partial Moment
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :param moment: Moment for calculation, defaults to 3
+        :type moment: int, optional
+        :return: Lower Partial Moment
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual_mar=annual_mar)
         _checks._check_posints(moment=moment)
 
@@ -824,6 +1016,21 @@ class PortfolioAnalytics:
         return lower_partial_moment[0]
 
     def kappa(self, annual_mar=0.03, moment=3, annual=True, compounding=True):
+        """
+        Calculates Kappa
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :param moment: Moment for calculation, defaults to 3
+        :type moment: int, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Kappa
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_mar=annual_mar, annual=annual, compounding=compounding
         )
@@ -852,6 +1059,13 @@ class PortfolioAnalytics:
         return kappa_ratio
 
     def gain_loss(self):
+        """
+        Calculates Gain-loss ratio
+
+        :return: Gain-loss ratio
+        :rtype: float
+        """
+
         higher_partial_moment = self.hpm(annual_mar=0, moment=1)
         lower_partial_moment = self.lpm(annual_mar=0, moment=1)
 
@@ -862,6 +1076,23 @@ class PortfolioAnalytics:
     def calmar(
         self, periods=0, inverse=True, annual_rfr=0.03, annual=True, compounding=True
     ):
+        """
+        Calculates Calmar ratio
+
+        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
+        :type periods: int, optional
+        :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
+        :type inverse: bool, optional
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Calmar ratio
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -919,6 +1150,13 @@ class PortfolioAnalytics:
         return sterling_ratio
 
     def ulcer(self):
+        """
+        Calculates Ulcer Index
+
+        :return: Ulcer Index
+        :rtype: float
+        """
+
         ss_drawdowns = (
             (100 * (self.state[self.name] / self.state[self.name].cummax() - 1)) ** 2
         ).sum()
@@ -932,6 +1170,19 @@ class PortfolioAnalytics:
         annual=True,
         compounding=True,
     ):
+        """
+        Calculates Martin ratio
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Martin ratio
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -1037,6 +1288,13 @@ class PortfolioAnalytics:
             plt.show()
 
     def correlation(self):
+        """
+        Calculates correlation matrix of portfolio assets' returns
+
+        :return: Correlation matrix
+        :rtype: np.ndarray
+        """
+
         matrix = self.assets_returns.corr().round(5)
 
         return matrix
@@ -1141,6 +1399,8 @@ class PortfolioAnalytics:
         """
         Calculates the Omega ratio of the portfolio.
 
+        :param returns: Array with portfolio returns for which the omega ratio is to be calculated (if different from the object portfolio), defaults to None
+        :type returns: np.ndarray, optional
         :param annual_mar: Annual Minimum Acceptable Return (MAR)., defaults to 0.03
         :type annual_mar: float, optional
         :return: Omega ratio of the portfolio
@@ -1165,6 +1425,15 @@ class PortfolioAnalytics:
         return omega
 
     def omega_sharpe_ratio(self, annual_mar=0.03):
+        """
+        Calculates Omega-Sharpe ratio
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Omega-Sharpe ratio
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         upside_potential = self.upside_potential(annual_mar)
@@ -1224,6 +1493,13 @@ class PortfolioAnalytics:
             plt.show()
 
     def herfindahl_index(self):
+        """
+        Calculates Herfindahl Index
+
+        :return: Herfindahl Index
+        :rtype: float
+        """
+
         acf = stattools.acf(self.returns)
         positive_acf = acf[acf >= 0][1:]
         positive_acf = positive_acf[~np.isnan(positive_acf)]
@@ -1309,6 +1585,13 @@ class PortfolioAnalytics:
         return burke_ratio[0]
 
     def hurst_index(self):
+        """
+        Calculates Hurst Index
+
+        :return: Hurst Index
+        :rtype: float
+        """
+
         m = (self.returns.max() - self.returns.min()) / np.std(self.returns)
         n = self.returns.shape[0]
         hurst_index = np.log(m) / np.log(n)
@@ -1316,6 +1599,13 @@ class PortfolioAnalytics:
         return hurst_index[0]
 
     def bernardo_ledoit(self):
+        """
+        Calculates Bernardo and Ledoit ratio
+
+        :return: Bernardo and Ledoit ratio
+        :rtype: float
+        """
+
         positive_returns = self.returns[self.returns > 0].dropna()
         negative_returns = self.returns[self.returns < 0].dropna()
 
@@ -1324,11 +1614,25 @@ class PortfolioAnalytics:
         return bernardo_ledoit_ratio[0]
 
     def skewness_kurtosis_ratio(self):
+        """
+        Calculates skewness-kurtosis ratio
+
+        :return: skewness-kurtosis ratio
+        :rtype: float
+        """
+
         skewness_kurtosis_ratio = self.skewness / self.kurtosis
 
         return skewness_kurtosis_ratio
 
     def d(self):
+        """
+        Calculates D ratio
+
+        :return: D ratio
+        :rtype: float
+        """
+
         positive_returns = self.returns[self.returns > 0].dropna()
         negative_returns = self.returns[self.returns < 0].dropna()
 
@@ -1412,6 +1716,15 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Fama beta
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Fama beta
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -1467,6 +1780,15 @@ class PortfolioAnalytics:
         return net_selectivity
 
     def downside_frequency(self, annual_mar=0.03):
+        """
+        Calculates Downside frequency
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Downside frequency
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
@@ -1477,6 +1799,15 @@ class PortfolioAnalytics:
         return downside_frequency
 
     def upside_frequency(self, annual_mar=0.03):
+        """
+        Calculates Upside frequency
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Upside frequency
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual_mar=annual_mar)
 
         mar = self._rate_conversion(annual_mar)
@@ -1498,6 +1829,15 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Up-market capture
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Up-market capture
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -1527,6 +1867,15 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Down-market capture
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Down-market capture
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -1556,6 +1905,15 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Up-market number
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Up-market number
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -1587,6 +1945,15 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Down-market number
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Down-market number
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -1618,6 +1985,15 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Up-market percentage
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Up-market percentage
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -1650,6 +2026,15 @@ class PortfolioAnalytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Down-market percentage
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Down-market percentage
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -1671,6 +2056,13 @@ class PortfolioAnalytics:
         return down_percentage
 
     def drawdowns(self):
+        """
+        Calculates portfolio drawdown level at each time-point
+
+        :return: Drawdown levels
+        :rtype: np.ndarray
+        """
+
         cumulative_concatenated = pd.concat(
             [
                 pd.DataFrame([1], columns=[self.name]),
@@ -1684,6 +2076,17 @@ class PortfolioAnalytics:
         return drawdowns
 
     def maximum_drawdown(self, periods=0, inverse=True):
+        """
+        Calculates Maximum drawdown
+
+        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
+        :type periods: int, optional
+        :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
+        :type inverse: bool, optional
+        :return: Maximum drawdown
+        :rtype: float
+        """
+
         _checks._check_periods(periods=periods, state=self.state)
         _checks._check_booleans(inverse=inverse)
 
@@ -1697,6 +2100,17 @@ class PortfolioAnalytics:
         return mdd
 
     def average_drawdown(self, largest=0, inverse=True):
+        """
+        Calculates Average drawdown
+
+        :param largest: Number of largest drawdowns taken into consideration for the calculation, defaults to 0
+        :type largest: int, optional
+        :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
+        :type inverse: bool, optional
+        :return: Average drawdown
+        :rtype: float
+        """
+
         _checks._check_nonnegints(largest=largest)
         _checks._check_booleans(inverse=inverse)
 
@@ -1711,6 +2125,15 @@ class PortfolioAnalytics:
         return add
 
     def sorted_drawdowns(self, largest=0, **sorted_drawdowns_kwargs):
+        """
+        Sorts the portfolio drawdowns at each time-point
+
+        :param largest: Number of largest drawdowns returned, defaults to 0
+        :type largest: int, optional
+        :return: Sorted drawdowns
+        :rtype: float
+        """
+
         _checks._check_nonnegints(largest=largest)
 
         drawdowns = self.drawdowns()
@@ -1740,31 +2163,85 @@ class PortfolioAnalytics:
             plt.show()
 
     def upside_risk(self, annual_mar=0.03):
+        """
+        Calculates Upside risk (also referred to as Upside semideviation)
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Upside risk
+        :rtype: float
+        """
+
         upside_risk = np.sqrt(self.hpm(annual_mar=annual_mar, moment=2))
 
         return upside_risk
 
     def upside_potential(self, annual_mar=0.03):
+        """
+        Calculates Upside potential
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Upside potential
+        :rtype: float
+        """
+
         upside_potential = self.hpm(annual_mar=annual_mar, moment=1)
 
         return upside_potential
 
     def upside_variance(self, annual_mar=0.03):
+        """
+        Calculates Upside variance
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Upside variance
+        :rtype: float
+        """
+
         upside_variance = self.hpm(annual_mar=annual_mar, moment=2)
 
         return upside_variance
 
     def downside_risk(self, annual_mar=0.03):
+        """
+        Calculates Downside risk (also referred to as Downside semideviation)
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Downside risk
+        :rtype: float
+        """
+
         downside_risk = np.sqrt(self.lpm(annual_mar=annual_mar, moment=2))
 
         return downside_risk
 
     def downside_potential(self, annual_mar=0.03):
+        """
+        Calculates Downside potential
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Downside potential
+        :rtype: float
+        """
+
         downside_potential = self.lpm(annual_mar=annual_mar, moment=1)
 
         return downside_potential
 
     def downside_variance(self, annual_mar=0.03):
+        """
+        Calculates Downside variance
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Downside variance
+        :rtype: float
+        """
+
         downside_variance = self.lpm(annual_mar=annual_mar, moment=2)
 
         return downside_variance
