@@ -3,14 +3,12 @@ from datetime import datetime
 import yfinance as yf
 
 
+CURRENT_DATE = str(datetime.now())[0:10]
+
+
 class GetData:
     def __init__(
-        self,
-        tickers,
-        start="1970-01-02",
-        end=str(datetime.now())[0:10],
-        interval="1d",
-        **kwargs
+        self, tickers, start="1970-01-02", end=CURRENT_DATE, interval="1d", **kwargs
     ):
         if len(tickers) == 1:
             self._data = yf.Ticker(tickers[0]).history(
