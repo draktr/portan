@@ -1,3 +1,55 @@
+"""
+`interesting_periods.py` module contains a dictionary with start and end
+dates of some interesting periods in economic and financial history.
+
+Currently implemented periods are
+- The Great Crash of 1929
+- Recession of 1937-1938
+- Kennedy Slide of 1962
+- Black Monday Stock Market Crash of 1987
+- Black Monday Aftermath
+- Friday the 13th Crash of 1989
+- 1990s Recession
+- Japanese Lost Decades from 1991 to 2011
+- Black Wednesday when the UK exited the ERM
+- Asian Financial Crisis from the depegging of Baht in 1997 to 1999
+- Russian Financial Crisis from 1998 to 2000
+- Dotcom Crash
+- 9/11 and its short aftermath
+- Housing Market Boom of mid-2000s
+- Low Volatility Bull Market preceding the GFC
+- Chinese Stock Market Bubble of 2007
+- Global Financial Crisis related periods
+    - Lehman Brothers Bankrupcy
+    - GFC Crash
+    - GFC Recovery Priod
+    - August of 2007
+    - March 2008
+    - September 2008
+    - Q1 of 2009
+    - Q2 of 2009
+- Flash Crash of 2010
+- Fukushima Disaster
+- European Debt Crisis
+- US Credit Rating Downgrade
+- ECB Euro Announcements of 2012
+- Taper Tantrum reaction to Federal Reserve QE tapering decisions
+- Mid-2010s volatility periods
+    - April 2014
+    - October 2014
+    - Fall 2015
+- Chinese Stock Market Turbulence of 2015-2016
+- Returning to Normalcy interest rate hikes
+- COVID-19 related events
+    - WHO Pandemic classification period
+    - Market crash of early 2020
+    - Rate cuts and stimulus programs announcements
+    - Bull market
+- 2022-2023 Federal Reserve rate hikes to tame the inflation
+- Cryptocurrency crashes of 2021-2023
+"""
+
+
 import pandas as pd
 
 

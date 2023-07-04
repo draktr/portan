@@ -1,5 +1,27 @@
+"""
+`portfolios.py` contains dictionaries with tickers and weights of assets for some notable portfolio examples.
+
+Portfolio examples taken from [PortfolioCharts](portfoliocharts.com/portfolios/):
+- All Weather
+- Butterfly
+- 60/40 stocks and bonds
+- Core Four
+- Coffeehouse
+- Global
+- Ideal
+- Larry
+- Three Fund
+- Sandwich
+- Swensen
+
+Other portfolios include:
+- Singlife Dynamic
+"""
+
+
 TICKERS = dict()
 WEIGHTS = dict()
+
 
 TICKERS["All Weather"] = ["ITOT", "SCHQ", "SCHR", "GSP", "SGOL"]
 WEIGHTS["All Weather"] = [0.3, 0.4, 0.15, 0.075, 0.075]
@@ -56,7 +78,7 @@ TICKERS["Singlife Dynamic"] = [
     "0P0001BONF.SI",
     "0P0001OK4Y.SI",
 ]
-WEIGHTS["Singlife"] = [
+WEIGHTS["Singlife Dynamic"] = [
     0.2004,
     0.02,
     0.999,

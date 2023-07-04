@@ -1,3 +1,9 @@
+"""
+`get_data.py` module contains `GetData` class
+for downloading and exporting financial data
+"""
+
+
 import os
 from datetime import datetime
 import yfinance as yf
