@@ -24,11 +24,13 @@ class GetData:
         """
 
         if len(tickers) == 1:
-            self._data = yf.Ticker(tickers[0]).history(
+            self.ticker = yf.Ticker(tickers[0])
+            self._data = self.ticker.history(
                 start=start, end=end, interval=interval, **kwargs
             )
         elif len(tickers) > 1:
-            self._data = yf.Tickers(tickers).history(
+            self.tickers = yf.Tickers(tickers)
+            self._data = self.tickers.history(
                 start=start, end=end, interval=interval, **kwargs
             )
 
