@@ -489,33 +489,6 @@ class PortfolioAnalytics:
 
         return "{:.1f}%\n(${:d})".format(pct, absolute)
 
-    def capm_return(
-        self,
-        annual_rfr=0.03,
-        annual=True,
-        compounding=True,
-        benchmark={
-            "benchmark_tickers": None,
-            "benchmark_prices": None,
-            "benchmark_weights": None,
-            "benchmark_name": "Benchmark Portfolio",
-            "start": "1970-01-02",
-            "end": CURRENT_DATE,
-            "interval": "1d",
-        },
-    ):
-        capm = self.capm(annual_rfr, benchmark)
-
-        if annual and compounding:
-            mean = annual_rfr + capm[1] * (self.benchmark_geometric_mean - annual_rfr)
-        elif annual and not compounding:
-            mean = annual_rfr + capm[1] * (self.benchmark_arithmetic_mean - annual_rfr)
-        elif not annual:
-            rfr = self._rate_conversion(annual_rfr)
-            mean = rfr + capm[1] * (self.benchmark_mean - rfr)
-
-        return mean
-
     def capm(
         self,
         annual_rfr=0.03,
@@ -643,6 +616,33 @@ class PortfolioAnalytics:
             )
 
         return sharpe_ratio
+
+    def capm_return(
+        self,
+        annual_rfr=0.03,
+        annual=True,
+        compounding=True,
+        benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },
+    ):
+        capm = self.capm(annual_rfr, benchmark)
+
+        if annual and compounding:
+            mean = annual_rfr + capm[1] * (self.benchmark_geometric_mean - annual_rfr)
+        elif annual and not compounding:
+            mean = annual_rfr + capm[1] * (self.benchmark_arithmetic_mean - annual_rfr)
+        elif not annual:
+            rfr = self._rate_conversion(annual_rfr)
+            mean = rfr + capm[1] * (self.benchmark_mean - rfr)
+
+        return mean
 
     def excess_benchmark(
         self,
