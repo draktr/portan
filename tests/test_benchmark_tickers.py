@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
-from portfolio_analytics.portfolio_analytics import PortfolioAnalytics
+from portan import Analytics
 
 
 @pytest.fixture
 def portfolio():
-    portfolio = PortfolioAnalytics(
+    portfolio = Analytics(
         tickers=["XOM", "GOOG"],
         weights=[0.3, 0.7],
         benchmark_tickers=["ITOT", "IEF"],

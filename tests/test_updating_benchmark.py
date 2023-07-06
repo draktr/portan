@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from portfolio_analytics.portfolio_analytics import PortfolioAnalytics
-from portfolio_analytics.get_data import GetData
+from portan import Analytics
+from portan import GetData
 
 
 @pytest.fixture
@@ -10,7 +10,7 @@ def portfolio():
         "Close"
     ]
 
-    portfolio = PortfolioAnalytics(
+    portfolio = Analytics(
         prices=data,
         weights=[0.3, 0.7],
     )
