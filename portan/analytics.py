@@ -365,6 +365,23 @@ class Analytics:
     def plot_aum(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots assets under management (AUM) over time
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
@@ -382,6 +399,23 @@ class Analytics:
     def plot_returns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots portfolio returns over time
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
@@ -399,6 +433,23 @@ class Analytics:
     def plot_returns_distribution(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots portfolio returns distribution histogram
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
@@ -416,6 +467,23 @@ class Analytics:
     def plot_cumulative_returns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots portfolio cumulative returns over time
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         plt.style.use(style)
@@ -433,6 +501,23 @@ class Analytics:
     def plot_piechart(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots portfolio assets pie chart
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         wp = {"linewidth": 1, "edgecolor": "black"}
@@ -467,6 +552,23 @@ class Analytics:
     def plot_assets_cumulative_returns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots portfolio individual assets cumulative returns over time
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         assets_cumulative_returns = (self.assets_returns + 1).cumprod()
@@ -539,6 +641,27 @@ class Analytics:
         },
         **fig_kw,
     ):
+        """
+        Plots Capital Asset Pricing Model (CAPM) model elements
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         capm = self.capm(annual_rfr, benchmark)
@@ -1200,9 +1323,37 @@ class Analytics:
         return martin_ratio
 
     def parametric_var(self, ci=0.95, frequency=1):
+        """
+        Calculates parametric Value-at-Risk (VaR)
+
+        :param ci: Confidence interval for VaR, defaults to 0.95
+        :type ci: float, optional
+        :param frequency: frequency for changing periods of VaR. For example, if
+                          `self.prices` contains daily data and there are 252
+                          trading days in a year, setting`frequency=252` will
+                          yield annual VaR, defaults to 1 (same as data)
+        :type frequency: int, optional
+        :return: Parametric VaR
+        :rtype: float
+        """
+
         return stats.norm.ppf(1 - ci, self.mean, self.volatility) * np.sqrt(frequency)
 
     def historical_var(self, ci=0.95, frequency=1):
+        """
+        Calculates historical Value-at-Risk (VaR)
+
+        :param ci: Confidence interval for VaR, defaults to 0.95
+        :type ci: float, optional
+        :param frequency: frequency for changing periods of VaR. For example, if
+                          `self.prices` contains daily data and there are 252
+                          trading days in a year, setting`frequency=252` will
+                          yield annual VaR, defaults to 1 (same as data)
+        :type frequency: int, optional
+        :return: Historical VaR
+        :rtype: float
+        """
+
         return np.percentile(self.returns, 100 * (1 - ci)) * np.sqrt(frequency)
 
     def plot_parametric_var(
@@ -1216,6 +1367,33 @@ class Analytics:
         save=False,
         **fig_kw,
     ):
+        """
+        Plot parametric Value-at-Risk (VaR) model elements
+
+        :param ci: Confidence interval for VaR, defaults to 0.95
+        :type ci: float, optional
+        :param frequency: frequency for changing periods of VaR. For example, if
+                          `self.prices` contains daily data and there are 252
+                          trading days in a year, setting`frequency=252` will
+                          yield annual VaR, defaults to 1 (same as data)
+        :type frequency: int, optional
+        :param plot_z: Normal distribution z-value that specifies how much of the
+                       distribution will be plotted, defaults to 3
+        :type plot_z: int, optional
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         var = self.parametric_var(ci, frequency)
         x = np.linspace(
             self.mean - plot_z * self.volatility,
@@ -1259,6 +1437,32 @@ class Analytics:
         save=False,
         **fig_kw,
     ):
+        """
+        Plots historical Value-at-Risk (VaR) model elements
+
+        :param ci: Confidence interval for VaR, defaults to 0.95
+        :type ci: float, optional
+        :param frequency: frequency for changing periods of VaR. For example, if
+                          `self.prices` contains daily data and there are 252
+                          trading days in a year, setting`frequency=252` will
+                          yield annual VaR, defaults to 1 (same as data)
+        :type frequency: int, optional
+        :param number_of_bins: Number of histogram bins, defaults to 100
+        :type number_of_bins: int, optional
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         var = self.historical_var(ci, frequency)
@@ -1289,9 +1493,9 @@ class Analytics:
 
     def correlation(self):
         """
-        Calculates correlation matrix of portfolio assets' returns
+        Calculates portfolio assets returns correlation matrix
 
-        :return: Correlation matrix
+        :return: Portfolio assets returns correlation matrix
         :rtype: np.ndarray
         """
 
@@ -1302,6 +1506,23 @@ class Analytics:
     def plot_correlation(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots portfolio assets returns correlation matrix
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         matrix = self.correlation()
@@ -1317,6 +1538,24 @@ class Analytics:
             plt.show()
 
     def covariance(self, method="regular", annual=False, cov_kwargs={}):
+        """
+        Calculates portfolio assets returns covariance matrix
+
+        :param method: Covariance matrix method calculation. Available are:
+                       `"regular"`, `"empirical"`, `"graphical_lasso"`,
+                       `"elliptic_envelope"`, `"ledoit_wolf"`, `"mcd"`,
+                       `"oas"`, `"shrunk_covariance"`, defaults to "regular"
+        :type method: str, optional
+        :param annual: Whether to calculate the covariance on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param cov_kwargs: Keyword arguments for matrix calculation
+                           methods, defaults to {}
+        :type cov_kwargs: dict, optional
+        :raises ValueError: If matrix calculation method is unavailable
+        :return: Portfolio assets returns covariance matrix
+        :rtype: np.ndarray
+        """
+
         if method == "regular":
             matrix = self.assets_returns.cov().round(5)
         elif method == "empirical":
@@ -1343,7 +1582,6 @@ class Analytics:
                 .fit(self.assets_returns)
                 .covariance_.round(5)
             )
-
         elif method == "mcd":
             matrix = (
                 covariance.MinCovDet(**cov_kwargs)
@@ -1363,7 +1601,7 @@ class Analytics:
                 .covariance_.round(5)
             )
         else:
-            raise ValueError()
+            raise ValueError("Covariance matrix calculation method is unavailable")
 
         if annual:
             matrix = matrix * self.frequency
@@ -1381,6 +1619,33 @@ class Analytics:
         cov_kwargs={},
         **fig_kw,
     ):
+        """
+        Plots portfolio assets returns covariance matrix
+
+        :param method: Covariance matrix method calculation. Available are:
+                       `"regular"`, `"empirical"`, `"graphical_lasso"`,
+                       `"elliptic_envelope"`, `"ledoit_wolf"`, `"mcd"`,
+                       `"oas"`, `"shrunk_covariance"`, defaults to "regular"
+        :type method: str, optional
+        :param annual: Whether to calculate the covariance on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        :param cov_kwargs: Keyword arguments for matrix calculation
+                           methods, defaults to {}
+        :type cov_kwargs: dict, optional
+        """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         matrix = self.covariance(method, annual, **cov_kwargs)
@@ -1404,7 +1669,7 @@ class Analytics:
         :param annual_mar: Annual Minimum Acceptable Return (MAR)., defaults to 0.03
         :type annual_mar: float, optional
         :return: Omega ratio of the portfolio
-        :rtype: pd.DataFrame
+        :rtype: float
         """
 
         if returns is None:
@@ -1456,6 +1721,30 @@ class Analytics:
         save=False,
         **fig_kw,
     ):
+        """
+        Plots Omega values across different Minimum Assets Returns (MAR)
+        for single or multiple portfolios
+
+        :param returns: Array with portfolio returns for which the omega ratio is to be calculated (if different from the object portfolio), defaults to None
+        :type returns: np.ndarray, optional
+        :param annual_mar_lower_bound: Lower bound for MAR that will be taken to calculate the values for curves, defaults to 0
+        :type annual_mar_lower_bound: float, optional
+        :param annual_mar_upper_bound: Upper bound for MAR that will be taken to calculate the values for curves, defaults to 0.1
+        :type annual_mar_upper_bound: float, optional
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
+
         if returns is None:
             returns = self.returns
 
@@ -2146,6 +2435,22 @@ class Analytics:
     def plot_drawdowns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
+        """
+        Plots portfolio drawdowns
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot as `.png` file, defaults to False
+        :type save: bool, optional
+        """
         _checks._check_plot_arguments(show=show, save=save)
 
         drawdowns = self.drawdowns()
