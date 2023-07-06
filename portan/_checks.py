@@ -3,7 +3,7 @@ import pandas as pd
 import warnings
 import numbers
 from datetime import datetime
-from portan import GetData
+from portan.get_data import GetData
 
 
 def _check_init(
