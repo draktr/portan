@@ -604,7 +604,19 @@ class Analytics:
             "interval": "1d",
         },
     ):
+        """
+        Estimates Capital Asset Pricing Model (CAPM) parameters
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: CAPM alpha, beta, epsilon, R-squared
+        :rtype: float, float, np.ndarray, float
+        """
+
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -704,6 +716,25 @@ class Analytics:
         probabilistic=False,
         sharpe_benchmark=0.0,
     ):
+        """
+        Calculates Sharpe ratio
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param adjusted: Whether to calculate adjusted Sharpe ratio, defaults to False
+        :type adjusted: bool, optional
+        :param probabilistic: Whether to calculate probabilistic Sharpe ratio, defaults to False
+        :type probabilistic: bool, optional
+        :param sharpe_benchmark: Benchmark Sharpe ratio for probabilistic Sharpe ratio, defaults to 0.0
+        :type sharpe_benchmark: float, optional
+        :return: Sharpe ratio
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -755,6 +786,21 @@ class Analytics:
             "interval": "1d",
         },
     ):
+        """
+        Expected excess portfolio return estimated by Capital Asset Pricing Model (CAPM)
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Expected excess portfolio return estimated by CAPM
+        :rtype: float
+        """
+
         capm = self.capm(annual_rfr, benchmark)
 
         if annual and compounding:
@@ -1242,6 +1288,27 @@ class Analytics:
         compounding=True,
         original=True,
     ):
+        """
+        Calculates Sterling ratio
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual_excess: Annual return above average largest drawdown, defaults to 0.1
+        :type annual_excess: float, optional
+        :param largest: Number of largest drawdowns taken into consideration for the calculation, defaults to 0
+        :type largest: int, optional
+        :param inverse: Whether to invert (i.e. make positive) average drawdown, defaults to True
+        :type inverse: bool, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param original: Whether to calculate the original version of Sterling ratio or Sterling-Calmar ratio, defaults to True
+        :type original: bool, optional
+        :return: Sterling ratio
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -1812,6 +1879,21 @@ class Analytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Appraisal ratio
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Appraisal ratio
+        :rtype: float
+        """
+
         capm = self.capm(annual_rfr, benchmark)
 
         if annual and compounding:
@@ -1850,6 +1932,22 @@ class Analytics:
         modified=False,
         **sorted_drawdowns_kwargs,
     ):
+        """
+        Calculates Burke ratio
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param largest: Number of largest drawdowns taken into consideration for the calculation, defaults to 0
+        :type largest: int, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param modified: Whether to calculate modified Burke ratio, defaults to False
+        :type modified: bool, optional
+        :return: Burke ratio
+        :rtype: float
+        """
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -2394,7 +2492,7 @@ class Analytics:
 
         :param largest: Number of largest drawdowns taken into consideration for the calculation, defaults to 0
         :type largest: int, optional
-        :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
+        :param inverse: Whether to invert (i.e. make positive) average drawdown, defaults to True
         :type inverse: bool, optional
         :return: Average drawdown
         :rtype: float
