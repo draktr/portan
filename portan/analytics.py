@@ -729,7 +729,7 @@ class Analytics:
         :type adjusted: bool, optional
         :param probabilistic: Whether to calculate probabilistic Sharpe ratio, defaults to False
         :type probabilistic: bool, optional
-        :param sharpe_benchmark: Benchmark Sharpe ratio for probabilistic Sharpe ratio, defaults to 0.0
+        :param sharpe_benchmark: Benchmark Sharpe ratio for probabilistic Sharpe ratio (if used), defaults to 0.0
         :type sharpe_benchmark: float, optional
         :return: Sharpe ratio
         :rtype: float
@@ -1948,6 +1948,7 @@ class Analytics:
         :return: Burke ratio
         :rtype: float
         """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -2029,16 +2030,21 @@ class Analytics:
 
         return -d_ratio[0]
 
-    def kelly_criterion(self, annual_rfr=0.03, half=True):
+    def kelly_criterion(self, annual_rfr=0.03):
+        """
+        Calculates Kelly criterion
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :return: Kelly criterion
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(annual_rfr=annual_rfr)
-        _checks._check_booleans(half=half)
 
         rfr = self._rate_conversion(annual_rfr)
         excess_returns = self.returns - rfr
         kelly_criterion = excess_returns.mean() / np.var(self.returns)
-
-        if half:
-            kelly_criterion = kelly_criterion / 2
 
         return kelly_criterion[0]
 
@@ -2060,6 +2066,27 @@ class Analytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Modigliani-Modigliani measure
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param adjusted: Whether to use adjusted Sharpe ratio for calculation, defaults to False
+        :type adjusted: bool, optional
+        :param probabilistic: Whether to use probabilistic Sharpe ratio for calculation, defaults to False
+        :type probabilistic: bool, optional
+        :param sharpe_benchmark: Benchmark Sharpe ratio for probabilistic Sharpe ratio (if used), defaults to 0.0
+        :type sharpe_benchmark: float, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Modigliani-Modigliani measure
+        :rtype: float
+        """
+
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
         )
@@ -2137,6 +2164,21 @@ class Analytics:
             "interval": "1d",
         },
     ):
+        """
+        Calculates Diversification measure
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Diversification
+        :rtype: float
+        """
+
         _checks._check_rate_arguments(
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
@@ -2159,6 +2201,19 @@ class Analytics:
         return diversification
 
     def net_selectivity(self, annual_rfr=0.03, annual=True, compounding=True):
+        """
+        Calculates Net Selectivity
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :return: Net Selectivity
+        :rtype: float
+        """
+
         jensen_alpha = self.jensen_alpha(annual_rfr, annual, compounding)
         diversification = self.diversification(annual_rfr, annual, compounding)
 
@@ -2549,6 +2604,7 @@ class Analytics:
         :param save: Whether to save the plot as `.png` file, defaults to False
         :type save: bool, optional
         """
+
         _checks._check_plot_arguments(show=show, save=save)
 
         drawdowns = self.drawdowns()
