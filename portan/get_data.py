@@ -14,6 +14,16 @@ CURRENT_DATE = str(datetime.now())[0:10]
 
 
 class GetData:
+    """
+    portan.GetData object allows downloading and exporting of financial data with `yfinance`
+
+    - Properties
+
+        - `tickers`/`tickers` - `yfinance.Ticker`/`yfinance.Tickers` object
+        - `data` - Full DataFrame of the downloaded data
+        - `close` - Assets prices at trading close
+    """
+
     def __init__(
         self, tickers, start="1970-01-02", end=CURRENT_DATE, interval="1d", **kwargs
     ):
@@ -57,7 +67,7 @@ class GetData:
     @property
     def close(self):
         """
-        Gives access to the asset prices at trading close
+        Gives access to the assets prices at trading close
 
         :return: Data downloaded
         :rtype: pd.DataFrame
