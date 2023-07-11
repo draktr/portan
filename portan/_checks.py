@@ -468,7 +468,7 @@ def _check_nonnegints(**kwargs):
             raise ValueError(f"`{name}` should be positive")
 
 
-def _check_data(tickers, start, end, interval):
+def _check_get_data(tickers, start, end, interval):
     if not isinstance(tickers, list):
         if isinstance(tickers, np.ndarray):
             tickers = tickers.tolist()
