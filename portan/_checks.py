@@ -486,7 +486,7 @@ def _check_get_data(tickers, start, end, interval):
                 "`tickers` should be of type `list`, `np.ndarray`, `pd.Series` or `pd.DataFrame`"
             )
 
-    if not isinstance(start(str, datetime, pd.Timestamp)):
+    if not isinstance(start, (str, datetime, pd.Timestamp)):
         raise ValueError(
             "`start` should be of type `str`, `datetime` or `pd.Timestamp`"
         )
