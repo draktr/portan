@@ -1,11 +1,14 @@
 """
 `utilities.py` module contains functions that complement the main
-features of the package. Currently implemented utilities are:
-- `concatenate_portfolios()`
-- `rate_conversion()`
-- `fill_nan()`
-- `fill_inf()`
-- `multi_returns()`
+features of the package.
+
+Currently implemented utilities are:
+
+    - `concatenate_portfolios()`
+    - `rate_conversion()`
+    - `fill_nan()`
+    - `fill_inf()`
+    - `multi_returns()`
 """
 
 
