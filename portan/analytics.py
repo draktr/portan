@@ -1,3 +1,9 @@
+"""
+`analytics.py` module contains `portan.Analytics` class
+for analyzing portfolio performance
+"""
+
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -19,6 +25,46 @@ CURRENT_DATE = str(datetime.now())[0:10]
 
 
 class Analytics:
+    """
+    `portan.Analytics object constructs framework for portfolio analytics
+
+    - Properties
+
+        - `prices` - Assets prices
+        - `assets_returns` - Assets returns
+        - `tickers` - Assets tickers
+        - `weights` - Assets weights
+        - `assets_info` - Information about assets
+        - `assets_names` - Assets names
+        - `name` - Name of the portfolio
+        - `initial_aum` - Initial Assets Under Management (AUM)
+        - `frequency` - Data frequency, number of data observations in a year. Used for annualization.
+        - `allocation_funds` - Allocation of funds into each asset
+        - `allocation_assets` - Number of each asset in the portfolio
+        - `state` - State of the each asset and whole portfolio time-series
+        - `returns` - Portfolio returns time-series
+        - `cumulative_returns` - Cumulative portfolio returns time-series
+        - `mean` - Mean portfolio return
+        - `arithmetic_mean` - Annualized arithmetic (not compounded) mean return
+        - `geometric_mean` - Annualized geometric (compounded) mean return
+        - `volatility` - Portfolio volatility (standard deviation)
+        - `annual_volatility` - Annualized portfolio volatility (standard deviation)
+        - `skewness` - Returns distribution skewness
+        - `kurtosis` - Returns distribution kurtosis
+        - `min_aum` - Minimum AUM during the data period
+        - `max_aum` - Maximum AUM during the data period
+        - `mean_aum` - Average AUM during the data period
+        - `final_aum` - AUM at the last point of the data period
+        - `benchmark_prices` - Benchmark assets prices
+        - `benchmark_weights` - Benchmark assets weights
+        - `benchmark_name` - Benchmark name
+        - `benchmark_assets_returns` - Benchmark assets returns
+        - `benchmark_returns` - Benchmark returns time-series
+        - `benchmark_mean` - Mean benchmark return
+        - `benchmark_arithmetic_mean` - Annualized arithmetic (not compounded) mean benchmark return
+        - `benchmark_geometric_mean` - Annualized geometric (compounded) mean benchmark return
+    """
+
     def __init__(
         self,
         tickers=None,
@@ -35,6 +81,37 @@ class Analytics:
         end=CURRENT_DATE,
         interval="1d",
     ) -> None:
+        """
+        Initiates `portan.Analytics` object
+
+        :param tickers: Assets tickers. Used to download assets prices time-series with `yfinance` if `prices=None`, defaults to None
+        :type tickers: _type_, optional
+        :param prices: Assets prices time-series. Optional, as assets prices can be downloaded by providing `tickers` argument. Especially useful when assets prices aren't available on `yfinance` or assets aren't public, defaults to None
+        :type prices: _type_, optional
+        :param weights: Assets weights. Mandatory argument. Default set to `None` only because of the ordering of arguments, defaults to None
+        :type weights: _type_, optional
+        :param benchmark_tickers: Benchmark assets tickers. Used to download benchmark assets prices time-series with `yfinance` if `benchmark_prices=None`, defaults to None
+        :type benchmark_tickers: _type_, optional
+        :param benchmark_prices: Benchmark assets prices time-series. Optional, as benchmark assets prices can be downloaded by providing `benchmark_tickers` argument. Especially useful when benchmark assets prices aren't available on `yfinance` or benchmark assets aren't public, defaults to None
+        :type benchmark_prices: _type_, optional
+        :param benchmark_weights: Benchmark assets weights. Mandatory argument. Default set to `None` only because of the ordering of arguments, defaults to None
+        :type benchmark_weights: _type_, optional
+        :param name: Portfolio name, defaults to "Investment Portfolio"
+        :type name: str, optional
+        :param benchmark_name: Benchmark name, defaults to "Benchmark Portfolio"
+        :type benchmark_name: str, optional
+        :param initial_aum: Initial Assets Under Management (AUM), defaults to 10000
+        :type initial_aum: int, optional
+        :param frequency: Data frequency, number of data observations in a year, defaults to 252
+        :type frequency: int, optional
+        :param start: Start date used for downloading assets prices data if `tickers` and/or `benchmark_tickers` arguments are provided, and `prices` and/or `benchmark_prices` arguments `None`, defaults to "1970-01-02"
+        :type start: str (YYYY-MM-DD) or `datetime.datetime()` or `pd.Timestamp`, optional
+        :param end: End date used for downloading assets prices data if `tickers` and/or `benchmark_tickers` arguments are provided, and `prices` and/or `benchmark_prices` arguments `None`, defaults to CURRENT_DATE
+        :type end: str (YYYY-MM-DD) or `datetime.datetime()` or `pd.Timestamp`, optional
+        :param interval: Data interval used for downloading assets prices data if `tickers` and/or `benchmark_tickers` arguments are provided, and `prices` and/or `benchmark_prices` arguments `None`. Valid intervals are: '1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo', defaults to "1d"
+        :type interval: str, optional
+        """
+
         prices, weights, benchmark_prices, benchmark_weights = _checks._check_init(
             tickers,
             prices,
