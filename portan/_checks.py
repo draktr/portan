@@ -1,3 +1,10 @@
+"""
+`_checks.py` module contains functions that check arguments,
+modify data structures, support core package features and/or
+give warnings if neccesary.
+"""
+
+
 import numpy as np
 import pandas as pd
 import warnings
