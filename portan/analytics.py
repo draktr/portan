@@ -17,6 +17,7 @@ from statsmodels.stats.diagnostic import lilliefors
 from statsmodels.tsa import stattools
 from itertools import repeat
 from datetime import datetime
+import warnings
 from portan import _checks
 
 
@@ -134,9 +135,14 @@ class Analytics:
         self.weights = weights
         self.assets_info = np.empty(len(self.tickers), dtype=object)
         self.assets_names = np.empty(len(self.tickers), dtype="<U64")
-        for i, ticker in enumerate(self.tickers):
-            self.assets_info[i] = yf.Ticker(ticker).info
-            self.assets_names[i] = self.assets_info[i]["longName"]
+        try:
+            for i, ticker in enumerate(self.tickers):
+                self.assets_info[i] = yf.Ticker(ticker).info
+                self.assets_names[i] = self.assets_info[i]["longName"]
+        except Exception:
+            warnings.warn(
+                "Couldn't obtain `assets_info` and `assets_names` from `yfinance`. Use `_set_info_names()` to set `assets_info` and `assets_names` properties"
+            )
         self.name = name
         self.initial_aum = initial_aum
         self.frequency = frequency
@@ -291,6 +297,11 @@ class Analytics:
             ** (self.frequency / self.benchmark_returns.shape[0])
             - 1
         )[0]
+
+    def _set_info_names(self, assets_info=None, assets_names=None):
+        print("(Re)setting `assets_info` and `assets_names` properties")
+        self.assets_info = assets_info
+        self.assets_names = assets_names
 
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
