@@ -466,3 +466,28 @@ def _check_nonnegints(**kwargs):
             raise ValueError(f"`{name}` should be of type `int`")
         if value < 0:
             raise ValueError(f"`{name}` should be positive")
+
+
+def _check_data(tickers, start, end, interval):
+    if not isinstance(tickers, list):
+        if isinstance(tickers, np.ndarray):
+            tickers = tickers.tolist()
+        elif isinstance(tickers, (pd.Series, pd.DataFrame)):
+            tickers = tickers.values.tolist()
+        else:
+            raise ValueError(
+                "`tickers` should be of type `list`, `np.ndarray`, `pd.Series` or `pd.DataFrame`"
+            )
+
+    if not isinstance(start(str, datetime, pd.Timestamp)):
+        raise ValueError(
+            "`start` should be of type `str`, `datetime` or `pd.Timestamp`"
+        )
+
+    if not isinstance(end, (str, datetime, pd.Timestamp)):
+        raise ValueError("`end` should be of type `str`, `datetime` or `pd.Timestamp`")
+
+    if not isinstance(interval, str):
+        raise ValueError("`interval` should be of type `str`")
+
+    return tickers

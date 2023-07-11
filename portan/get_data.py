@@ -7,6 +7,7 @@ for downloading and exporting financial data
 import os
 from datetime import datetime
 import yfinance as yf
+from portan import _checks
 
 
 CURRENT_DATE = str(datetime.now())[0:10]
@@ -20,14 +21,16 @@ class GetData:
         Initialtes GetData object by downloading data from `yfinance` which the user can use within `Python` or save as `.csv`
 
         :param tickers: Tickers of assets for which data is to be downloaded
-        :type tickers: list
+        :type tickers: list, np.ndarray, pd.Series, pd.DataFrame
         :param start: Download start date for the data, defaults to "1970-01-02"
-        :type start: str, optional
+        :type start: str (YYYY-MM-DD) or `datetime.datetime()` or `pd.Timestamp`, optional
         :param end: Download end date for the data, defaults to CURRENT_DATE
-        :type end: str, optional
-        :param interval: Data interval. Valid intervals are: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo, defaults to "1d"
+        :type end: str (YYYY-MM-DD) or `datetime.datetime()` or `pd.Timestamp`, optional
+        :param interval: Data interval. Valid intervals are: '1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo', defaults to "1d"
         :type interval: str, optional
         """
+
+        tickers = _checks._check_get_data(tickers, start, end, interval)
 
         if len(tickers) == 1:
             self.ticker = yf.Ticker(tickers[0])
