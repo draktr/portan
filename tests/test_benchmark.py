@@ -15,7 +15,7 @@ def portfolio():
 
     portfolio = Analytics(
         prices=data,
-        weights=[0.3, 0.7],
+        weights=[0.7, 0.3],
         benchmark_prices=benchmark,
         benchmark_weights=[0.6, 0.4],
     )
@@ -116,12 +116,12 @@ def test_benchmark_returns(portfolio):
 
 
 def test_benchmark_mean(portfolio):
-    assert np.abs(portfolio.benchmark_mean - 0.0011455816173713998) < 0.01
+    assert np.abs(portfolio.benchmark_mean - 0.0013218250018707618) < 0.01
 
 
 def test_benchmark_arithmetic_mean(portfolio):
-    assert np.abs(portfolio.benchmark_arithmetic_mean - 0.28868656757759276) < 0.01
+    assert np.abs(portfolio.benchmark_arithmetic_mean - 0.33309990047143195) < 0.01
 
 
 def test_benchmark_geometric_mean(portfolio):
-    assert np.abs(portfolio.benchmark_geometric_mean - 0.33380485767037205) < 0.01
+    assert np.abs(portfolio.benchmark_geometric_mean - 0.3940063396989859) < 0.01

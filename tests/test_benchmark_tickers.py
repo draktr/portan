@@ -7,7 +7,7 @@ from portan import Analytics
 def portfolio():
     portfolio = Analytics(
         tickers=["XOM", "GOOG"],
-        weights=[0.3, 0.7],
+        weights=[0.7, 0.3],
         benchmark_tickers=["ITOT", "IEF"],
         benchmark_weights=[0.6, 0.4],
         start="2012-01-01",
@@ -22,4 +22,4 @@ def test_tickers_geometric_mean(portfolio):
 
 
 def test_tickers_information_ratio(portfolio):
-    assert np.abs(portfolio.information_ratio() - -0.06629389) < 0.01
+    assert np.abs(portfolio.information_ratio() - -0.27850399828383127) < 0.01

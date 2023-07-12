@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pandas as pd
 from portan import Analytics
 from portan import GetData
 
@@ -15,7 +16,7 @@ def portfolio():
 
     portfolio = Analytics(
         prices=data,
-        weights=[0.3, 0.7],
+        weights=[0.7, 0.3],
         benchmark_prices=benchmark,
         benchmark_weights=[0.6, 0.4],
     )
@@ -57,25 +58,25 @@ def test_assets_returns(portfolio):
             portfolio.assets_returns["XOM"].values
             - np.array(
                 [
-                    0.00023201,
-                    -0.00302221,
-                    -0.00746274,
+                    0.00023236,
+                    -0.00302249,
+                    -0.0074626,
                     0.00446454,
-                    0.00257272,
-                    -0.00746615,
+                    0.00257286,
+                    -0.00746629,
                     -0.0039961,
-                    0.00165195,
-                    0.0095433,
-                    0.00886883,
+                    0.00165202,
+                    0.00954294,
+                    0.00886919,
                     0.00670894,
-                    0.00528571,
-                    -0.00022861,
-                    -0.00331525,
-                    0.00045858,
-                    -0.00515933,
-                    -0.01083326,
-                    -0.00396147,
-                    -0.02047017,
+                    0.00528557,
+                    -0.00022848,
+                    -0.00331546,
+                    0.00045878,
+                    -0.00515947,
+                    -0.01083333,
+                    -0.00396083,
+                    -0.02047052,
                 ]
             )
         )
@@ -85,18 +86,20 @@ def test_assets_returns(portfolio):
 
 def test_assets_names(portfolio):
     assert np.all(
-        portfolio.assets_names == np.array(["Alphabet Inc.", "Exxon Mobil Corporation"])
+        portfolio.assets_names == ["Exxon Mobil Corporation", "Alphabet Inc."]
     )
 
 
 def test_allocation_funds(portfolio):
-    assert np.all(portfolio.allocation_funds.values == np.array([3000.0, 7000.0]))
+    assert np.all(portfolio.allocation_funds.values == np.array([7000.0, 3000.0]))
 
 
 def test_allocation_assets(portfolio):
     assert np.all(
-        np.abs(portfolio.allocation_assets.values - np.array([181.0159012, 129.561992]))
-        < 0.01
+        np.abs(
+            portfolio.allocation_assets.values - np.array([129.561992, 181.0159012])
+            < 0.01
+        )
     )
 
 
@@ -168,25 +171,25 @@ def test_state(portfolio):
                 == np.array(
                     [
                         10000.0,
-                        10014.5633971,
-                        9951.60924005,
-                        9858.9847155,
-                        9765.66231621,
-                        9786.63238636,
-                        9747.25355667,
-                        9736.17122788,
-                        9726.60104565,
-                        9808.71957835,
-                        9890.09952827,
-                        9967.3342656,
-                        9763.21211796,
-                        9759.46505623,
-                        9715.16777273,
-                        9666.84459994,
-                        9623.94998961,
-                        9600.99932643,
-                        9562.99938058,
-                        9431.46856914,
+                        10014.56586888,
+                        9951.6097274,
+                        9858.98617294,
+                        9765.66378456,
+                        9786.63484952,
+                        9747.25501296,
+                        9736.1726744,
+                        9726.60299043,
+                        9808.7190752,
+                        9890.10151816,
+                        9967.33627216,
+                        9763.21314925,
+                        9759.46707543,
+                        9715.16830087,
+                        9666.84661196,
+                        9623.95100022,
+                        9600.99981578,
+                        9563.00430832,
+                        9431.4709754,
                     ]
                 )
             )

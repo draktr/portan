@@ -15,7 +15,7 @@ def portfolio():
 
     portfolio = Analytics(
         prices=data,
-        weights=[0.3, 0.7],
+        weights=[0.7, 0.3],
         benchmark_prices=benchmark,
         benchmark_weights=[0.6, 0.4],
     )
@@ -68,7 +68,7 @@ def test_treynor(portfolio):
 def test_jensen_alpha(portfolio):
     m = portfolio.jensen_alpha()
 
-    assert np.abs(m - -0.05243432) < 0.01
+    assert np.abs(m - -0.07671839837596321) < 0.01
 
 
 def test_sortino(portfolio):
@@ -92,10 +92,10 @@ def test_volatility_skewness(portfolio):
 def test_information_ratio(portfolio):
     m = portfolio.information_ratio()
 
-    assert np.abs(m - -0.06629389) < 0.01
+    assert np.abs(m - -0.27850399828383127) < 0.01
 
 
 def test_tracking_error(portfolio):
     m = portfolio.tracking_error()
 
-    assert np.abs(m - 0.1366695) < 0.01
+    assert np.abs(m - 0.11847556606072403) < 0.01

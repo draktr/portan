@@ -15,7 +15,7 @@ def portfolio():
 
     portfolio = Analytics(
         prices=data,
-        weights=[0.3, 0.7],
+        weights=[0.7, 0.3],
         benchmark_prices=benchmark,
         benchmark_weights=[0.6, 0.4],
     )
@@ -32,7 +32,7 @@ def test_herfindahl_index(portfolio):
 def test_appraisal(portfolio):
     m = portfolio.appraisal()
 
-    assert np.abs(m - -0.408979) < 0.001
+    assert np.abs(m - -0.701247436948423) < 0.001
 
 
 def test_burke(portfolio):
@@ -68,7 +68,7 @@ def test_d(portfolio):
 def test_kelly_criterion(portfolio):
     m = portfolio.kelly_criterion()
 
-    assert np.abs(m - 0.9195233) < 0.01
+    assert np.abs(m - 1.8399636985826249) < 0.01
 
 
 def test_modigliani(portfolio):
@@ -80,13 +80,13 @@ def test_modigliani(portfolio):
 def test_fama_beta(portfolio):
     m = portfolio.fama_beta()
 
-    assert np.abs(m - 3.259069) < 0.01
+    assert np.abs(m - 2.2315815270153005) < 0.01
 
 
 def test_diversification(portfolio):
     m = portfolio.diversification()
 
-    assert np.abs(m - 0.058739753344608736) < 0.01
+    assert np.abs(m - 0.041425953987263654) < 0.01
 
 
 def test_net_selectivity(portfolio):

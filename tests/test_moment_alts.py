@@ -15,7 +15,7 @@ def portfolio():
 
     portfolio = Analytics(
         prices=data,
-        weights=[0.3, 0.7],
+        weights=[0.7, 0.3],
         benchmark_prices=benchmark,
         benchmark_weights=[0.6, 0.4],
     )

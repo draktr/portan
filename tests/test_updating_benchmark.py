@@ -12,7 +12,7 @@ def portfolio():
 
     portfolio = Analytics(
         prices=data,
-        weights=[0.3, 0.7],
+        weights=[0.7, 0.3],
     )
 
     return portfolio
@@ -30,7 +30,9 @@ def test_updating_prices(portfolio):
     )
     ratio = portfolio.information_ratio()
 
-    assert (np.abs(ret - 0.11864433) < 0.01) & (np.abs(ratio - -0.06629389) < 0.01)
+    assert (np.abs(ret - 0.14285995167253468) < 0.01) & (
+        np.abs(ratio - -0.27850399828383127) < 0.01
+    )
 
 
 def test_updating_tickers(portfolio):
@@ -42,4 +44,6 @@ def test_updating_tickers(portfolio):
     )
     ratio = portfolio.information_ratio()
 
-    assert (np.abs(ret - 0.11864433) < 0.01) & (np.abs(ratio - -0.06629389) < 0.01)
+    assert (np.abs(ret - 0.14285995167253468) < 0.01) & (
+        np.abs(ratio - -0.27850399828383127) < 0.01
+    )
