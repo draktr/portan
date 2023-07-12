@@ -1,5 +1,7 @@
 """
+PortAn
 
+Portfolio analytics and reporting toolset in Python
 """
 
 from portan.analytics import Analytics
