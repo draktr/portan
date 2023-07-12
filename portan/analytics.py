@@ -131,14 +131,15 @@ class Analytics:
 
         self.prices = prices
         self.assets_returns = self.prices.pct_change().drop(self.prices.index[0])
-        self.tickers = self.prices.columns
-        self.weights = weights
+        self.tickers = self.prices.columns.tolist()
+        self.weights = pd.Series(weights, index=self.tickers)
         self.assets_info = np.empty(len(self.tickers), dtype=object)
         self.assets_names = np.empty(len(self.tickers), dtype="<U64")
         try:
             for i, ticker in enumerate(self.tickers):
                 self.assets_info[i] = yf.Ticker(ticker).info
                 self.assets_names[i] = self.assets_info[i]["longName"]
+            self.assets_names = self.assets_names.tolist()
         except Exception:
             warnings.warn(
                 "Couldn't obtain `assets_info` and `assets_names` from `yfinance`. Use `_set_info_names()` to set `assets_info` and `assets_names` properties"
@@ -207,7 +208,9 @@ class Analytics:
             self.benchmark_geometric_mean = None
         elif benchmark_prices is not None and benchmark_weights is not None:
             self.benchmark_prices = benchmark_prices
-            self.benchmark_weights = benchmark_weights
+            self.benchmark_weights = pd.Series(
+                benchmark_weights, index=self.benchmark_prices.columns
+            )
             self.benchmark_name = benchmark_name
 
             self.benchmark_assets_returns = self.benchmark_prices.pct_change().drop(
@@ -263,7 +266,9 @@ class Analytics:
         )
 
         self.benchmark_prices = benchmark_prices
-        self.benchmark_weights = benchmark_weights
+        self.benchmark_weights = pd.Series(
+            benchmark_weights, index=self.benchmark_prices.columns
+        )
         self.benchmark_name = benchmark_name
         self.prices = prices
 
