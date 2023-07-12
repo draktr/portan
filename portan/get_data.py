@@ -51,7 +51,7 @@ class GetData:
             self.tickers = yf.Tickers(tickers)
             self._data = self.tickers.history(
                 start=start, end=end, interval=interval, **kwargs
-            )
+            ).reindex(columns=tickers, level=1)
 
     @property
     def data(self):
