@@ -482,10 +482,10 @@ class Analytics:
         fig, ax = plt.subplots(**fig_kw)
         self.state[self.name].plot(ax=ax)
         ax.set_xlabel("Date")
-        ax.set_ylabel("AUM ($)")
+        ax.set_ylabel("AUM")
         ax.set_title("Assets Under Management")
         if save:
-            plt.savefig("aum.png", dpi=300)
+            plt.savefig(f"{self.name}_aum.png", dpi=300)
         if show:
             plt.show()
 
@@ -516,10 +516,10 @@ class Analytics:
         fig, ax = plt.subplots(**fig_kw)
         self.returns.plot(ax=ax)
         ax.set_xlabel("Date")
-        ax.set_ylabel("Returns")
+        ax.set_ylabel("Return")
         ax.set_title("Portfolio Returns")
         if save:
-            plt.savefig("returns.png", dpi=300)
+            plt.savefig(f"{self.name}_returns.png", dpi=300)
         if show:
             plt.show()
 
@@ -548,12 +548,12 @@ class Analytics:
         plt.style.use(style)
         plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
-        self.returns.plot.hist(ax=ax, bins=90)
-        ax.set_xlabel("Returns")
-        ax.set_ylabel("Frequency")
-        ax.set_title("Portfolio Returns Distribution")
+        self.returns.plot.hist(ax=ax, bins=100)
+        ax.set_xlabel("Return")
+        ax.set_ylabel("Return Frequency")
+        ax.set_title("Portfolio Return Distribution")
         if save:
-            plt.savefig("returns_distribution.png", dpi=300)
+            plt.savefig(f"{self.name}_return_distribution.png", dpi=300)
         if show:
             plt.show()
 
@@ -584,10 +584,10 @@ class Analytics:
         fig, ax = plt.subplots(**fig_kw)
         self.cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
-        ax.set_ylabel("Cumulative Returns")
+        ax.set_ylabel("Cumulative Return")
         ax.set_title("Portfolio Cumulative Returns")
         if save:
-            plt.savefig("cumulative_returns.png", dpi=300)
+            plt.savefig(f"{self.name}_cumulative_returns.png", dpi=300)
         if show:
             plt.show()
 
@@ -636,9 +636,9 @@ class Analytics:
             bbox_to_anchor=(0.7, 0, 0.5, 1),
         )
         plt.setp(pie[2], size=9, weight="bold")
-        ax.set_title(str(self.name + " Asset Distribution"))
+        ax.set_title(f"{self.name} Asset Distribution")
         if save:
-            plt.savefig(str(self.name + "_pie_chart.png"), dpi=300)
+            plt.savefig(f"{self.name}_pie_chart.png", dpi=300)
         if show:
             plt.show()
 
@@ -671,11 +671,11 @@ class Analytics:
         fig, ax = plt.subplots(**fig_kw)
         assets_cumulative_returns.plot(ax=ax)
         ax.set_xlabel("Date")
-        ax.set_ylabel("Cumulative Returns")
+        ax.set_ylabel("Cumulative Return")
         ax.set_title("Assets Cumulative Returns")
         ax.legend(labels=self.assets_names)
         if save:
-            plt.savefig("assets_cumulative_returns.png", dpi=300)
+            plt.savefig(f"{self.name}_assets_cumulative_returns.png", dpi=300)
         if show:
             plt.show()
 
@@ -791,12 +791,13 @@ class Analytics:
                 r"$\alpha$" + " = " + str(np.round(capm[0], 5)),
                 r"$\beta$" + " = " + str(np.round(capm[1], 5)),
             ],
+            handlelength=-1,
         )
-        ax.set_xlabel("Benchmark Excess Returns")
-        ax.set_ylabel("Portfolio Excess Returns")
+        ax.set_xlabel("Benchmark Excess Return")
+        ax.set_ylabel("Portfolio Excess Return")
         ax.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
         if save:
-            plt.savefig("capm.png", dpi=300)
+            plt.savefig(f"{self.name}_capm.png", dpi=300)
         if show:
             plt.show()
 
@@ -1573,16 +1574,19 @@ class Analytics:
             label="Analytical Distribution",
         )
         ax.fill_between(
-            x[0:cutoff], pdf[0:cutoff], facecolor="r", label="Value-At-Risk"
+            x[0:cutoff],
+            pdf[0:cutoff],
+            facecolor="r",
+            label=f"Value-At-Risk (ci={ci})",
         )
         ax.legend(
             loc="upper right",
         )
-        ax.set_xlabel("Returns")
-        ax.set_ylabel("Density of Returns")
+        ax.set_xlabel("Return")
+        ax.set_ylabel("Density of Return")
         ax.set_title("Parametric VaR Plot")
         if save:
-            plt.savefig("parametric_var.png", dpi=300)
+            plt.savefig(f"{self.name}_parametric_var.png", dpi=300)
         if show:
             plt.show()
 
@@ -1641,13 +1645,13 @@ class Analytics:
             bins,
             label="Historical Distribution",
         )
-        ax.axvline(x=var, ymin=0, color="r", label="Value-At-Risk Cutoff")
+        ax.axvline(x=var, ymin=0, color="r", label=f"Value-At-Risk Cutoff (ci={ci})")
         ax.legend()
-        ax.set_xlabel("Returns")
-        ax.set_ylabel("Frequency of Returns")
+        ax.set_xlabel("Return")
+        ax.set_ylabel("Frequency of Return")
         ax.set_title("Historical VaR Plot")
         if save:
-            plt.savefig("historical_var.png", dpi=300)
+            plt.savefig(f"{self.name}_historical_var.png", dpi=300)
         if show:
             plt.show()
 
@@ -1693,7 +1697,7 @@ class Analytics:
         sns.heatmap(matrix, vmin=-1, vmax=1, center=0, annot=True, ax=ax)
         ax.set_title("Correlation Matrix")
         if save:
-            plt.savefig("correlation.png", dpi=300)
+            plt.savefig(f"{self.name}_correlation.png", dpi=300)
         if show:
             plt.show()
 
@@ -1816,7 +1820,7 @@ class Analytics:
         sns.heatmap(matrix, vmin=0, center=0, annot=True, ax=ax)
         ax.set_title("Covariance Matrix")
         if save:
-            plt.savefig("covariance.png", dpi=300)
+            plt.savefig(f"{self.name}_covariance.png", dpi=300)
         if show:
             plt.show()
 
@@ -1933,9 +1937,9 @@ class Analytics:
         plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         all_values.plot(ax=ax)
-        ax.set_xlabel("Minimum Acceptable Return (%)")
+        ax.set_xlabel("Minimum Acceptable Return (MAR)")
         ax.set_ylabel("Omega Ratio")
-        ax.set_title("Omega Curve")
+        ax.set_title("Omega Curves")
         if save:
             plt.savefig("omega_curves.png", dpi=300)
         if show:
@@ -2707,10 +2711,10 @@ class Analytics:
         fig, ax = plt.subplots(**fig_kw)
         drawdowns.plot(ax=ax)
         ax.set_xlabel("Date")
-        ax.set_ylabel("Drawdowns")
+        ax.set_ylabel("Drawdown")
         ax.set_title("Portfolio Drawdowns")
         if save:
-            plt.savefig("drawdowns.png", dpi=300)
+            plt.savefig(f"{self.name}_drawdowns.png", dpi=300)
         if show:
             plt.show()
 
