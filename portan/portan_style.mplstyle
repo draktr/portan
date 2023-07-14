@@ -70,9 +70,9 @@
 ## ***************************************************************************
 ## See https://matplotlib.org/stable/api/artist_api.html#module-matplotlib.lines
 ## for more information on line properties.
-#lines.linewidth: 1.5               # line width in points
+lines.linewidth: 1               # line width in points
 #lines.linestyle: -                 # solid line
-lines.color:     white                # has no affect on plot(); see axes.prop_cycle
+lines.color:     ffffe4                # has no affect on plot(); see axes.prop_cycle
 #lines.marker:          None        # the default marker
 #lines.markerfacecolor: auto        # the default marker face color
 #lines.markeredgecolor: auto        # the default marker edge color
@@ -236,7 +236,7 @@ lines.color:     white                # has no affect on plot(); see axes.prop_c
 ## The text properties used by `text.Text`.
 ## See https://matplotlib.org/stable/api/artist_api.html#module-matplotlib.text
 ## for more information on text properties
-text.color: white
+text.color: ffffe4
 
 ## FreeType hinting flag ("foo" corresponds to FT_LOAD_FOO); may be one of the
 ## following (Proprietary Matplotlib-specific synonyms are given in parentheses,
@@ -318,23 +318,23 @@ text.color: white
 ## Following are default face and edge colors, default tick sizes,
 ## default font sizes for tick labels, and so on.  See
 ## https://matplotlib.org/stable/api/axes_api.html#module-matplotlib.axes
-axes.facecolor:     black   # axes background color
-axes.edgecolor:     white   # axes edge color
+axes.facecolor:     1d2021   # axes background color
+axes.edgecolor:     ffffe4   # axes edge color
 #axes.linewidth:     0.8     # edge line width
 axes.grid:          True   # display grid or not
 #axes.grid.axis:     both    # which axis the grid should apply to
 #axes.grid.which:    major   # grid lines at {major, minor, both} ticks
 #axes.titlelocation: center  # alignment of the title: {left, right, center}
-#axes.titlesize:     large   # font size of the axes title
+axes.titlesize:     12   # font size of the axes title
 #axes.titleweight:   normal  # font weight of title
 #axes.titlecolor:    auto    # color of the axes title, auto falls back to
                              # text.color as default value
 #axes.titley:        None    # position title (axes relative units).  None implies auto
-#axes.titlepad:      6.0     # pad between axes and title in points
-#axes.labelsize:     medium  # font size of the x and y labels
-#axes.labelpad:      4.0     # space between label and axis
+axes.titlepad:      12     # pad between axes and title in points
+axes.labelsize:     10  # font size of the x and y labels
+axes.labelpad:      6     # space between label and axis
 #axes.labelweight:   normal  # weight of the x and y labels
-#axes.labelcolor:    black
+axes.labelcolor:    ffffe4
 #axes.axisbelow:     line    # draw axis gridlines and ticks:
                              #     - below patches (True)
                              #     - above patches but below lines ('line')
@@ -430,13 +430,13 @@ axes.prop_cycle: cycler('color', ['1f77b4', 'ff7f0e', '2ca02c', 'd62728', '9467b
 #xtick.bottom:        True    # draw ticks on the bottom side
 #xtick.labeltop:      False   # draw label on the top
 #xtick.labelbottom:   True    # draw label on the bottom
-#xtick.major.size:    3.5     # major tick size in points
-#xtick.minor.size:    2       # minor tick size in points
+xtick.major.size:    4     # major tick size in points
+xtick.minor.size:    2.5       # minor tick size in points
 #xtick.major.width:   0.8     # major tick width in points
 #xtick.minor.width:   0.6     # minor tick width in points
-#xtick.major.pad:     3.5     # distance to major tick label in points
-#xtick.minor.pad:     3.4     # distance to the minor tick label in points
-xtick.color:         white   # color of the ticks
+xtick.major.pad:     4     # distance to major tick label in points
+xtick.minor.pad:     3.5     # distance to the minor tick label in points
+xtick.color:         ffffe4   # color of the ticks
 #xtick.labelcolor:    inherit # color of the tick labels or inherit from xtick.color
 #xtick.labelsize:     medium  # font size of the tick labels
 #xtick.direction:     out     # direction: {in, out, inout}
@@ -451,13 +451,13 @@ xtick.color:         white   # color of the ticks
 #ytick.right:         False   # draw ticks on the right side
 #ytick.labelleft:     True    # draw tick labels on the left side
 #ytick.labelright:    False   # draw tick labels on the right side
-#ytick.major.size:    3.5     # major tick size in points
-#ytick.minor.size:    2       # minor tick size in points
+ytick.major.size:    4     # major tick size in points
+ytick.minor.size:    2.5       # minor tick size in points
 #ytick.major.width:   0.8     # major tick width in points
 #ytick.minor.width:   0.6     # minor tick width in points
-#ytick.major.pad:     3.5     # distance to major tick label in points
-#ytick.minor.pad:     3.4     # distance to the minor tick label in points
-ytick.color:         white   # color of the ticks
+ytick.major.pad:     4     # distance to major tick label in points
+ytick.minor.pad:     3.5     # distance to the minor tick label in points
+ytick.color:         ffffe4   # color of the ticks
 #ytick.labelcolor:    inherit # color of the tick labels or inherit from ytick.color
 #ytick.labelsize:     medium  # font size of the tick labels
 #ytick.direction:     out     # direction: {in, out, inout}
@@ -472,7 +472,7 @@ ytick.color:         white   # color of the ticks
 ## ***************************************************************************
 ## * GRIDS                                                                   *
 ## ***************************************************************************
-#grid.color:     "#b0b0b0"  # grid color
+grid.color:     ffffe4  # grid color
 #grid.linestyle: -          # solid
 grid.linewidth: 0.2        # in points
 grid.alpha:     0.6        # transparency, between 0.0 and 1.0
@@ -482,8 +482,8 @@ grid.alpha:     0.6        # transparency, between 0.0 and 1.0
 ## * LEGEND                                                                  *
 ## ***************************************************************************
 #legend.loc:           best
-#legend.frameon:       True     # if True, draw the legend on a background patch
-#legend.framealpha:    0.8      # legend patch transparency
+legend.frameon:       True     # if True, draw the legend on a background patch
+legend.framealpha:    0.3      # legend patch transparency
 #legend.facecolor:     inherit  # inherit from axes.facecolor; or color spec
 #legend.edgecolor:     0.8      # background patch boundary color
 #legend.fancybox:      True     # if True, use a rounded box for the
@@ -514,10 +514,10 @@ grid.alpha:     0.6        # transparency, between 0.0 and 1.0
 #figure.titleweight: normal    # weight of the figure title
 #figure.labelsize:   large     # size of the figure label (``Figure.sup[x|y]label()``)
 #figure.labelweight: normal    # weight of the figure label
-#figure.figsize:     6.4, 4.8  # figure size in inches
+figure.figsize:     7.8, 5.4  # figure size in inches
 #figure.dpi:         100       # figure dots per inch
-figure.facecolor:   black     # figure face color
-#figure.edgecolor:   white     # figure edge color
+figure.facecolor:   0e1010     # figure face color
+figure.edgecolor:   ffffe4     # figure edge color
 #figure.frameon:     True      # enable figure frame
 #figure.max_open_warning: 20   # The maximum number of figures to open through
                                # the pyplot interface before emitting a warning.
@@ -582,13 +582,13 @@ figure.facecolor:   black     # figure face color
 ## ***************************************************************************
 ## * HISTOGRAM PLOTS                                                         *
 ## ***************************************************************************
-#hist.bins: 10  # The default number of histogram bins or 'auto'.
+hist.bins: 100  # The default number of histogram bins or 'auto'.
 
 
 ## ***************************************************************************
 ## * SCATTER PLOTS                                                           *
 ## ***************************************************************************
-#scatter.marker: o         # The default marker type for scatter plots.
+scatter.marker: .         # The default marker type for scatter plots.
 #scatter.edgecolors: face  # The default edge colors for scatter plots.
 
 
@@ -635,10 +635,10 @@ figure.facecolor:   black     # figure face color
 ## The default savefig parameters can be different from the display parameters
 ## e.g., you may want a higher resolution, or to make the figure
 ## background white
-#savefig.dpi:       figure      # figure dots per inch or 'figure'
+savefig.dpi:       300      # figure dots per inch or 'figure'
 #savefig.facecolor: auto        # figure face color when saving
 #savefig.edgecolor: auto        # figure edge color when saving
-#savefig.format:    png         # {png, ps, pdf, svg}
+savefig.format:    png         # {png, ps, pdf, svg}
 #savefig.bbox:      standard    # {tight, standard}
                                 # 'tight' is incompatible with pipe-based animation
                                 # backends (e.g. 'ffmpeg') but will work with those
