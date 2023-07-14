@@ -1919,12 +1919,12 @@ class Analytics:
             annual_mar_upper_bound=annual_mar_upper_bound,
         )
 
-        all_values = pd.DataFrame(columns=returns.columns)
         mar_array = np.linspace(
             annual_mar_lower_bound,
             annual_mar_upper_bound,
             round(100 * (annual_mar_upper_bound - annual_mar_lower_bound)),
         )
+        all_values = pd.DataFrame(index=mar_array, columns=returns.columns)
 
         for portfolio in returns.columns:
             omega_values = list()
