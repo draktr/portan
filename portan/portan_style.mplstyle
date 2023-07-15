@@ -320,7 +320,7 @@ text.color: ffffe4
 ## https://matplotlib.org/stable/api/axes_api.html#module-matplotlib.axes
 axes.facecolor:     1d2021   # axes background color
 axes.edgecolor:     ffffe4   # axes edge color
-#axes.linewidth:     0.8     # edge line width
+axes.linewidth:     0.6     # edge line width
 axes.grid:          True   # display grid or not
 #axes.grid.axis:     both    # which axis the grid should apply to
 #axes.grid.which:    major   # grid lines at {major, minor, both} ticks
@@ -367,7 +367,7 @@ axes.labelcolor:    ffffe4
 
 #axes.unicode_minus: True  # use Unicode for the minus symbol rather than hyphen.  See
                            # https://en.wikipedia.org/wiki/Plus_and_minus_signs#Character_codes
-axes.prop_cycle: cycler('color', ['1f77b4', 'ff7f0e', '2ca02c', 'd62728', '9467bd', '8c564b', 'e377c2', '7f7f7f', 'bcbd22', '17becf'])
+axes.prop_cycle: cycler('color', ["006FA6", "FF4A46", "FFFF00", "1CE6FF", "FF34FF", "7A4900", "8FB0FF", "0045D2", "809693", "00D891", "E7AB63", "FFDBE5"])
                   # color cycle for plot lines as list of string color specs:
                   # single letter, long name, or web-style hex
                   # As opposed to all other parameters in this file, the color
@@ -474,7 +474,7 @@ ytick.color:         ffffe4   # color of the ticks
 ## ***************************************************************************
 grid.color:     ffffe4  # grid color
 #grid.linestyle: -          # solid
-grid.linewidth: 0.2        # in points
+grid.linewidth: 0.1        # in points
 grid.alpha:     0.6        # transparency, between 0.0 and 1.0
 
 
@@ -643,7 +643,7 @@ savefig.format:    png         # {png, ps, pdf, svg}
                                 # 'tight' is incompatible with pipe-based animation
                                 # backends (e.g. 'ffmpeg') but will work with those
                                 # based on temporary files (e.g. 'ffmpeg_file')
-#savefig.pad_inches:  0.1       # padding to be used, when bbox is set to 'tight'
+savefig.pad_inches:  0.05       # padding to be used, when bbox is set to 'tight'
 #savefig.directory:   ~         # default directory in savefig dialog, gets updated after
                                 # interactive saves, unless set to the empty string (i.e.
                                 # the current directory); use '.' to start at the current
