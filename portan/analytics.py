@@ -471,7 +471,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -485,7 +485,7 @@ class Analytics:
         ax.set_ylabel("AUM")
         ax.set_title("Assets Under Management")
         if save:
-            plt.savefig(f"{self.name}_aum.png", dpi=300)
+            plt.savefig(f"{self.name}_aum")
         if show:
             plt.show()
 
@@ -505,7 +505,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -519,15 +519,15 @@ class Analytics:
         ax.set_ylabel("Return")
         ax.set_title("Portfolio Returns")
         if save:
-            plt.savefig(f"{self.name}_returns.png", dpi=300)
+            plt.savefig(f"{self.name}_returns")
         if show:
             plt.show()
 
-    def plot_returns_distribution(
+    def plot_return_distribution(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         """
-        Plots portfolio returns distribution histogram
+        Plots portfolio return distribution histogram
 
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
@@ -539,7 +539,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -553,7 +553,7 @@ class Analytics:
         ax.set_ylabel("Return Frequency")
         ax.set_title("Portfolio Return Distribution")
         if save:
-            plt.savefig(f"{self.name}_return_distribution.png", dpi=300)
+            plt.savefig(f"{self.name}_return_distribution")
         if show:
             plt.show()
 
@@ -573,7 +573,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -587,7 +587,7 @@ class Analytics:
         ax.set_ylabel("Cumulative Return")
         ax.set_title("Portfolio Cumulative Returns")
         if save:
-            plt.savefig(f"{self.name}_cumulative_returns.png", dpi=300)
+            plt.savefig(f"{self.name}_cumulative_returns")
         if show:
             plt.show()
 
@@ -607,7 +607,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -638,7 +638,7 @@ class Analytics:
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title(f"{self.name} Asset Distribution")
         if save:
-            plt.savefig(f"{self.name}_pie_chart.png", dpi=300)
+            plt.savefig(f"{self.name}_piechart")
         if show:
             plt.show()
 
@@ -658,7 +658,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -675,7 +675,7 @@ class Analytics:
         ax.set_title("Assets Cumulative Returns")
         ax.legend(labels=self.assets_names)
         if save:
-            plt.savefig(f"{self.name}_assets_cumulative_returns.png", dpi=300)
+            plt.savefig(f"{self.name}_assets_cumulative_returns")
         if show:
             plt.show()
 
@@ -761,7 +761,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
         :type benchmark: dict, optional
@@ -797,7 +797,7 @@ class Analytics:
         ax.set_ylabel("Portfolio Excess Return")
         ax.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
         if save:
-            plt.savefig(f"{self.name}_capm.png", dpi=300)
+            plt.savefig(f"{self.name}_capm")
         if show:
             plt.show()
 
@@ -1551,7 +1551,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -1586,7 +1586,7 @@ class Analytics:
         ax.set_ylabel("Density of Return")
         ax.set_title("Parametric VaR Plot")
         if save:
-            plt.savefig(f"{self.name}_parametric_var.png", dpi=300)
+            plt.savefig(f"{self.name}_parametric_var")
         if show:
             plt.show()
 
@@ -1623,7 +1623,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -1651,7 +1651,7 @@ class Analytics:
         ax.set_ylabel("Frequency of Return")
         ax.set_title("Historical VaR Plot")
         if save:
-            plt.savefig(f"{self.name}_historical_var.png", dpi=300)
+            plt.savefig(f"{self.name}_historical_var")
         if show:
             plt.show()
 
@@ -1683,7 +1683,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -1697,7 +1697,7 @@ class Analytics:
         sns.heatmap(matrix, vmin=-1, vmax=1, center=0, annot=True, ax=ax)
         ax.set_title("Correlation Matrix")
         if save:
-            plt.savefig(f"{self.name}_correlation.png", dpi=300)
+            plt.savefig(f"{self.name}_correlation")
         if show:
             plt.show()
 
@@ -1803,7 +1803,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         :param cov_kwargs: Keyword arguments for matrix calculation
                            methods, defaults to {}
@@ -1820,7 +1820,7 @@ class Analytics:
         sns.heatmap(matrix, vmin=0, center=0, annot=True, ax=ax)
         ax.set_title("Covariance Matrix")
         if save:
-            plt.savefig(f"{self.name}_covariance.png", dpi=300)
+            plt.savefig(f"{self.name}_covariance")
         if show:
             plt.show()
 
@@ -1905,7 +1905,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -1941,7 +1941,7 @@ class Analytics:
         ax.set_ylabel("Omega Ratio")
         ax.set_title("Omega Curves")
         if save:
-            plt.savefig("omega_curves.png", dpi=300)
+            plt.savefig("omega_curves")
         if show:
             plt.show()
 
@@ -2698,7 +2698,7 @@ class Analytics:
         :type rcParams_update: dict, optional
         :param show: Whether to show the plot, defaults to True
         :type show: bool, optional
-        :param save: Whether to save the plot as `.png` file, defaults to False
+        :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
         """
 
@@ -2714,7 +2714,7 @@ class Analytics:
         ax.set_ylabel("Drawdown")
         ax.set_title("Portfolio Drawdowns")
         if save:
-            plt.savefig(f"{self.name}_drawdowns.png", dpi=300)
+            plt.savefig(f"{self.name}_drawdowns")
         if show:
             plt.show()
 
