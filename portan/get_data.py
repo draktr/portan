@@ -75,7 +75,7 @@ class GetData:
 
         return self._data["Close"]
 
-    def save_all_long(self):
+    def save_long(self):
         """
         Saves downloaded data as `.csv` in long format
         """
@@ -88,14 +88,14 @@ class GetData:
         )
         data_long.to_csv("all_tickers_data_long.csv")
 
-    def save_all_wide(self):
+    def save_wide(self):
         """
         Saves downloaded data as `.csv` in wide format
         """
 
         self.data.to_csv("all_tickers_data_wide.csv")
 
-    def save_close_only(self):
+    def save_close(self):
         """
         Saves trading close prices as `.csv`
         """
