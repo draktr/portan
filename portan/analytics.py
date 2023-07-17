@@ -135,15 +135,17 @@ class Analytics:
         self.weights = pd.Series(weights, index=self.tickers)
         self.assets_info = np.empty(len(self.tickers), dtype=object)
         self.assets_names = np.empty(len(self.tickers), dtype="<U64")
-        try:
-            for i, ticker in enumerate(self.tickers):
+        for i, ticker in enumerate(self.tickers):
+            try:
                 self.assets_info[i] = yf.Ticker(ticker).info
                 self.assets_names[i] = self.assets_info[i]["longName"]
-            self.assets_names = self.assets_names.tolist()
-        except Exception:
-            warnings.warn(
-                "Couldn't obtain `assets_info` and `assets_names` from `yfinance`. Use `_set_info_names()` to set `assets_info` and `assets_names` properties"
-            )
+            except Exception:
+                self.assets_info[i] = ticker
+                self.assets_names[i] = ticker
+                warnings.warn(
+                    f"Couldn't obtain `assets_info` and `assets_names` from `yfinance` for ticker `{ticker}`, so value `{ticker}` is assigned to those values for that assset. Use `_set_info_names()` to set `assets_info` and `assets_names` properties as desired"
+                )
+        self.assets_names = self.assets_names.tolist()
         self.name = name
         self.initial_aum = initial_aum
         self.frequency = frequency
