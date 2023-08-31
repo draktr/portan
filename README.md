@@ -39,8 +39,8 @@ portfolio = Analytics(
 Initiation of the `Analytics` object automatically calculates some basic portfolio attributes such as return time-series, mean return (simple, geometric and arithmetic), return volatility, AUM statistics, etc. For example, to get compounded annual mean return call
 
 ```python
->>> print(f"Compounded mean return: {portfolio.geometric_mean}")
-0.12978880349610256
+print(f"Compounded mean return: {portfolio.geometric_mean}")
+# Compounded mean return: 0.12978880349610256
 ```
 
 However, most of the analytics can be obtained by calling the relevant method. Here are a few examples:
@@ -54,15 +54,15 @@ var = portfolio.parametric_var()
 
 This yields
 
-```shell
->>> print(f"Premium: {premium}")
-Premium: 0.07978880349610255
->>> print(f"KS Test p-value: {results[1]}")
-KS Test p-value: 0.0
->>> print(f"Ulcer Index: {ulcer_index}")
-Ulcer Index: 15.025392174313993
->>> print(f"Parametric Value-at-Risk: {var}")
-Parametric Value-at-Risk: -0.02050514669206502
+```python
+print(f"Premium: {premium}")
+# Premium: 0.07978880349610255
+print(f"KS Test p-value: {results[1]}")
+# KS Test p-value: 0.0
+print(f"Ulcer Index: {ulcer_index}")
+# Ulcer Index: 15.025392174313993
+print(f"Parametric Value-at-Risk: {var}")
+# Parametric Value-at-Risk: -0.02050514669206502
 ```
 
 **IMPORTANT**: Since we didn't provide benchmark details, we cannot use any analytics that require benchmark such as portfolio $\beta$, information ratio, up capture, etc. To utilize full set of `portan.Analytics` features the user should specify benchmark details. Recommended way to do this is to provide benchmark details (benchmark weights and benchmark tickers or prices) at object instantiation:
@@ -89,15 +89,15 @@ downside_risk = portfolio.downside_risk()
 
 This yields
 
-```shell
->>> print(f"Portfolio beta: {beta}")
-Portfolio beta: 1.4821305983730502
->>> print(f"Information ratio: {ir}")
-Information ratio: 0.3873682857378387
->>> print(f"Treynor: {treynor}")
-Treynor: 0.06732794488749151
->>> print(f"Downside risk: {downside_risk}")
-Downside risk: 0.008819039607513948
+```python
+print(f"Portfolio beta: {beta}")
+# Portfolio beta: 1.4821305983730502
+print(f"Information ratio: {ir}")
+# Information ratio: 0.3873682857378387
+print(f"Treynor: {treynor}")
+# Treynor: 0.06732794488749151
+print(f"Downside risk: {downside_risk}")
+# Downside risk: 0.008819039607513948
 ```
 
 Alternatively, benchmark can be set and reset after initiation of `Analytics` object. More on this is discussed in [(Re)setting Benchmark](#(re)setting-benchmark) section.
