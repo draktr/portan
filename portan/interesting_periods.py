@@ -73,7 +73,7 @@ PERIODS["Black Monday Aftermath"] = (
     pd.Timestamp("1988-01-01"),
 )
 
-PERIODS["Friday the 13th"] = (pd.Timestamp("1989-10-13"), pd.Timestamp("1989-10-13"))
+PERIODS["Friday the 13th"] = (pd.Timestamp("1989-10-13"), pd.Timestamp("1989-10-14"))
 PERIODS["1990s Recession"] = (pd.Timestamp("1990-07-01"), pd.Timestamp("1991-04-01"))
 
 PERIODS["Japanese Lost Decades"] = (
@@ -91,7 +91,7 @@ PERIODS["Russian Financial Crisis"] = (
 )
 
 PERIODS["Dotcom Crash"] = (pd.Timestamp("2000-03-10"), pd.Timestamp("2000-11-09"))
-PERIODS["9/11"] = (pd.Timestamp("2001-09-11"), pd.Timestamp("2001-10-04"))
+PERIODS["9/11 Volatility"] = (pd.Timestamp("2001-09-11"), pd.Timestamp("2001-10-04"))
 
 PERIODS["Housing Market Boom"] = (
     pd.Timestamp("2004-06-30"),
@@ -117,7 +117,7 @@ PERIODS["September 2008"] = (pd.Timestamp("2008-09-01"), pd.Timestamp("2008-10-0
 PERIODS["2009Q1"] = (pd.Timestamp("2009-01-01"), pd.Timestamp("2009-03-01"))
 PERIODS["2009Q2"] = (pd.Timestamp("2009-03-01"), pd.Timestamp("2009-06-01"))
 
-PERIODS["Flash Crashof 2010"] = (pd.Timestamp("2010-05-05"), pd.Timestamp("2010-05-07"))
+PERIODS["Flash Crash of 2010"] = (pd.Timestamp("2010-05-06"), pd.Timestamp("2010-05-07"))
 
 PERIODS["Fukushima"] = (pd.Timestamp("2011-03-11"), pd.Timestamp("2011-04-11"))
 

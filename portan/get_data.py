@@ -82,9 +82,9 @@ class GetData:
 
         data_long = (
             self.data.stack(level=1)
-            .reset_index(1)
-            .rename(columns={"Symbols": "Ticker"})
-            .sort_values("Ticker")
+            .reset_index(level=1)
+            .rename(columns={"level_1": "Ticker"})
+            .sort_values(by=["Ticker", "Date"])
         )
         data_long.to_csv("all_tickers_data_long.csv")
 
