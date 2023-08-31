@@ -13,9 +13,6 @@ Portfolio examples taken from [PortfolioCharts](portfoliocharts.com/portfolios/)
 - Three Fund
 - Sandwich
 - Swensen
-
-Other portfolios include:
-- Singlife Dynamic
 """
 
 
@@ -65,28 +62,3 @@ WEIGHTS["Sandwich"] = [0.2, 0.08, 0.06, 0.1, 0.06, 0.3, 0.11, 0.04, 0.05]
 
 TICKERS["Swensen"] = ["ITOT", "SPDW", "VWO", "SCHR", "SCHH"]
 WEIGHTS["Swensen"] = [0.3, 0.15, 0.05, 0.3, 0.2]
-
-TICKERS["Singlife Dynamic"] = [
-    "0P00006G1V.SI",
-    "0P0000SO1U.SI",
-    "0P0000ZJWQ.SI",
-    "0P00016FYC.SI",
-    "0P0001CB2H.SI",
-    "0P0001FL3C.SI",
-    "0P00006HYS.SI",
-    "0P00018FHU.SI",
-    "0P0001BONF.SI",
-    "0P0001OK4Y.SI",
-]
-WEIGHTS["Singlife Dynamic"] = [
-    0.2004,
-    0.02,
-    0.999,
-    0.1199,
-    0.01,
-    0.0601,
-    0.2098,
-    0.1299,
-    0.1098,
-    0.0402,
-]
