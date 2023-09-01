@@ -2320,6 +2320,25 @@ class Analytics:
 
         return net_selectivity
 
+    def upside_frequency(self, annual_mar=0.03):
+        """
+        Calculates Upside frequency
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :return: Upside frequency
+        :rtype: float
+        """
+
+        _checks._check_rate_arguments(annual_mar=annual_mar)
+
+        mar = self._rate_conversion(annual_mar)
+        winning = self.returns[self.returns > mar].dropna()
+
+        upside_frequency = winning.shape[0] / self.returns.shape[0]
+
+        return upside_frequency
+
     def downside_frequency(self, annual_mar=0.03):
         """
         Calculates Downside frequency
@@ -2339,24 +2358,22 @@ class Analytics:
 
         return downside_frequency
 
-    def upside_frequency(self, annual_mar=0.03):
+    def summary_frequency(self, annual_mar=0.03):
         """
-        Calculates Upside frequency
+        Creates table with upside and downside frequency
 
         :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
         :type annual_mar: float, optional
-        :return: Upside frequency
-        :rtype: float
+        :return: Table with frequencies
+        :rtype: pd.Series
         """
 
-        _checks._check_rate_arguments(annual_mar=annual_mar)
+        upside = self.upside_frequency(annual_mar)
+        downside = self.downside_frequency(annual_mar)
 
-        mar = self._rate_conversion(annual_mar)
-        winning = self.returns[self.returns > mar].dropna()
+        table = pd.Series([upside, downside], index=["Upside Frequency", "Downside Frequency"])
 
-        upside_frequency = winning.shape[0] / self.returns.shape[0]
-
-        return upside_frequency
+        return table
 
     def up_capture(
         self,
