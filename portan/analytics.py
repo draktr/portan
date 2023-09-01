@@ -313,6 +313,26 @@ class Analytics:
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
 
+    def summary_return_moments(self):
+        """
+        Created a table with return moments (first to fourth)
+
+        :return: Table with moments
+        :rtype: pd.Series
+        """
+
+        return pd.series([self.mean, self.arithmetic_mean, self.geometric_mean, self.volatility, self.annual_volatility, self.skewness, self.kurtosis], index=["Mean Return", "Annualized Non-Compounded Mean Return", "Annualized Compounded Mean Return", "Volatiliry", "Annualized Volatility", "Skewness", "Kurtosis"])
+
+    def summary_aum(self):
+        """
+        Creates a table with Assets Under Management (AUM) levels
+
+        :return: Table with AUM levels
+        :rtype: pd.Series
+        """
+
+        return pd.Series([self.min_aum, self.max_aum, self.mean_aum, self.final_aum], index = ["Minimum AUM", "Maximum AUM", "Mean AUM", "Final AUM"])
+
     def excess_mar(self, annual_mar=0.03, annual=True, compounding=True):
         """
         Calculates excess mean return above Minimum Accepted Return (MAR)
@@ -2360,7 +2380,7 @@ class Analytics:
 
     def summary_frequency(self, annual_mar=0.03):
         """
-        Creates table with upside and downside frequency
+        Creates a table with upside and downside frequency
 
         :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
         :type annual_mar: float, optional
