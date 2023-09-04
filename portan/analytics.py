@@ -2786,6 +2786,52 @@ class Analytics:
         if show:
             plt.show()
 
+    def summary_drawdowns_ratio(self,
+        annual_rfr=0.03,
+        annual_excess=0.1,
+        largest=0,
+        periods=0,
+        inverse=True,
+        annual=True,
+        compounding=True,
+        modified=False,
+        original=True,
+        **sorted_drawdowns_kwargs):
+        """
+        Creates a table with drawdowns ratios
+
+        :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
+        :type annual_rfr: float, optional
+        :param annual_excess: Annual return above average largest drawdown, defaults to 0.1
+        :type annual_excess: float, optional
+        :param largest: Number of largest drawdowns taken into consideration for the calculation, defaults to 0
+        :type largest: int, optional
+        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
+        :type periods: int, optional
+        :param inverse: Whether to invert (i.e. make positive) average drawdown, defaults to True
+        :type inverse: bool, optional
+        :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
+        :type annual: bool, optional
+        :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
+        :type compounding: bool, optional
+        :param modified: Whether to calculate modified Burke ratio, defaults to False
+        :type modified: bool, optional
+        :param original: Whether to calculate the original version of Sterling ratio or Sterling-Calmar ratio, defaults to True
+        :type original: bool, optional
+        :return: Table with drawdowns ratios
+        :rtype: pd.Series
+        """
+
+        sterling = self.sterling(annual_rfr, annual_excess, largest, inverse, annual, compounding, original)
+        calmar = self.calmar(periods, inverse, annual_rfr, annual, compounding)
+        burke = self.burke(annual_rfr, largest, annual, compounding, modified, **sorted_drawdowns_kwargs)
+        ulcer = self.ulcer()
+        martin = self.martin(annual_rfr, annual, compounding)
+
+        summary = pd.Series([sterling, calmar, burke, ulcer, martin], index=["Sterling ratio", "Calmar ratio", "Burke ratio", "Ulcer index", "Martin ratio"])
+
+        return summary
+
     def upside_risk(self, annual_mar=0.03):
         """
         Calculates Upside risk (also referred to as Upside semideviation)
