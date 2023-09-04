@@ -315,7 +315,7 @@ class Analytics:
 
     def summary_return_moments(self):
         """
-        Created a table with return moments (first to fourth)
+        Creates a table with return moments (first to fourth)
 
         :return: Table with moments
         :rtype: pd.Series
@@ -2632,6 +2632,35 @@ class Analytics:
         )
 
         return down_percentage
+
+    def summary_up_down(self, benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },):
+        """
+        Creates a table with up-market and down-market analytics
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Table with up-market and down-market analytics
+        :rtype: pd.Series
+        """
+
+        up_capture = self.up_capture(benchmark)
+        down_capture = self.down_capture(benchmark)
+        up_number = self.up_number(benchmark)
+        down_number = self.down_number(benchmark)
+        up_percentage = self.up_percentage(benchmark)
+        down_percentage = self.down_percentage(benchmark)
+
+        summary = pd.Series([up_capture, down_capture, up_number, down_number, up_percentage, down_percentage], index=["Up-market Capture", "Down-market Capture", "Up-market Number", "Down-market Number", "Up-market Percentage", "Down-market Percentage"])
+
+        return summary
 
     def drawdowns(self):
         """
