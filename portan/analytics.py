@@ -2915,3 +2915,32 @@ class Analytics:
         downside_variance = self.lpm(annual_mar=annual_mar, moment=2)
 
         return downside_variance
+
+    def summary_downside_risk(self, annual_mar=0.03, periods=0, inverse=True, ci=0.95, frequency=1):
+        """
+        Creates a table with downside risk analytics
+
+        :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
+        :type annual_mar: float, optional
+        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
+        :type periods: int, optional
+        :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
+        :type inverse: bool, optional
+        :param ci: Confidence interval for VaR, defaults to 0.95
+        :type ci: float, optional
+        :param frequency: frequency for changing periods of VaR. For example, if
+                          `self.prices` contains daily data and there are 252
+                          trading days in a year, setting`frequency=252` will
+                          yield annual VaR, defaults to 1 (same as data)
+        :type frequency: int, optional
+        :return: Table with downside risk analytics
+        :rtype: pd.Series
+        """
+        downside_risk = self.downside_risk(annual_mar)
+        mdd = self.maximum_drawdown(periods, inverse)
+        historical_var = self.historical_var(ci, frequency)
+        parametric_var = self.parametric_var(ci, frequency)
+
+        summary = pd.Series([downside_risk, mdd, parametric_var, historical_var], index=[f"Downside risk (Annual MAR={annual_mar*100}%)", "Maximum Drawdown", f"Parametric VaR (CI={ci*100}%)", f"Historical VaR (CI={ci*100}%)"])
+
+        return summary
