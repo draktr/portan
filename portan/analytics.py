@@ -321,7 +321,26 @@ class Analytics:
         :rtype: pd.Series
         """
 
-        return pd.series([self.mean, self.arithmetic_mean, self.geometric_mean, self.volatility, self.annual_volatility, self.skewness, self.kurtosis], index=["Mean Return", "Annualized Non-Compounded Mean Return", "Annualized Compounded Mean Return", "Volatiliry", "Annualized Volatility", "Skewness", "Kurtosis"])
+        return pd.series(
+            [
+                self.mean,
+                self.arithmetic_mean,
+                self.geometric_mean,
+                self.volatility,
+                self.annual_volatility,
+                self.skewness,
+                self.kurtosis,
+            ],
+            index=[
+                "Mean Return",
+                "Annualized Non-Compounded Mean Return",
+                "Annualized Compounded Mean Return",
+                "Volatiliry",
+                "Annualized Volatility",
+                "Skewness",
+                "Kurtosis",
+            ],
+        )
 
     def summary_aum(self):
         """
@@ -331,7 +350,10 @@ class Analytics:
         :rtype: pd.Series
         """
 
-        return pd.Series([self.min_aum, self.max_aum, self.mean_aum, self.final_aum], index = ["Minimum AUM", "Maximum AUM", "Mean AUM", "Final AUM"])
+        return pd.Series(
+            [self.min_aum, self.max_aum, self.mean_aum, self.final_aum],
+            index=["Minimum AUM", "Maximum AUM", "Mean AUM", "Final AUM"],
+        )
 
     def excess_mar(self, annual_mar=0.03, annual=True, compounding=True):
         """
@@ -2391,7 +2413,9 @@ class Analytics:
         upside = self.upside_frequency(annual_mar)
         downside = self.downside_frequency(annual_mar)
 
-        table = pd.Series([upside, downside], index=["Upside Frequency", "Downside Frequency"])
+        table = pd.Series(
+            [upside, downside], index=["Upside Frequency", "Downside Frequency"]
+        )
 
         return table
 
@@ -2633,7 +2657,9 @@ class Analytics:
 
         return down_percentage
 
-    def summary_up_down(self, benchmark={
+    def summary_up_down(
+        self,
+        benchmark={
             "benchmark_tickers": None,
             "benchmark_prices": None,
             "benchmark_weights": None,
@@ -2641,7 +2667,8 @@ class Analytics:
             "start": "1970-01-02",
             "end": CURRENT_DATE,
             "interval": "1d",
-        },):
+        },
+    ):
         """
         Creates a table with up-market and down-market analytics
 
@@ -2658,7 +2685,24 @@ class Analytics:
         up_percentage = self.up_percentage(benchmark)
         down_percentage = self.down_percentage(benchmark)
 
-        summary = pd.Series([up_capture, down_capture, up_number, down_number, up_percentage, down_percentage], index=["Up-market Capture", "Down-market Capture", "Up-market Number", "Down-market Number", "Up-market Percentage", "Down-market Percentage"])
+        summary = pd.Series(
+            [
+                up_capture,
+                down_capture,
+                up_number,
+                down_number,
+                up_percentage,
+                down_percentage,
+            ],
+            index=[
+                "Up-market Capture",
+                "Down-market Capture",
+                "Up-market Number",
+                "Down-market Number",
+                "Up-market Percentage",
+                "Down-market Percentage",
+            ],
+        )
 
         return summary
 
@@ -2786,7 +2830,8 @@ class Analytics:
         if show:
             plt.show()
 
-    def summary_drawdowns_ratio(self,
+    def summary_drawdowns_ratio(
+        self,
         annual_rfr=0.03,
         annual_excess=0.1,
         largest=0,
@@ -2796,7 +2841,8 @@ class Analytics:
         compounding=True,
         modified=False,
         original=True,
-        **sorted_drawdowns_kwargs):
+        **sorted_drawdowns_kwargs,
+    ):
         """
         Creates a table with drawdowns ratios
 
@@ -2822,13 +2868,31 @@ class Analytics:
         :rtype: pd.Series
         """
 
-        sterling = self.sterling(annual_rfr, annual_excess, largest, inverse, annual, compounding, original)
+        sterling = self.sterling(
+            annual_rfr, annual_excess, largest, inverse, annual, compounding, original
+        )
         calmar = self.calmar(periods, inverse, annual_rfr, annual, compounding)
-        burke = self.burke(annual_rfr, largest, annual, compounding, modified, **sorted_drawdowns_kwargs)
+        burke = self.burke(
+            annual_rfr,
+            largest,
+            annual,
+            compounding,
+            modified,
+            **sorted_drawdowns_kwargs,
+        )
         ulcer = self.ulcer()
         martin = self.martin(annual_rfr, annual, compounding)
 
-        summary = pd.Series([sterling, calmar, burke, ulcer, martin], index=["Sterling ratio", "Calmar ratio", "Burke ratio", "Ulcer index", "Martin ratio"])
+        summary = pd.Series(
+            [sterling, calmar, burke, ulcer, martin],
+            index=[
+                "Sterling ratio",
+                "Calmar ratio",
+                "Burke ratio",
+                "Ulcer index",
+                "Martin ratio",
+            ],
+        )
 
         return summary
 
@@ -2916,7 +2980,9 @@ class Analytics:
 
         return downside_variance
 
-    def summary_downside_risk(self, annual_mar=0.03, periods=0, inverse=True, ci=0.95, frequency=1):
+    def summary_downside_risk(
+        self, annual_mar=0.03, periods=0, inverse=True, ci=0.95, frequency=1
+    ):
         """
         Creates a table with downside risk analytics
 
@@ -2941,6 +3007,14 @@ class Analytics:
         historical_var = self.historical_var(ci, frequency)
         parametric_var = self.parametric_var(ci, frequency)
 
-        summary = pd.Series([downside_risk, mdd, parametric_var, historical_var], index=[f"Downside risk (Annual MAR={annual_mar*100}%)", "Maximum Drawdown", f"Parametric VaR (CI={ci*100}%)", f"Historical VaR (CI={ci*100}%)"])
+        summary = pd.Series(
+            [downside_risk, mdd, parametric_var, historical_var],
+            index=[
+                f"Downside risk (Annual MAR={annual_mar*100}%)",
+                "Maximum Drawdown",
+                f"Parametric VaR (CI={ci*100}%)",
+                f"Historical VaR (CI={ci*100}%)",
+            ],
+        )
 
         return summary
