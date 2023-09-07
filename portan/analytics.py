@@ -2413,11 +2413,11 @@ class Analytics:
         upside = self.upside_frequency(annual_mar)
         downside = self.downside_frequency(annual_mar)
 
-        table = pd.Series(
+        summary = pd.Series(
             [upside, downside], index=["Upside Frequency", "Downside Frequency"]
         )
 
-        return table
+        return summary
 
     def up_capture(
         self,
