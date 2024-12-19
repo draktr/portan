@@ -3,7 +3,6 @@
 for analyzing portfolio performance
 """
 
-
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -822,11 +821,11 @@ class Analytics:
         plt.style.use(style)
         plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
-        ax.scatter(excess_benchmark_returns, excess_returns, color="b")
+        ax.scatter(excess_benchmark_returns, excess_returns, color="C1")
         ax.plot(
             excess_benchmark_returns,
             capm[0] + capm[1] * excess_benchmark_returns,
-            color="r",
+            color="C0",
         )
         empty_patch = mpatches.Patch(color="none", visible=False)
         ax.legend(
