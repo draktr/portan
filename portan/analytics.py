@@ -532,6 +532,8 @@ class Analytics:
         if show:
             plt.show()
 
+        return fig
+
     def plot_returns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
@@ -565,6 +567,8 @@ class Analytics:
             plt.savefig(f"{self.name}_returns")
         if show:
             plt.show()
+
+        return fig
 
     def plot_return_distribution(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
@@ -600,6 +604,8 @@ class Analytics:
         if show:
             plt.show()
 
+        return fig
+
     def plot_cumulative_returns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
@@ -633,6 +639,8 @@ class Analytics:
             plt.savefig(f"{self.name}_cumulative_returns")
         if show:
             plt.show()
+
+        return fig
 
     def plot_piechart(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
@@ -685,6 +693,8 @@ class Analytics:
         if show:
             plt.show()
 
+        return fig
+
     def plot_assets_cumulative_returns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
@@ -721,6 +731,8 @@ class Analytics:
             plt.savefig(f"{self.name}_assets_cumulative_returns")
         if show:
             plt.show()
+
+        return fig
 
     def _ap(self, pct, all_values):
         absolute = int(pct / 100.0 * np.sum(all_values))
@@ -843,6 +855,8 @@ class Analytics:
             plt.savefig(f"{self.name}_capm")
         if show:
             plt.show()
+
+        return fig
 
     def sharpe(
         self,
@@ -1633,6 +1647,8 @@ class Analytics:
         if show:
             plt.show()
 
+        return fig
+
     def plot_historical_var(
         self,
         ci=0.95,
@@ -1698,6 +1714,8 @@ class Analytics:
         if show:
             plt.show()
 
+        return fig
+
     def correlation(self):
         """
         Calculates portfolio assets returns correlation matrix
@@ -1743,6 +1761,8 @@ class Analytics:
             plt.savefig(f"{self.name}_correlation")
         if show:
             plt.show()
+
+        return fig
 
     def covariance(self, method="regular", annual=False, cov_kwargs={}):
         """
@@ -1867,6 +1887,8 @@ class Analytics:
         if show:
             plt.show()
 
+        return fig
+
     def omega_ratio(self, returns=None, annual_mar=0.03):
         """
         Calculates the Omega ratio of the portfolio.
@@ -1987,6 +2009,8 @@ class Analytics:
             plt.savefig("omega_curves")
         if show:
             plt.show()
+
+        return fig
 
     def herfindahl_index(self):
         """
@@ -2828,6 +2852,8 @@ class Analytics:
             plt.savefig(f"{self.name}_drawdowns")
         if show:
             plt.show()
+
+        return fig
 
     def summary_drawdowns_ratio(
         self,
