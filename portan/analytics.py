@@ -642,8 +642,8 @@ class Analytics:
 
         return fig
 
-    def plot_piechart(
-        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+    def plot_initial_holdings(
+        self, top=10, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
         """
         Plots portfolio assets pie chart
@@ -664,32 +664,42 @@ class Analytics:
 
         _checks._check_plot_arguments(show=show, save=save)
 
+        allocation = pd.concat(
+            (
+                self.allocation_funds.sort_values(ascending=False)[:top],
+                pd.Series(
+                    self.allocation_funds.sort_values(ascending=False)[top:].sum(),
+                    index=["Others"],
+                ),
+            )
+        )
+
         wp = {"linewidth": 1, "edgecolor": "black"}
-        explode = tuple(repeat(0.05, len(self.tickers)))
+        explode = tuple(repeat(0.05, len(allocation.index)))
 
         plt.style.use(style)
         plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         pie = ax.pie(
-            self.allocation_funds,
-            autopct=lambda pct: self._ap(pct, self.allocation_funds),
+            allocation,
+            autopct=lambda pct: self._ap(pct, allocation),
             explode=explode,
-            labels=self.tickers,
+            labels=allocation.index,
             shadow=True,
-            startangle=90,
+            startangle=0,
             wedgeprops=wp,
         )
         ax.legend(
             pie[0],
-            self.assets_names,
+            allocation.index,
             title="Portfolio Assets",
             loc="upper right",
-            bbox_to_anchor=(0.7, 0, 0.5, 1),
+            bbox_to_anchor=(1.4, 1),
         )
         plt.setp(pie[2], size=9, weight="bold")
-        ax.set_title(f"{self.name} Asset Distribution")
+        ax.set_title(f"{self.name} Holdings")
         if save:
-            plt.savefig(f"{self.name}_piechart")
+            plt.savefig(f"{self.name}_holdings")
         if show:
             plt.show()
 
