@@ -3053,3 +3053,35 @@ class Analytics:
         )
 
         return summary
+
+    def sectors(self):
+
+        sector = np.empty(len(self.tickers), dtype="<U64")
+        for i, ticker in enumerate(self.tickers):
+            sector[i] = self.assets_info[i]["sector"]
+
+        return pd.Series(sector, index=self.tickers)
+
+    def iss_risk(self):
+        data = np.empty((self.tickers.shape[0], 5))
+        for i, ticker in enumerate(self.tickers):
+            data[i, 0] = self.assets_info[i]["auditRisk"]
+            data[i, 1] = self.assets_info[i]["boardRisk"]
+            data[i, 3] = self.assets_info[i]["compensationRisk"]
+            data[i, 2] = self.assets_info[i]["shareHolderRightsRisk"]
+            data[i, 4] = self.assets_info[i]["overallRisk"]
+
+        return pd.DataFrame(
+            data,
+            index=self.tickers,
+            columns=["Audit", "Board", "Compensation", "Shareholder Rights", "Overall"],
+        )
+
+    def initial_holdings(self):
+        return pd.DataFrame(
+            {
+                "Allocation ($)": self.allocation_funds,
+                "Allocation (%)": self.allocation_funds / self.initial_aum,
+            },
+            index=self.tickers,
+        )
