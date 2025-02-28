@@ -752,6 +752,7 @@ class Analytics:
     def capm(
         self,
         annual_rfr=0.03,
+        periods=0,
         benchmark={
             "benchmark_tickers": None,
             "benchmark_prices": None,
@@ -767,6 +768,10 @@ class Analytics:
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0
+        :type periods: int, optional
         :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
         :type benchmark: dict, optional
         :return: CAPM alpha, beta, epsilon, R-squared
@@ -785,7 +790,7 @@ class Analytics:
         excess_returns = self.returns - rfr
         excess_benchmark_returns = self.benchmark_returns - rfr
 
-        model = LinearRegression().fit(excess_benchmark_returns, excess_returns)
+        model = LinearRegression().fit(excess_benchmark_returns[-periods:], excess_returns[-periods:])
         alpha = model.intercept_[0]
         beta = model.coef_[0][0]
         epsilon = excess_returns.to_numpy() - alpha - beta * excess_benchmark_returns
@@ -796,6 +801,7 @@ class Analytics:
     def plot_capm(
         self,
         annual_rfr=0.03,
+        periods=0,
         style=STYLE,
         rcParams_update={},
         show=True,
@@ -816,6 +822,10 @@ class Analytics:
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0
+        :type periods: int, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -834,7 +844,7 @@ class Analytics:
 
         _checks._check_plot_arguments(show=show, save=save)
 
-        capm = self.capm(annual_rfr, benchmark)
+        capm = self.capm(annual_rfr, periods, benchmark)
 
         rfr = self._rate_conversion(annual_rfr)
         excess_returns = self.returns - rfr
@@ -3077,11 +3087,22 @@ class Analytics:
             columns=["Audit", "Board", "Compensation", "Shareholder Rights", "Overall"],
         )
 
-    def initial_holdings(self):
+    def initial_holdings(self, top=10):
+
+        allocation = pd.concat(
+            (
+                self.allocation_funds.sort_values(ascending=False)[:top],
+                pd.Series(
+                    self.allocation_funds.sort_values(ascending=False)[top:].sum(),
+                    index=["Others"],
+                ),
+            )
+        )
+
         return pd.DataFrame(
             {
-                "Allocation ($)": self.allocation_funds,
-                "Allocation (%)": self.allocation_funds / self.initial_aum,
+                "Allocation ($)": allocation,
+                "Allocation (%)": allocation / self.initial_aum,
             },
-            index=self.tickers,
+            index=allocation.index,
         )
