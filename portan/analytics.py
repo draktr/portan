@@ -3189,3 +3189,167 @@ class Analytics:
             plt.show()
 
         return fig
+
+    def annual_returns(self):
+        return (
+            self.state.groupby(self.state.index.year)[self.name]
+            .apply(lambda x: (x - x.iloc[0]) / x.iloc[0])
+            .rename_axis(["Year", "Date"])
+            .groupby(level=0)
+            .last()
+        )
+
+    def benchmark_annual_returns(
+        self,
+        benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },
+    ):
+
+        set_benchmark = _checks._whether_to_set(
+            slf_benchmark_prices=self.benchmark_prices, **benchmark
+        )
+        if set_benchmark:
+            self._set_benchmark(**benchmark)
+
+        benchmark_allocation_funds = pd.Series(
+            np.multiply(self.initial_aum, self.benchmark_weights)
+        )
+        benchmark_allocation_assets = pd.Series(
+            np.divide(benchmark_allocation_funds, self.benchmark_prices.iloc[0].T)
+        )
+        benchmark_state = pd.DataFrame(
+            np.multiply(self.benchmark_prices, benchmark_allocation_assets)
+        )
+        benchmark_state[self.benchmark_name] = benchmark_state.sum(axis=1)
+
+        return (
+            benchmark_state.groupby(benchmark_state.index.year)[self.benchmark_name]
+            .apply(lambda x: (x - x.iloc[0]) / x.iloc[0])
+            .rename_axis(["Year", "Date"])
+            .groupby(level=0)
+            .last()
+        )
+
+    def trailing_returns(self):
+        trailing_periods = [
+            63,
+            252,
+            252 * 3,
+            252 * 5,
+            252 * 10,
+            252 * 20,
+            252 * 30,
+            252 * 40,
+            252 * 50,
+            252 * 1000,
+        ]
+        trailing_returns = list()
+        for period in trailing_periods:
+            try:
+                trailing_returns.append(
+                    (self.state.iloc[-1, -1] - self.state.iloc[-period, -1])
+                    / self.state.iloc[-period, -1]
+                )
+            except:
+                trailing_returns.append(
+                    (self.state.iloc[-1, -1] - self.state.iloc[0, -1])
+                    / self.state.iloc[0, -1]
+                )
+                break
+
+        trailing_returns.insert(1, self.annual_returns().iloc[-1, -1])
+
+        index = [
+            "Quarter",
+            "Year-to-date",
+            "1 Year",
+            "3 Year",
+            "5 Year",
+            "10 Year",
+            "20 Year",
+            "30 Year",
+            "40 Year",
+            "50 Year",
+        ][: len(trailing_returns) - 1] + ["Since Inception"]
+
+        return pd.Series(trailing_returns, index=index)
+
+    def benchmark_trailing_returns(
+        self,
+        benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },
+    ):
+
+        set_benchmark = _checks._whether_to_set(
+            slf_benchmark_prices=self.benchmark_prices, **benchmark
+        )
+        if set_benchmark:
+            self._set_benchmark(**benchmark)
+
+        benchmark_allocation_funds = pd.Series(
+            np.multiply(self.initial_aum, self.benchmark_weights)
+        )
+        benchmark_allocation_assets = pd.Series(
+            np.divide(benchmark_allocation_funds, self.benchmark_prices.iloc[0].T)
+        )
+        benchmark_state = pd.DataFrame(
+            np.multiply(self.benchmark_prices, benchmark_allocation_assets)
+        )
+        benchmark_state[self.benchmark_name] = benchmark_state.sum(axis=1)
+
+        trailing_periods = [
+            63,
+            252,
+            252 * 3,
+            252 * 5,
+            252 * 10,
+            252 * 20,
+            252 * 30,
+            252 * 40,
+            252 * 50,
+            252 * 1000,
+        ]
+        trailing_returns = list()
+        for period in trailing_periods:
+            try:
+                trailing_returns.append(
+                    (benchmark_state.iloc[-1, -1] - benchmark_state.iloc[-period, -1])
+                    / benchmark_state.iloc[-period, -1]
+                )
+            except:
+                trailing_returns.append(
+                    (benchmark_state.iloc[-1, -1] - benchmark_state.iloc[0, -1])
+                    / benchmark_state.iloc[0, -1]
+                )
+                break
+
+        trailing_returns.insert(1, self.benchmark_annual_returns().iloc[-1, -1])
+
+        index = [
+            "Quarter",
+            "Year-to-date",
+            "1 Year",
+            "3 Year",
+            "5 Year",
+            "10 Year",
+            "20 Year",
+            "30 Year",
+            "40 Year",
+            "50 Year",
+        ][: len(trailing_returns) - 1] + ["Since Inception"]
+
+        return pd.Series(trailing_returns, index=index)
