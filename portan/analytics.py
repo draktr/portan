@@ -642,69 +642,6 @@ class Analytics:
 
         return fig
 
-    def plot_initial_holdings(
-        self, top=10, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
-    ):
-        """
-        Plots portfolio assets pie chart
-
-        :param style: `matplotlib` style to be used for plots. User can pass
-                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
-                      or a path to a custom style defined in a `.mplstyle` document,
-                      defaults to STYLE (propriatery PortAn style)
-        :type style: str, optional
-        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
-                                `style` argument, defaults to {} (no modification)
-        :type rcParams_update: dict, optional
-        :param show: Whether to show the plot, defaults to True
-        :type show: bool, optional
-        :param save: Whether to save the plot, defaults to False
-        :type save: bool, optional
-        """
-
-        _checks._check_plot_arguments(show=show, save=save)
-
-        allocation = pd.concat(
-            (
-                self.allocation_funds.sort_values(ascending=False)[:top],
-                pd.Series(
-                    self.allocation_funds.sort_values(ascending=False)[top:].sum(),
-                    index=["Others"],
-                ),
-            )
-        )
-
-        wp = {"linewidth": 1, "edgecolor": "black"}
-        explode = tuple(repeat(0.05, len(allocation.index)))
-
-        plt.style.use(style)
-        plt.rcParams.update(**rcParams_update)
-        fig, ax = plt.subplots(**fig_kw)
-        pie = ax.pie(
-            allocation,
-            autopct=lambda pct: self._ap(pct, allocation),
-            explode=explode,
-            labels=allocation.index,
-            shadow=True,
-            startangle=0,
-            wedgeprops=wp,
-        )
-        ax.legend(
-            pie[0],
-            allocation.index,
-            title="Portfolio Assets",
-            loc="upper right",
-            bbox_to_anchor=(1.4, 1),
-        )
-        plt.setp(pie[2], size=9, weight="bold")
-        ax.set_title(f"{self.name} Holdings")
-        if save:
-            plt.savefig(f"{self.name}_holdings")
-        if show:
-            plt.show()
-
-        return fig
-
     def plot_assets_cumulative_returns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
@@ -3106,3 +3043,149 @@ class Analytics:
             },
             index=allocation.index,
         )
+
+    def plot_initial_holdings(
+        self, top=10, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+    ):
+        """
+        Plots portfolio assets pie chart
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot, defaults to False
+        :type save: bool, optional
+        """
+
+        _checks._check_plot_arguments(show=show, save=save)
+
+        allocation = pd.concat(
+            (
+                self.allocation_funds.sort_values(ascending=False)[:top],
+                pd.Series(
+                    self.allocation_funds.sort_values(ascending=False)[top:].sum(),
+                    index=["Others"],
+                ),
+            )
+        )
+
+        wp = {"linewidth": 1, "edgecolor": "black"}
+        explode = tuple(repeat(0.05, len(allocation.index)))
+
+        plt.style.use(style)
+        plt.rcParams.update(**rcParams_update)
+        fig, ax = plt.subplots(**fig_kw)
+        pie = ax.pie(
+            allocation,
+            autopct=lambda pct: self._ap(pct, allocation),
+            explode=explode,
+            labels=allocation.index,
+            shadow=True,
+            startangle=0,
+            wedgeprops=wp,
+        )
+        ax.legend(
+            pie[0],
+            allocation.index,
+            title="Portfolio Assets",
+            loc="upper right",
+            bbox_to_anchor=(1.4, 1),
+        )
+        plt.setp(pie[2], size=9, weight="bold")
+        ax.set_title(f"{self.name} Holdings")
+        if save:
+            plt.savefig(f"{self.name}_holdings")
+        if show:
+            plt.show()
+
+        return fig
+
+    def current_holdings(self, top=10):
+
+        allocation = pd.concat(
+            (
+                self.state.iloc[-1, :-1].sort_values(ascending=False)[:top],
+                pd.Series(
+                    self.state.iloc[-1, :-1].sort_values(ascending=False)[top:].sum(),
+                    index=["Others"],
+                ),
+            )
+        )
+
+        return pd.DataFrame(
+            {
+                "Allocation ($)": allocation,
+                "Allocation (%)": allocation / self.final_aum,
+            },
+            index=allocation.index,
+        )
+
+    def plot_current_holdings(
+        self, top=10, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+    ):
+        """
+        Plots portfolio current holdings pie chart
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot, defaults to False
+        :type save: bool, optional
+        """
+
+        _checks._check_plot_arguments(show=show, save=save)
+
+        allocation = pd.concat(
+            (
+                self.state.iloc[-1, :-1].sort_values(ascending=False)[:top],
+                pd.Series(
+                    self.state.iloc[-1, :-1].sort_values(ascending=False)[top:].sum(),
+                    index=["Others"],
+                ),
+            )
+        )
+
+        wp = {"linewidth": 1, "edgecolor": "black"}
+        explode = tuple(repeat(0.05, len(allocation.index)))
+
+        plt.style.use(style)
+        plt.rcParams.update(**rcParams_update)
+        fig, ax = plt.subplots(**fig_kw)
+        pie = ax.pie(
+            allocation,
+            autopct=lambda pct: self._ap(pct, allocation),
+            explode=explode,
+            labels=allocation.index,
+            shadow=True,
+            startangle=0,
+            wedgeprops=wp,
+        )
+        ax.legend(
+            pie[0],
+            allocation.index,
+            title="Portfolio Assets",
+            loc="upper right",
+            bbox_to_anchor=(1.4, 1),
+        )
+        plt.setp(pie[2], size=9, weight="bold")
+        ax.set_title(f"{self.name} Current Holdings")
+        if save:
+            plt.savefig(f"{self.name}_current_holdings")
+        if show:
+            plt.show()
+
+        return fig
