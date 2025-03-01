@@ -727,7 +727,9 @@ class Analytics:
         excess_returns = self.returns - rfr
         excess_benchmark_returns = self.benchmark_returns - rfr
 
-        model = LinearRegression().fit(excess_benchmark_returns[-periods:], excess_returns[-periods:])
+        model = LinearRegression().fit(
+            excess_benchmark_returns[-periods:], excess_returns[-periods:]
+        )
         alpha = model.intercept_[0]
         beta = model.coef_[0][0]
         epsilon = excess_returns.to_numpy() - alpha - beta * excess_benchmark_returns
@@ -3002,6 +3004,12 @@ class Analytics:
         return summary
 
     def sectors(self):
+        """
+        Returns sectors of the assets in the portfolio
+
+        :return: Sectors of the assets
+        :rtype: pd.Series
+        """
 
         sector = np.empty(len(self.tickers), dtype="<U64")
         for i, ticker in enumerate(self.tickers):
@@ -3025,6 +3033,15 @@ class Analytics:
         )
 
     def initial_holdings(self, top=10):
+        """
+        Returns initial asset holdings values percentages in the portfolio
+
+        :param top: Number of largest holdings to be listed individually,
+                    with others being grouped into "Others", defaults to 10
+        :type top: int, optional
+        :return: Initial holdings
+        :rtype: pd.Dataframe
+        """
 
         allocation = pd.concat(
             (
@@ -3050,6 +3067,9 @@ class Analytics:
         """
         Plots portfolio assets pie chart
 
+        :param top: Number of largest holdings to be listed individually,
+                    with others being grouped into "Others", defaults to 10
+        :type top: int, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -3108,6 +3128,15 @@ class Analytics:
         return fig
 
     def current_holdings(self, top=10):
+        """
+        Returns current asset holdings values and percentages in the portfolio
+
+        :param top: Number of largest holdings to be listed individually,
+                    with others being grouped into "Others", defaults to 10
+        :type top: int, optional
+        :return: Current holdings
+        :rtype: pd.Dataframe
+        """
 
         allocation = pd.concat(
             (
@@ -3133,6 +3162,9 @@ class Analytics:
         """
         Plots portfolio current holdings pie chart
 
+        :param top: Number of largest holdings to be listed individually,
+                    with others being grouped into "Others", defaults to 10
+        :type top: int, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -3191,6 +3223,13 @@ class Analytics:
         return fig
 
     def annual_returns(self):
+        """
+        Returns annual (calendar year) returns of the portfolio
+
+        :return: Annual returns
+        :rtype: pd.DataFrame
+        """
+
         return (
             self.state.groupby(self.state.index.year)[self.name]
             .apply(lambda x: (x - x.iloc[0]) / x.iloc[0])
@@ -3211,6 +3250,14 @@ class Analytics:
             "interval": "1d",
         },
     ):
+        """
+        Returns annual (calendar year) returns of the benchmark portfolio
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Annual benchmark returns
+        :rtype: pd.DataFrame
+        """
 
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
@@ -3238,6 +3285,13 @@ class Analytics:
         )
 
     def trailing_returns(self):
+        """
+        Returns trailing returns of the portfolio
+
+        :return: Trailing returns
+        :rtype: pd.DataFrame
+        """
+
         trailing_periods = [
             63,
             252,
@@ -3251,6 +3305,7 @@ class Analytics:
             252 * 1000,
         ]
         trailing_returns = list()
+
         for period in trailing_periods:
             try:
                 trailing_returns.append(
@@ -3293,6 +3348,14 @@ class Analytics:
             "interval": "1d",
         },
     ):
+        """
+        Returns trailing returns of the benchmark portfolio
+
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Trailing benchmark returns
+        :rtype: pd.DataFrame
+        """
 
         set_benchmark = _checks._whether_to_set(
             slf_benchmark_prices=self.benchmark_prices, **benchmark
@@ -3324,6 +3387,7 @@ class Analytics:
             252 * 1000,
         ]
         trailing_returns = list()
+
         for period in trailing_periods:
             try:
                 trailing_returns.append(
