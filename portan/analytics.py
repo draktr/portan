@@ -707,7 +707,7 @@ class Analytics:
         :type annual_rfr: float, optional
         :param periods: Number of periods taken into consideration.
                         For example, if data is daily one period is one day,
-                        defaults to 0
+                        defaults to 0 (all data)
         :type periods: int, optional
         :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
         :type benchmark: dict, optional
@@ -724,11 +724,11 @@ class Analytics:
             self._set_benchmark(**benchmark)
 
         rfr = self._rate_conversion(annual_rfr)
-        excess_returns = self.returns - rfr
-        excess_benchmark_returns = self.benchmark_returns - rfr
+        excess_returns = self.returns[-periods:] - rfr
+        excess_benchmark_returns = self.benchmark_returns[-periods:] - rfr
 
         model = LinearRegression().fit(
-            excess_benchmark_returns[-periods:], excess_returns[-periods:]
+            excess_benchmark_returns, excess_returns
         )
         alpha = model.intercept_[0]
         beta = model.coef_[0][0]
@@ -763,7 +763,7 @@ class Analytics:
         :type annual_rfr: float, optional
         :param periods: Number of periods taken into consideration.
                         For example, if data is daily one period is one day,
-                        defaults to 0
+                        defaults to 0 (all data)
         :type periods: int, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
@@ -786,8 +786,8 @@ class Analytics:
         capm = self.capm(annual_rfr, periods, benchmark)
 
         rfr = self._rate_conversion(annual_rfr)
-        excess_returns = self.returns - rfr
-        excess_benchmark_returns = self.benchmark_returns - rfr
+        excess_returns = self.returns[-periods:] - rfr
+        excess_benchmark_returns = self.benchmark_returns[-periods:] - rfr
 
         plt.style.use(style)
         plt.rcParams.update(**rcParams_update)
@@ -884,6 +884,7 @@ class Analytics:
     def capm_return(
         self,
         annual_rfr=0.03,
+        periods=0,
         annual=True,
         compounding=True,
         benchmark={
@@ -901,6 +902,10 @@ class Analytics:
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
         :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
@@ -911,7 +916,7 @@ class Analytics:
         :rtype: float
         """
 
-        capm = self.capm(annual_rfr, benchmark)
+        capm = self.capm(annual_rfr, periods, benchmark)
 
         if annual and compounding:
             mean = annual_rfr + capm[1] * (self.benchmark_geometric_mean - annual_rfr)
@@ -969,6 +974,7 @@ class Analytics:
     def tracking_error(
         self,
         annual=True,
+        periods=0,
         benchmark={
             "benchmark_tickers": None,
             "benchmark_prices": None,
@@ -984,6 +990,10 @@ class Analytics:
 
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
         :type benchmark: dict, optional
         :return: Tracking error
@@ -997,7 +1007,9 @@ class Analytics:
         if set_benchmark:
             self._set_benchmark(**benchmark)
 
-        tracking_error = np.std(self.returns - self.benchmark_returns.to_numpy())
+        tracking_error = np.std(
+            self.returns[-periods:] - self.benchmark_returns[-periods:].to_numpy()
+        )
 
         if annual:
             return tracking_error[0] * np.sqrt(self.frequency)
@@ -1006,6 +1018,7 @@ class Analytics:
 
     def information_ratio(
         self,
+        periods=0,
         annual=True,
         compounding=True,
         benchmark={
@@ -1021,6 +1034,10 @@ class Analytics:
         """
         Calculates information ratio
 
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
         :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
@@ -1032,7 +1049,7 @@ class Analytics:
         """
 
         excess_return = self.excess_benchmark(annual, compounding, benchmark)
-        tracking_error = self.tracking_error(annual, benchmark)
+        tracking_error = self.tracking_error(annual, periods, benchmark)
 
         information_ratio = excess_return / tracking_error
 
@@ -1149,6 +1166,7 @@ class Analytics:
     def jensen_alpha(
         self,
         annual_rfr=0.03,
+        periods=0,
         annual=True,
         compounding=True,
         benchmark={
@@ -1166,6 +1184,10 @@ class Analytics:
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
         :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
@@ -1180,29 +1202,42 @@ class Analytics:
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        capm = self.capm(annual_rfr, benchmark)
+        capm = self.capm(annual_rfr, periods, benchmark)
+        mean = self.returns[-periods:].mean()[0]
+        arithmetic_mean = self.returns[-periods:].mean()[0] * self.frequency
+        geometric_mean = (
+            (1 + self.returns[-periods:]).prod() ** (self.frequency / self.returns[-periods:].shape[0]) - 1
+        )[0]
+        benchmark_mean = self.benchmark_returns[-periods:].mean()[0]
+        benchmark_arithmetic_mean = self.benchmark_returns[-periods:].mean()[0] * self.frequency
+        benchmark_geometric_mean = (
+            (1 + self.benchmark_returns[-periods:]).prod()
+            ** (self.frequency / self.benchmark_returns[-periods:].shape[0])
+            - 1
+        )[0]
 
         if annual and compounding:
             jensen_alpha = (
-                self.geometric_mean
+                geometric_mean
                 - annual_rfr
-                - capm[1] * (self.benchmark_geometric_mean - annual_rfr)
+                - capm[1] * (benchmark_geometric_mean - annual_rfr)
             )
         elif annual and not compounding:
             jensen_alpha = (
-                self.arithmetic_mean
+                arithmetic_mean
                 - annual_rfr
-                - capm[1] * (self.benchmark_arithmetic_mean - annual_rfr)
+                - capm[1] * (benchmark_arithmetic_mean - annual_rfr)
             )
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            jensen_alpha = self.mean - rfr - capm[1] * (self.benchmark_mean - rfr)
+            jensen_alpha = mean - rfr - capm[1] * (benchmark_mean - rfr)
 
         return jensen_alpha
 
     def treynor(
         self,
         annual_rfr=0.03,
+        periods=0,
         annual=True,
         compounding=True,
         benchmark={
@@ -1220,6 +1255,10 @@ class Analytics:
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
         :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
@@ -1234,15 +1273,20 @@ class Analytics:
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        capm = self.capm(annual_rfr, benchmark)
+        capm = self.capm(annual_rfr, periods, benchmark)
+        mean = self.returns[-periods:].mean()[0]
+        arithmetic_mean = self.returns[-periods:].mean()[0] * self.frequency
+        geometric_mean = (
+            (1 + self.returns[-periods:]).prod() ** (self.frequency / self.returns[-periods:].shape[0]) - 1
+        )[0]
 
         if annual and compounding:
-            treynor_ratio = (self.geometric_mean - annual_rfr) / capm[1]
+            treynor_ratio = (geometric_mean - annual_rfr) / capm[1]
         elif annual and not compounding:
-            treynor_ratio = (self.arithmetic_mean - annual_rfr) / capm[1]
+            treynor_ratio = (arithmetic_mean - annual_rfr) / capm[1]
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            treynor_ratio = (self.mean - rfr) / capm[1]
+            treynor_ratio = (mean - rfr) / capm[1]
 
         return treynor_ratio
 
@@ -1353,13 +1397,13 @@ class Analytics:
         return gain_loss_ratio
 
     def calmar(
-        self, periods=0, inverse=True, annual_rfr=0.03, annual=True, compounding=True
+        self, mdd_periods=0, inverse=True, annual_rfr=0.03, annual=True, compounding=True
     ):
         """
         Calculates Calmar ratio
 
-        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
-        :type periods: int, optional
+        :param mdd_periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0 (all data)
+        :type mdd_periods: int, optional
         :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
         :type inverse: bool, optional
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
@@ -1376,7 +1420,7 @@ class Analytics:
             annual_rfr=annual_rfr, annual=annual, compounding=compounding
         )
 
-        maximum_drawdown = self.maximum_drawdown(periods=periods, inverse=inverse)
+        maximum_drawdown = self.maximum_drawdown(periods=mdd_periods, inverse=inverse)
 
         if annual and compounding:
             calmar_ratio = (self.geometric_mean - annual_rfr) / maximum_drawdown
@@ -1990,6 +2034,7 @@ class Analytics:
     def appraisal(
         self,
         annual_rfr=0.03,
+        periods=0,
         annual=True,
         compounding=True,
         benchmark={
@@ -2007,6 +2052,10 @@ class Analytics:
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
         :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
@@ -2017,7 +2066,7 @@ class Analytics:
         :rtype: float
         """
 
-        capm = self.capm(annual_rfr, benchmark)
+        capm = self.capm(annual_rfr, periods, benchmark)
 
         if annual and compounding:
             specific_risk = np.sqrt(
@@ -2025,7 +2074,7 @@ class Analytics:
             ) * np.sqrt(self.frequency)
 
             appraisal_ratio = (
-                self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+                self.jensen_alpha(annual_rfr, periods, annual, compounding) / specific_risk
             )
         elif annual and not compounding:
             specific_risk = np.sqrt(
@@ -2033,7 +2082,7 @@ class Analytics:
             ) * np.sqrt(self.frequency)
 
             appraisal_ratio = (
-                self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+                self.jensen_alpha(annual_rfr, periods, annual, compounding) / specific_risk
             )
         elif not annual:
             specific_risk = np.sqrt(
@@ -2041,7 +2090,7 @@ class Analytics:
             )
 
             appraisal_ratio = (
-                self.jensen_alpha(annual_rfr, annual, compounding) / specific_risk
+                self.jensen_alpha(annual_rfr, periods, annual, compounding) / specific_risk
             )
 
         return appraisal_ratio[0]
@@ -2275,6 +2324,7 @@ class Analytics:
     def diversification(
         self,
         annual_rfr=0.03,
+        periods=0,
         annual=True,
         compounding=True,
         benchmark={
@@ -2292,6 +2342,10 @@ class Analytics:
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
         :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
@@ -2307,28 +2361,39 @@ class Analytics:
         )
 
         fama_beta = self.fama_beta(benchmark)
-        capm = self.capm(annual_rfr, benchmark)
+        capm = self.capm(annual_rfr, periods, benchmark)
+        benchmark_mean = self.benchmark_returns[-periods:].mean()[0]
+        benchmark_arithmetic_mean = self.benchmark_returns[-periods:].mean()[0] * self.frequency
+        benchmark_geometric_mean = (
+            (1 + self.benchmark_returns[-periods:]).prod()
+            ** (self.frequency / self.benchmark_returns[-periods:].shape[0])
+            - 1
+        )[0]
 
         if annual and compounding:
             diversification = (fama_beta - capm[1]) * (
-                self.benchmark_geometric_mean - annual_rfr
+                benchmark_geometric_mean - annual_rfr
             )
         elif annual and not compounding:
             diversification = (fama_beta - capm[1]) * (
-                self.benchmark_arithmetic_mean - annual_rfr
+                benchmark_arithmetic_mean - annual_rfr
             )
         elif not annual:
             rfr = self._rate_conversion(annual_rfr)
-            diversification = (fama_beta - capm[1]) * (self.benchmark_mean - rfr)
+            diversification = (fama_beta - capm[1]) * (benchmark_mean - rfr)
 
         return diversification
 
-    def net_selectivity(self, annual_rfr=0.03, annual=True, compounding=True):
+    def net_selectivity(self, annual_rfr=0.03, periods=0, annual=True, compounding=True):
         """
         Calculates Net Selectivity
 
         :param annual_rfr: Annual Risk-free Rate (RFR), defaults to 0.03
         :type annual_rfr: float, optional
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
         :type annual: bool, optional
         :param compounding: If `annual=True`, specifies if returns should be compounded, defaults to True
@@ -2337,8 +2402,8 @@ class Analytics:
         :rtype: float
         """
 
-        jensen_alpha = self.jensen_alpha(annual_rfr, annual, compounding)
-        diversification = self.diversification(annual_rfr, annual, compounding)
+        jensen_alpha = self.jensen_alpha(annual_rfr, periods, annual, compounding)
+        diversification = self.diversification(annual_rfr, periods, annual, compounding)
 
         net_selectivity = jensen_alpha - diversification
 
@@ -2712,7 +2777,7 @@ class Analytics:
         """
         Calculates Maximum drawdown
 
-        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
+        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0 (all data)
         :type periods: int, optional
         :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
         :type inverse: bool, optional
@@ -2819,7 +2884,7 @@ class Analytics:
         annual_rfr=0.03,
         annual_excess=0.1,
         largest=0,
-        periods=0,
+        mdd_periods=0,
         inverse=True,
         annual=True,
         compounding=True,
@@ -2836,8 +2901,8 @@ class Analytics:
         :type annual_excess: float, optional
         :param largest: Number of largest drawdowns taken into consideration for the calculation, defaults to 0
         :type largest: int, optional
-        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
-        :type periods: int, optional
+        :param mdd_periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0 (all data)
+        :type mdd_periods: int, optional
         :param inverse: Whether to invert (i.e. make positive) average drawdown, defaults to True
         :type inverse: bool, optional
         :param annual: Whether to calculate the statistic on annual basis or data frequency basis, defaults to True
@@ -2855,7 +2920,7 @@ class Analytics:
         sterling = self.sterling(
             annual_rfr, annual_excess, largest, inverse, annual, compounding, original
         )
-        calmar = self.calmar(periods, inverse, annual_rfr, annual, compounding)
+        calmar = self.calmar(mdd_periods, inverse, annual_rfr, annual, compounding)
         burke = self.burke(
             annual_rfr,
             largest,
@@ -2965,15 +3030,15 @@ class Analytics:
         return downside_variance
 
     def summary_downside_risk(
-        self, annual_mar=0.03, periods=0, inverse=True, ci=0.95, frequency=1
+        self, annual_mar=0.03, mdd_periods=0, inverse=True, ci=0.95, frequency=1
     ):
         """
         Creates a table with downside risk analytics
 
         :param annual_mar: Annual Minimum Accepted Return (MAR), defaults to 0.03
         :type annual_mar: float, optional
-        :param periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0
-        :type periods: int, optional
+        :param mdd_periods: Number of periods taken into consideration for maximum drawdown calculation, defaults to 0 (all data)
+        :type mdd_periods: int, optional
         :param inverse: Whether to invert (i.e. make positive) maximum drawdown, defaults to True
         :type inverse: bool, optional
         :param ci: Confidence interval for VaR, defaults to 0.95
@@ -2987,7 +3052,7 @@ class Analytics:
         :rtype: pd.Series
         """
         downside_risk = self.downside_risk(annual_mar)
-        mdd = self.maximum_drawdown(periods, inverse)
+        mdd = self.maximum_drawdown(mdd_periods, inverse)
         historical_var = self.historical_var(ci, frequency)
         parametric_var = self.parametric_var(ci, frequency)
 
@@ -3013,24 +3078,120 @@ class Analytics:
 
         sector = np.empty(len(self.tickers), dtype="<U64")
         for i, ticker in enumerate(self.tickers):
-            sector[i] = self.assets_info[i]["sector"]
+            try:
+                sector[i] = self.assets_info[i]["sector"]
+            except:
+                sector[i] = np.nan
 
         return pd.Series(sector, index=self.tickers)
 
-    def iss_risk(self):
-        data = np.empty((self.tickers.shape[0], 5))
-        for i, ticker in enumerate(self.tickers):
-            data[i, 0] = self.assets_info[i]["auditRisk"]
-            data[i, 1] = self.assets_info[i]["boardRisk"]
-            data[i, 3] = self.assets_info[i]["compensationRisk"]
-            data[i, 2] = self.assets_info[i]["shareHolderRightsRisk"]
-            data[i, 4] = self.assets_info[i]["overallRisk"]
+    def sectors_allocation(self):
+        """
+        Returns allocation to sectors in the portfolio
 
-        return pd.DataFrame(
-            data,
-            index=self.tickers,
-            columns=["Audit", "Board", "Compensation", "Shareholder Rights", "Overall"],
+        :return: Sectors allocation
+        :rtype: pd.Series
+        """
+
+        sectors = self.sectors()
+        holdings = self.current_holdings(top=1000000)
+        holdings["Sector"] = sectors
+
+        return holdings.groupby("Sector")["Allocation (%)"].sum()
+
+    def plot_sectors_allocation(
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+    ):
+        """
+        Plots allocation to sectors pie chart
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot, defaults to False
+        :type save: bool, optional
+        """
+
+        _checks._check_plot_arguments(show=show, save=save)
+
+        allocation = self.sectors_allocation()
+
+        wp = {"linewidth": 1, "edgecolor": "black"}
+        explode = tuple(repeat(0.05, len(allocation.index)))
+
+        plt.style.use(style)
+        plt.rcParams.update(**rcParams_update)
+        fig, ax = plt.subplots(**fig_kw)
+        pie = ax.pie(
+            allocation,
+            autopct=lambda pct: self._ap(pct, allocation),
+            explode=explode,
+            labels=allocation.index,
+            shadow=True,
+            startangle=0,
+            wedgeprops=wp,
         )
+        ax.legend(
+            pie[0],
+            allocation.index,
+            title="Sectors Allocation",
+            loc="upper right",
+            bbox_to_anchor=(1.4, 1),
+        )
+        plt.setp(pie[2], size=9, weight="bold")
+
+        ax.set_title("Sectors Allocation")
+        if save:
+            plt.savefig(f"{self.name}_sectors_allocation")
+        if show:
+            plt.show()
+
+        return fig
+
+    def iss_risk(self):
+        """
+        Returns ISS risk ratings of the assets in the portfolio
+
+        :return: ISS risk ratings
+        :rtype: pd.DataFrame
+        """
+
+        data = pd.DataFrame(
+            [[None] * 5] * len(self.tickers),
+            index=self.tickers,
+            columns=["Audit", "Board", "Compensation", "Shareholders", "Overall"],
+        )
+
+        for i, ticker in enumerate(self.tickers):
+            try:
+                data.iloc[i, 0] = self.assets_info[i]["auditRisk"]
+            except:
+                data.iloc[i, 0] = np.nan
+            try:
+                data.iloc[i, 1] = self.assets_info[i]["boardRisk"]
+            except:
+                data.iloc[i, 1] = np.nan
+            try:
+                data.iloc[i, 2] = self.assets_info[i]["compensationRisk"]
+            except:
+                data.iloc[i, 2] = np.nan
+            try:
+                data.iloc[i, 3] = self.assets_info[i]["shareHolderRightsRisk"]
+            except:
+                data.iloc[i, 3] = np.nan
+            try:
+                data.iloc[i, 4] = self.assets_info[i]["overallRisk"]
+            except:
+                data.iloc[i, 4] = np.nan
+
+        return data
 
     def initial_holdings(self, top=10):
         """
@@ -3319,11 +3480,11 @@ class Analytics:
                 )
                 break
 
-        trailing_returns.insert(1, self.annual_returns().iloc[-1, -1])
+        trailing_returns.insert(1, self.annual_returns().iloc[-1])
 
         index = [
             "Quarter",
-            "Year-to-date",
+            "YTD",
             "1 Year",
             "3 Year",
             "5 Year",
@@ -3332,7 +3493,7 @@ class Analytics:
             "30 Year",
             "40 Year",
             "50 Year",
-        ][: len(trailing_returns) - 1] + ["Since Inception"]
+        ][: len(trailing_returns) - 1] + ["Incept."]
 
         return pd.Series(trailing_returns, index=index)
 
@@ -3401,11 +3562,11 @@ class Analytics:
                 )
                 break
 
-        trailing_returns.insert(1, self.benchmark_annual_returns().iloc[-1, -1])
+        trailing_returns.insert(1, self.benchmark_annual_returns().iloc[-1])
 
         index = [
             "Quarter",
-            "Year-to-date",
+            "YTD",
             "1 Year",
             "3 Year",
             "5 Year",
@@ -3414,6 +3575,6 @@ class Analytics:
             "30 Year",
             "40 Year",
             "50 Year",
-        ][: len(trailing_returns) - 1] + ["Since Inception"]
+        ][: len(trailing_returns) - 1] + ["Incept."]
 
         return pd.Series(trailing_returns, index=index)
