@@ -727,9 +727,7 @@ class Analytics:
         excess_returns = self.returns[-periods:] - rfr
         excess_benchmark_returns = self.benchmark_returns[-periods:] - rfr
 
-        model = LinearRegression().fit(
-            excess_benchmark_returns, excess_returns
-        )
+        model = LinearRegression().fit(excess_benchmark_returns, excess_returns)
         alpha = model.intercept_[0]
         beta = model.coef_[0][0]
         epsilon = excess_returns.to_numpy() - alpha - beta * excess_benchmark_returns
@@ -1206,10 +1204,14 @@ class Analytics:
         mean = self.returns[-periods:].mean()[0]
         arithmetic_mean = self.returns[-periods:].mean()[0] * self.frequency
         geometric_mean = (
-            (1 + self.returns[-periods:]).prod() ** (self.frequency / self.returns[-periods:].shape[0]) - 1
+            (1 + self.returns[-periods:]).prod()
+            ** (self.frequency / self.returns[-periods:].shape[0])
+            - 1
         )[0]
         benchmark_mean = self.benchmark_returns[-periods:].mean()[0]
-        benchmark_arithmetic_mean = self.benchmark_returns[-periods:].mean()[0] * self.frequency
+        benchmark_arithmetic_mean = (
+            self.benchmark_returns[-periods:].mean()[0] * self.frequency
+        )
         benchmark_geometric_mean = (
             (1 + self.benchmark_returns[-periods:]).prod()
             ** (self.frequency / self.benchmark_returns[-periods:].shape[0])
@@ -1277,7 +1279,9 @@ class Analytics:
         mean = self.returns[-periods:].mean()[0]
         arithmetic_mean = self.returns[-periods:].mean()[0] * self.frequency
         geometric_mean = (
-            (1 + self.returns[-periods:]).prod() ** (self.frequency / self.returns[-periods:].shape[0]) - 1
+            (1 + self.returns[-periods:]).prod()
+            ** (self.frequency / self.returns[-periods:].shape[0])
+            - 1
         )[0]
 
         if annual and compounding:
@@ -1397,7 +1401,12 @@ class Analytics:
         return gain_loss_ratio
 
     def calmar(
-        self, mdd_periods=0, inverse=True, annual_rfr=0.03, annual=True, compounding=True
+        self,
+        mdd_periods=0,
+        inverse=True,
+        annual_rfr=0.03,
+        annual=True,
+        compounding=True,
     ):
         """
         Calculates Calmar ratio
@@ -2074,7 +2083,8 @@ class Analytics:
             ) * np.sqrt(self.frequency)
 
             appraisal_ratio = (
-                self.jensen_alpha(annual_rfr, periods, annual, compounding) / specific_risk
+                self.jensen_alpha(annual_rfr, periods, annual, compounding)
+                / specific_risk
             )
         elif annual and not compounding:
             specific_risk = np.sqrt(
@@ -2082,7 +2092,8 @@ class Analytics:
             ) * np.sqrt(self.frequency)
 
             appraisal_ratio = (
-                self.jensen_alpha(annual_rfr, periods, annual, compounding) / specific_risk
+                self.jensen_alpha(annual_rfr, periods, annual, compounding)
+                / specific_risk
             )
         elif not annual:
             specific_risk = np.sqrt(
@@ -2090,7 +2101,8 @@ class Analytics:
             )
 
             appraisal_ratio = (
-                self.jensen_alpha(annual_rfr, periods, annual, compounding) / specific_risk
+                self.jensen_alpha(annual_rfr, periods, annual, compounding)
+                / specific_risk
             )
 
         return appraisal_ratio[0]
@@ -2363,7 +2375,9 @@ class Analytics:
         fama_beta = self.fama_beta(benchmark)
         capm = self.capm(annual_rfr, periods, benchmark)
         benchmark_mean = self.benchmark_returns[-periods:].mean()[0]
-        benchmark_arithmetic_mean = self.benchmark_returns[-periods:].mean()[0] * self.frequency
+        benchmark_arithmetic_mean = (
+            self.benchmark_returns[-periods:].mean()[0] * self.frequency
+        )
         benchmark_geometric_mean = (
             (1 + self.benchmark_returns[-periods:]).prod()
             ** (self.frequency / self.benchmark_returns[-periods:].shape[0])
@@ -2384,7 +2398,9 @@ class Analytics:
 
         return diversification
 
-    def net_selectivity(self, annual_rfr=0.03, periods=0, annual=True, compounding=True):
+    def net_selectivity(
+        self, annual_rfr=0.03, periods=0, annual=True, compounding=True
+    ):
         """
         Calculates Net Selectivity
 
@@ -3150,6 +3166,93 @@ class Analytics:
         ax.set_title("Sectors Allocation")
         if save:
             plt.savefig(f"{self.name}_sectors_allocation")
+        if show:
+            plt.show()
+
+        return fig
+
+    def countries(self):
+        """
+        Returns countries of the assets in the portfolio
+
+        :return: Countries of the assets
+        :rtype: pd.Series
+        """
+
+        countries = np.empty(len(self.tickers), dtype="<U64")
+        for i, ticker in enumerate(self.tickers):
+            try:
+                countries[i] = self.assets_info[i]["country"]
+            except:
+                countries[i] = np.nan
+
+        return pd.Series(countries, index=self.tickers)
+
+    def countries_allocation(self):
+        """
+        Returns allocation to countries in the portfolio
+
+        :return: Countries allocation
+        :rtype: pd.Series
+        """
+
+        countries = self.countries()
+        holdings = self.current_holdings(top=1000000)
+        holdings["Country"] = countries
+
+        return holdings.groupby("Country")["Allocation (%)"].sum()
+
+    def plot_countries_allocation(
+        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+    ):
+        """
+        Plots allocation to countries pie chart
+
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot, defaults to False
+        :type save: bool, optional
+        """
+
+        _checks._check_plot_arguments(show=show, save=save)
+
+        allocation = self.countries_allocation()
+
+        wp = {"linewidth": 1, "edgecolor": "black"}
+        explode = tuple(repeat(0.05, len(allocation.index)))
+
+        plt.style.use(style)
+        plt.rcParams.update(**rcParams_update)
+        fig, ax = plt.subplots(**fig_kw)
+        pie = ax.pie(
+            allocation,
+            autopct=lambda pct: self._ap(pct, allocation),
+            explode=explode,
+            labels=allocation.index,
+            shadow=True,
+            startangle=0,
+            wedgeprops=wp,
+        )
+        ax.legend(
+            pie[0],
+            allocation.index,
+            title="Countries Allocation",
+            loc="upper right",
+            bbox_to_anchor=(1.4, 1),
+        )
+        plt.setp(pie[2], size=9, weight="bold")
+
+        ax.set_title("Countries Allocation")
+        if save:
+            plt.savefig(f"{self.name}_countries_allocation")
         if show:
             plt.show()
 
