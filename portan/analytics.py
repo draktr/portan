@@ -3578,3 +3578,62 @@ class Analytics:
         ][: len(trailing_returns) - 1] + ["Incept."]
 
         return pd.Series(trailing_returns, index=index)
+
+    def std(self, periods=0, annual=False):
+        """
+        Calculates standard deviation of the portfolio returns for
+        the past `periods` number of periods
+
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
+        :param annual: Whether to annualize standard deviation, defaults to False
+        :type annual: bool, optional
+        :return: Standard deviation for given periods
+        :rtype: float
+        """
+
+        if annual is False:
+            return self.returns[-periods:].std()[0]
+        elif annual is True:
+            return self.returns[-periods:].std()[0] * np.sqrt(self.frequency)
+
+    def market_cap(self):
+        """
+        Returns market capitalization of the assets in the portfolio
+
+        :return: Market capitalizations
+        :rtype: pd.Series
+        """
+
+        market_cap = np.empty(len(self.tickers))
+        for i, ticker in enumerate(self.tickers):
+            try:
+                market_cap[i] = self.assets_info[i]["marketCap"]
+            except Exception:
+                market_cap[i] = np.nan
+                warnings.warn(
+                    f"Couldn't obtain market capitalization data from `yfinance` for ticker `{ticker}`, so value `np.nan` is assigned"
+                )
+
+        return pd.Series(
+            market_cap.tolist(), index=self.tickers, name="Market Capitalization"
+        )
+
+    def correlation_to_benchmark(self, periods=0):
+        """
+        Returns correlation between portfolio and benchmark returns
+
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
+        :return: Pearson correlation coeffiecient and corresponding p-value
+                 between portfolio and benchmark returns
+        :rtype: scipy.stats.PearsonRResult
+        """
+
+        return stats.pearsonr(
+            self.returns[-periods:], self.benchmark_returns[-periods:]
+        )
