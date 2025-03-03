@@ -643,11 +643,19 @@ class Analytics:
         return fig
 
     def plot_assets_cumulative_returns(
-        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+        self,
+        legend=True,
+        style=STYLE,
+        rcParams_update={},
+        show=True,
+        save=False,
+        **fig_kw,
     ):
         """
         Plots portfolio individual assets cumulative returns over time
 
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -673,7 +681,8 @@ class Analytics:
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative Return")
         ax.set_title("Assets Cumulative Returns")
-        ax.legend(labels=self.assets_names)
+        if legend:
+            ax.legend(labels=self.tickers)
         if save:
             plt.savefig(f"{self.name}_assets_cumulative_returns")
         if show:
@@ -739,6 +748,7 @@ class Analytics:
         self,
         annual_rfr=0.03,
         periods=0,
+        legend=True,
         style=STYLE,
         rcParams_update={},
         show=True,
@@ -763,6 +773,8 @@ class Analytics:
                         For example, if data is daily one period is one day,
                         defaults to 0 (all data)
         :type periods: int, optional
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -797,14 +809,15 @@ class Analytics:
             color="C0",
         )
         empty_patch = mpatches.Patch(color="none", visible=False)
-        ax.legend(
-            handles=[empty_patch, empty_patch],
-            labels=[
-                r"$\alpha$" + " = " + str(np.round(capm[0], 5)),
-                r"$\beta$" + " = " + str(np.round(capm[1], 5)),
-            ],
-            handlelength=-1,
-        )
+        if legend:
+            ax.legend(
+                handles=[empty_patch, empty_patch],
+                labels=[
+                    r"$\alpha$" + " = " + str(np.round(capm[0], 5)),
+                    r"$\beta$" + " = " + str(np.round(capm[1], 5)),
+                ],
+                handlelength=-1,
+            )
         ax.set_xlabel("Benchmark Excess Return")
         ax.set_ylabel("Portfolio Excess Return")
         ax.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
@@ -1591,6 +1604,7 @@ class Analytics:
         ci=0.95,
         frequency=1,
         plot_z=3,
+        legend=True,
         style=STYLE,
         rcParams_update={},
         show=True,
@@ -1610,6 +1624,8 @@ class Analytics:
         :param plot_z: Normal distribution z-value that specifies how much of the
                        distribution will be plotted, defaults to 3
         :type plot_z: int, optional
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -1645,12 +1661,13 @@ class Analytics:
         ax.fill_between(
             x[0:cutoff],
             pdf[0:cutoff],
-            facecolor="r",
+            facecolor="C2",
             label=f"Value-At-Risk (ci={ci})",
         )
-        ax.legend(
-            loc="upper right",
-        )
+        if legend:
+            ax.legend(
+                loc="upper right",
+            )
         ax.set_xlabel("Return")
         ax.set_ylabel("Density of Return")
         ax.set_title("Parametric VaR Plot")
@@ -1666,6 +1683,7 @@ class Analytics:
         ci=0.95,
         frequency=1,
         number_of_bins=100,
+        legend=True,
         style=STYLE,
         rcParams_update={},
         show=True,
@@ -1684,6 +1702,8 @@ class Analytics:
         :type frequency: int, optional
         :param number_of_bins: Number of histogram bins, defaults to 100
         :type number_of_bins: int, optional
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -1716,8 +1736,9 @@ class Analytics:
             bins,
             label="Historical Distribution",
         )
-        ax.axvline(x=var, ymin=0, color="r", label=f"Value-At-Risk Cutoff (ci={ci})")
-        ax.legend()
+        ax.axvline(x=var, ymin=0, color="C2", label=f"Value-At-Risk Cutoff (ci={ci})")
+        if legend:
+            ax.legend()
         ax.set_xlabel("Return")
         ax.set_ylabel("Frequency of Return")
         ax.set_title("Historical VaR Plot")
@@ -3116,11 +3137,19 @@ class Analytics:
         return holdings.groupby("Sector")["Allocation (%)"].sum()
 
     def plot_sectors_allocation(
-        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+        self,
+        legend=False,
+        style=STYLE,
+        rcParams_update={},
+        show=True,
+        save=False,
+        **fig_kw,
     ):
         """
         Plots allocation to sectors pie chart
 
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -3154,13 +3183,14 @@ class Analytics:
             startangle=0,
             wedgeprops=wp,
         )
-        ax.legend(
-            pie[0],
-            allocation.index,
-            title="Sectors Allocation",
-            loc="upper right",
-            bbox_to_anchor=(1.4, 1),
-        )
+        if legend:
+            ax.legend(
+                pie[0],
+                allocation.index,
+                title="Sectors Allocation",
+                loc="upper right",
+                bbox_to_anchor=(1.4, 1),
+            )
         plt.setp(pie[2], size=9, weight="bold")
 
         ax.set_title("Sectors Allocation")
@@ -3203,11 +3233,19 @@ class Analytics:
         return holdings.groupby("Country")["Allocation (%)"].sum()
 
     def plot_countries_allocation(
-        self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+        self,
+        legend=False,
+        style=STYLE,
+        rcParams_update={},
+        show=True,
+        save=False,
+        **fig_kw,
     ):
         """
         Plots allocation to countries pie chart
 
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -3241,13 +3279,14 @@ class Analytics:
             startangle=0,
             wedgeprops=wp,
         )
-        ax.legend(
-            pie[0],
-            allocation.index,
-            title="Countries Allocation",
-            loc="upper right",
-            bbox_to_anchor=(1.4, 1),
-        )
+        if legend:
+            ax.legend(
+                pie[0],
+                allocation.index,
+                title="Countries Allocation",
+                loc="upper right",
+                bbox_to_anchor=(1.4, 1),
+            )
         plt.setp(pie[2], size=9, weight="bold")
 
         ax.set_title("Countries Allocation")
@@ -3326,7 +3365,14 @@ class Analytics:
         )
 
     def plot_initial_holdings(
-        self, top=10, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+        self,
+        top=10,
+        legend=False,
+        style=STYLE,
+        rcParams_update={},
+        show=True,
+        save=False,
+        **fig_kw,
     ):
         """
         Plots portfolio assets pie chart
@@ -3334,6 +3380,8 @@ class Analytics:
         :param top: Number of largest holdings to be listed individually,
                     with others being grouped into "Others", defaults to 10
         :type top: int, optional
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -3375,13 +3423,14 @@ class Analytics:
             startangle=0,
             wedgeprops=wp,
         )
-        ax.legend(
-            pie[0],
-            allocation.index,
-            title="Portfolio Assets",
-            loc="upper right",
-            bbox_to_anchor=(1.4, 1),
-        )
+        if legend:
+            ax.legend(
+                pie[0],
+                allocation.index,
+                title="Portfolio Assets",
+                loc="upper right",
+                bbox_to_anchor=(1.4, 1),
+            )
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title(f"{self.name} Holdings")
         if save:
@@ -3421,7 +3470,14 @@ class Analytics:
         )
 
     def plot_current_holdings(
-        self, top=10, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+        self,
+        top=10,
+        legend=False,
+        style=STYLE,
+        rcParams_update={},
+        show=True,
+        save=False,
+        **fig_kw,
     ):
         """
         Plots portfolio current holdings pie chart
@@ -3429,6 +3485,8 @@ class Analytics:
         :param top: Number of largest holdings to be listed individually,
                     with others being grouped into "Others", defaults to 10
         :type top: int, optional
+        :param legend: Whether to draw a legend on the figure, defaults to False
+        :type legend: bool, optional
         :param style: `matplotlib` style to be used for plots. User can pass
                       built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
                       or a path to a custom style defined in a `.mplstyle` document,
@@ -3470,13 +3528,14 @@ class Analytics:
             startangle=0,
             wedgeprops=wp,
         )
-        ax.legend(
-            pie[0],
-            allocation.index,
-            title="Portfolio Assets",
-            loc="upper right",
-            bbox_to_anchor=(1.4, 1),
-        )
+        if legend:
+            ax.legend(
+                pie[0],
+                allocation.index,
+                title="Portfolio Assets",
+                loc="upper right",
+                bbox_to_anchor=(1.4, 1),
+            )
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title(f"{self.name} Current Holdings")
         if save:
