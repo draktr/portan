@@ -524,6 +524,7 @@ class Analytics:
         plt.rcParams.update(**rcParams_update)
         fig, ax = plt.subplots(**fig_kw)
         self.state[self.name].plot(ax=ax)
+        ax.fill_between(self.state.index, self.state[self.name], color="C1", alpha=0.3)
         ax.set_xlabel("Date")
         ax.set_ylabel("AUM")
         ax.set_title("Assets Under Management")
@@ -3168,7 +3169,7 @@ class Analytics:
 
         allocation = self.sectors_allocation()
 
-        wp = {"linewidth": 1, "edgecolor": "black"}
+        wp = {"linewidth": 1, "edgecolor": "C1"}
         explode = tuple(repeat(0.05, len(allocation.index)))
 
         plt.style.use(style)
@@ -3264,7 +3265,7 @@ class Analytics:
 
         allocation = self.countries_allocation()
 
-        wp = {"linewidth": 1, "edgecolor": "black"}
+        wp = {"linewidth": 1, "edgecolor": "C1"}
         explode = tuple(repeat(0.05, len(allocation.index)))
 
         plt.style.use(style)
@@ -3408,7 +3409,7 @@ class Analytics:
             )
         )
 
-        wp = {"linewidth": 1, "edgecolor": "black"}
+        wp = {"linewidth": 1, "edgecolor": "C1"}
         explode = tuple(repeat(0.05, len(allocation.index)))
 
         plt.style.use(style)
@@ -3513,7 +3514,7 @@ class Analytics:
             )
         )
 
-        wp = {"linewidth": 1, "edgecolor": "black"}
+        wp = {"linewidth": 1, "edgecolor": "C1"}
         explode = tuple(repeat(0.05, len(allocation.index)))
 
         plt.style.use(style)
@@ -3621,10 +3622,6 @@ class Analytics:
             252 * 3,
             252 * 5,
             252 * 10,
-            252 * 20,
-            252 * 30,
-            252 * 40,
-            252 * 50,
             252 * 1000,
         ]
         trailing_returns = list()
@@ -3651,10 +3648,6 @@ class Analytics:
             "3 Year",
             "5 Year",
             "10 Year",
-            "20 Year",
-            "30 Year",
-            "40 Year",
-            "50 Year",
         ][: len(trailing_returns) - 1] + ["Incept."]
 
         return pd.Series(trailing_returns, index=index)
@@ -3703,10 +3696,6 @@ class Analytics:
             252 * 3,
             252 * 5,
             252 * 10,
-            252 * 20,
-            252 * 30,
-            252 * 40,
-            252 * 50,
             252 * 1000,
         ]
         trailing_returns = list()
@@ -3733,10 +3722,6 @@ class Analytics:
             "3 Year",
             "5 Year",
             "10 Year",
-            "20 Year",
-            "30 Year",
-            "40 Year",
-            "50 Year",
         ][: len(trailing_returns) - 1] + ["Incept."]
 
         return pd.Series(trailing_returns, index=index)
