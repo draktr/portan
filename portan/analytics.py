@@ -811,6 +811,7 @@ class Analytics:
             ],
             handlelength=-1,
         )
+        ax.set_aspect("equal")
         ax.set_xlabel("Benchmark Excess Return")
         ax.set_ylabel("Portfolio Excess Return")
         ax.set_title("Portfolio Excess Returns Against Benchmark (CAPM)")
@@ -2726,6 +2727,19 @@ class Analytics:
 
         return down_percentage
 
+    def percentage_gain(self):
+        """
+        Calculates Percentage gain ratio
+
+        :return: Percentage gain ratio
+        :rtype: float
+        """
+
+        return (
+            self.returns[self.returns > 0].dropna().shape[0]
+            / self.benchmark_returns[self.benchmark_returns > 0].dropna().shape[0]
+        )
+
     def summary_up_down(
         self,
         benchmark={
@@ -3167,6 +3181,7 @@ class Analytics:
         )
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title("Sectors Allocation")
+        plt.tight_layout()
         if save:
             plt.savefig(f"{self.name}_sectors_allocation")
         if show:
@@ -3251,6 +3266,7 @@ class Analytics:
         )
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title("Countries Allocation")
+        plt.tight_layout()
         if save:
             plt.savefig(f"{self.name}_countries_allocation")
         if show:
@@ -3383,6 +3399,7 @@ class Analytics:
         )
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title(f"{self.name} Holdings")
+        plt.tight_layout()
         if save:
             plt.savefig(f"{self.name}_holdings")
         if show:
@@ -3477,6 +3494,7 @@ class Analytics:
         )
         plt.setp(pie[2], size=9, weight="bold")
         ax.set_title(f"{self.name} Current Holdings")
+        plt.tight_layout()
         if save:
             plt.savefig(f"{self.name}_current_holdings")
         if show:
