@@ -3744,3 +3744,62 @@ class Analytics:
         return stats.pearsonr(
             self.returns[-periods:], self.benchmark_returns[-periods:]
         )
+
+    def plot_annual_returns(
+        self, years=7, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+    ):
+        """
+        Plots assets under management (AUM) over time
+
+        :param years: Number of most recent years plotted, defaults to 7
+        :type years: int, optional
+        :param style: `matplotlib` style to be used for plots. User can pass
+                      built-in `matplotlib` style (e.g. `classic`, `fivethirtyeight`),
+                      or a path to a custom style defined in a `.mplstyle` document,
+                      defaults to STYLE (propriatery PortAn style)
+        :type style: str, optional
+        :param rcParams_update: `matplotlib.rcParams` to modify the style defined by
+                                `style` argument, defaults to {} (no modification)
+        :type rcParams_update: dict, optional
+        :param show: Whether to show the plot, defaults to True
+        :type show: bool, optional
+        :param save: Whether to save the plot, defaults to False
+        :type save: bool, optional
+        """
+
+        _checks._check_plot_arguments(show=show, save=save)
+
+        returns = self.annual_returns()[-years:]
+        benchmark_returns = self.benchmark_annual_returns()[-years:]
+        width = 0.4
+
+        plt.style.use(style)
+        plt.rcParams.update(**rcParams_update)
+        fig, ax = plt.subplots(**fig_kw)
+        ax.bar(
+            returns.index - width / 2,
+            returns,
+            width=width,
+            color="C0",
+            label=self.name,
+        )
+        ax.bar(
+            benchmark_returns.index + width / 2,
+            benchmark_returns,
+            width=width,
+            color="C1",
+            label=self.benchmark_name,
+        )
+        ax.axhline(0, color="#4A5256", linewidth=1.5)
+        ax.set_xticks(returns.index)
+        ax.set_xticklabels(returns.index)
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Return")
+        ax.set_title("Annual Returns")
+        plt.tight_layout()
+        if save:
+            plt.savefig("annual_returns_bar_chart")
+        if show:
+            plt.show()
+
+        return fig
