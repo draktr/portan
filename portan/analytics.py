@@ -2900,6 +2900,61 @@ class Analytics:
 
         return sorted_drawdowns
 
+    def drawdowns_table(self, top=5, by_depth=False):
+        """
+        Returns details of #`top` portfolio drawdowns by depth or duration
+
+        :param top: Number of largest drawdowns returned, defaults to 5
+        :type top: int, optional
+        :param by_depth: Whether to sort drawdowns by depth or duration, defaults to False
+        :type by_depth: bool, optional
+        :return: Table of largest drawdowns sorted
+        :rtype: pd.DataFrame
+        """
+
+        drawdowns = self.drawdowns()
+        drawdowns["Date"] = drawdowns.index
+        drawdowns.index = range(drawdowns.shape[0])
+        zero_indices = drawdowns[drawdowns[self.name] == 0].index
+
+        separated = [
+            drawdowns.iloc[start + 1 : end].reset_index(drop=True)
+            for start, end in zip(
+                [-1] + zero_indices.tolist(), zero_indices.tolist() + [len(drawdowns)]
+            )
+        ]
+
+        segments = list()
+        for i in range(len(separated)):
+            if len(separated[i]) != 0:
+                segments.append(separated[i])
+
+        table = pd.DataFrame(
+            index=range(len(segments)), columns=["Start", "End", "Depth", "Duration"]
+        )
+        for i in range(len(segments)):
+            table.iloc[i, 0] = segments[i].iloc[0, 1]
+            table.iloc[i, 1] = segments[i].iloc[-1, 1]
+            table.iloc[i, 2] = segments[i].iloc[:, 0].min()
+            table.iloc[i, 3] = segments[i].shape[0]
+
+        if by_depth is False:
+            return table.sort_values("Duration")[:top]
+        else:
+            return table.sort_values("Depth")[:top]
+
+    def average_duration(self):
+        """
+        Calculates average duration of all drawdowns in data periods
+
+        :return: Average duration of drawdowns
+        :rtype: float
+        """
+
+        table = self.drawdowns_table()
+
+        return table.iloc[:, 3].mean()
+
     def plot_drawdowns(
         self, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
     ):
