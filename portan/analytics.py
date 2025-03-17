@@ -516,6 +516,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -553,6 +555,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -589,6 +593,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -625,6 +631,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -666,6 +674,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -783,6 +793,8 @@ class Analytics:
         :type save: bool, optional
         :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
         :type benchmark: dict, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -1629,6 +1641,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         var = self.parametric_var(ci, frequency)
@@ -1703,6 +1717,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -1765,6 +1781,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -1890,6 +1908,8 @@ class Analytics:
         :param cov_kwargs: Keyword arguments for matrix calculation
                            methods, defaults to {}
         :type cov_kwargs: dict, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -1991,6 +2011,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         if returns is None:
@@ -2849,6 +2871,7 @@ class Analytics:
         _checks._check_booleans(inverse=inverse)
 
         drawdowns = self.drawdowns()
+        drawdowns = drawdowns[drawdowns[self.name] != 0]
         drawdowns = drawdowns.sort_values(by=self.name, ascending=False)[-largest:]
 
         if inverse:
@@ -2895,6 +2918,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -3158,6 +3183,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -3243,6 +3270,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -3368,6 +3397,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -3463,6 +3494,8 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
@@ -3671,7 +3704,7 @@ class Analytics:
                 )
                 break
 
-        trailing_returns.insert(1, self.benchmark_annual_returns().iloc[-1])
+        trailing_returns.insert(1, self.benchmark_annual_returns(benchmark).iloc[-1])
 
         index = [
             "Quarter",
@@ -3746,10 +3779,25 @@ class Analytics:
         )
 
     def plot_annual_returns(
-        self, years=7, style=STYLE, rcParams_update={}, show=True, save=False, **fig_kw
+        self,
+        years=7,
+        style=STYLE,
+        rcParams_update={},
+        show=True,
+        save=False,
+        benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },
+        **fig_kw,
     ):
         """
-        Plots assets under management (AUM) over time
+        Plots bar chart annual returns for portfolio and benchmark
 
         :param years: Number of most recent years plotted, defaults to 7
         :type years: int, optional
@@ -3765,12 +3813,16 @@ class Analytics:
         :type show: bool, optional
         :param save: Whether to save the plot, defaults to False
         :type save: bool, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Matplotlib figure object
+        :rtype: matplotlib.figure.Figure
         """
 
         _checks._check_plot_arguments(show=show, save=save)
 
         returns = self.annual_returns()[-years:]
-        benchmark_returns = self.benchmark_annual_returns()[-years:]
+        benchmark_returns = self.benchmark_annual_returns(benchmark)[-years:]
         width = 0.4
 
         plt.style.use(style)
