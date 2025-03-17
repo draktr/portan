@@ -3910,3 +3910,113 @@ class Analytics:
             plt.show()
 
         return fig
+
+    def bull_beta(
+        self,
+        periods=0,
+        benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },
+    ):
+        """
+        Calculates bull market CAPM beta
+
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Bull market CAPM beta
+        :rtype: float
+        """
+
+        set_benchmark = _checks._whether_to_set(
+            slf_benchmark_prices=self.benchmark_prices, **benchmark
+        )
+        if set_benchmark:
+            self._set_benchmark(**benchmark)
+
+        benchmark_returns = self.benchmark_returns[-periods:][
+            self.benchmark_returns > 0
+        ].dropna()
+        returns = self.returns[-periods:].loc[benchmark_returns.index].dropna()
+
+        model = LinearRegression().fit(benchmark_returns, returns)
+
+        return model.coef_[0][0]
+
+    def bear_beta(
+        self,
+        periods=0,
+        benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },
+    ):
+        """
+        Calculates bear market CAPM beta
+
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: Bear market CAPM beta
+        :rtype: float
+        """
+
+        set_benchmark = _checks._whether_to_set(
+            slf_benchmark_prices=self.benchmark_prices, **benchmark
+        )
+        if set_benchmark:
+            self._set_benchmark(**benchmark)
+
+        benchmark_returns = self.benchmark_returns[-periods:][
+            self.benchmark_returns <= 0
+        ].dropna()
+        returns = self.returns[-periods:].loc[benchmark_returns.index].dropna()
+
+        model = LinearRegression().fit(benchmark_returns, returns)
+
+        return model.coef_[0][0]
+
+    def beta_timing(
+        self,
+        periods=0,
+        benchmark={
+            "benchmark_tickers": None,
+            "benchmark_prices": None,
+            "benchmark_weights": None,
+            "benchmark_name": "Benchmark Portfolio",
+            "start": "1970-01-02",
+            "end": CURRENT_DATE,
+            "interval": "1d",
+        },
+    ):
+        """
+        Calculates CAPM beta timing ratio
+
+        :param periods: Number of periods taken into consideration.
+                        For example, if data is daily one period is one day,
+                        defaults to 0 (all data)
+        :type periods: int, optional
+        :param benchmark: Benchmark details that can be provided to set or reset (i.e. change) benchmark portfolio, defaults to { "benchmark_tickers": None, "benchmark_prices": None, "benchmark_weights": None, "benchmark_name": "Benchmark Portfolio", "start": "1970-01-02", "end": CURRENT_DATE, "interval": "1d", }
+        :type benchmark: dict, optional
+        :return: CAPM beta timing ratio
+        :rtype: float
+        """
+
+        return self.bull_beta(periods, benchmark) / self.bear_beta(periods, benchmark)
