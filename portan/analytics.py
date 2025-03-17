@@ -36,6 +36,8 @@ class Analytics:
         - `weights` - Assets weights
         - `assets_info` - Information about assets
         - `assets_names` - Assets names
+        - `currencies` - Currencies of the assets
+        - `exchange_rates` - Exchange rates of assets' currency to USD
         - `name` - Name of the portfolio
         - `initial_aum` - Initial Assets Under Management (AUM)
         - `frequency` - Data frequency, number of data observations in a year. Used for annualization.
@@ -57,6 +59,10 @@ class Analytics:
         - `final_aum` - AUM at the last point of the data period
         - `benchmark_prices` - Benchmark assets prices
         - `benchmark_weights` - Benchmark assets weights
+        - `benchmark_tickers` - Benchmark assets tickers
+        - `benchmark_assets_info` - Information about benchmark assets
+        - `benchmark_currencies` - Currencies of benchmark assets
+        - `benchmark_exchange_rates` - Exchange rates of benchmark assets' currency to USD
         - `benchmark_name` - Benchmark name
         - `benchmark_assets_returns` - Benchmark assets returns
         - `benchmark_returns` - Benchmark returns time-series
@@ -129,22 +135,34 @@ class Analytics:
         )
 
         self.prices = prices
-        self.assets_returns = self.prices.pct_change().drop(self.prices.index[0])
         self.tickers = self.prices.columns.tolist()
-        self.weights = pd.Series(weights, index=self.tickers)
         self.assets_info = np.empty(len(self.tickers), dtype=object)
         self.assets_names = np.empty(len(self.tickers), dtype="<U64")
+        self.currencies = np.empty(len(self.tickers), dtype="<U16")
+        self.exchange_rates = np.empty(len(self.tickers), dtype=float)
         for i, ticker in enumerate(self.tickers):
             try:
                 self.assets_info[i] = yf.Ticker(ticker).info
                 self.assets_names[i] = self.assets_info[i]["longName"]
+                self.currencies[i] = self.assets_info[i]["currency"]
+                if self.currencies[i] == "USD":
+                    self.exchange_rates[i] = 1
+                else:
+                    self.exchange_rates[i] = yf.Ticker(
+                        self.assets_info[i]["currency"] + "=X"
+                    ).history(period="1d")["Close"][0]
             except Exception:
                 self.assets_info[i] = ticker
                 self.assets_names[i] = ticker
+                self.currencies[i] = "USD"
+                self.exchange_rates[i] = 1
                 warnings.warn(
-                    f"Couldn't obtain `assets_info` and `assets_names` from `yfinance` for ticker `{ticker}`, so value `{ticker}` is assigned to those values for that assset. Use `_set_info_names()` to set `assets_info` and `assets_names` properties as desired"
+                    f"Couldn't obtain info from `yfinance` for `{ticker}`. Values `{ticker}`, `{ticker}, `'USD'`, and `1` is assigned to its `assets_info`, `assets_name`, `currencies`, and `exchange_rates` properties respectively. Use `_set_info()` to set `assets_info` and `assets_names` properties as desired"
                 )
         self.assets_names = self.assets_names.tolist()
+        self.prices = self.prices / self.exchange_rates
+        self.assets_returns = self.prices.pct_change().drop(self.prices.index[0])
+        self.weights = pd.Series(weights, index=self.tickers)
         self.name = name
         self.initial_aum = initial_aum
         self.frequency = frequency
@@ -208,7 +226,37 @@ class Analytics:
             self.benchmark_arithmetic_mean = None
             self.benchmark_geometric_mean = None
         elif benchmark_prices is not None and benchmark_weights is not None:
-            self.benchmark_prices = benchmark_prices
+            self.benchmark_tickers = benchmark_prices.columns.tolist()
+            self.benchmark_assets_info = np.empty(
+                len(self.benchmark_tickers), dtype=object
+            )
+            self.benchmark_currencies = np.empty(
+                len(self.benchmark_tickers), dtype="<U16"
+            )
+            self.benchmark_exchange_rates = np.empty(
+                len(self.benchmark_tickers), dtype=float
+            )
+            for i, ticker in enumerate(self.benchmark_tickers):
+                try:
+                    self.benchmark_assets_info[i] = yf.Ticker(ticker).info
+                    self.benchmark_currencies[i] = self.benchmark_assets_info[i][
+                        "currency"
+                    ]
+                    if self.benchmark_currencies[i] == "USD":
+                        self.benchmark_exchange_rates[i] = 1
+                    else:
+                        self.benchmark_exchange_rates[i] = yf.Ticker(
+                            self.benchmark_assets_info[i]["currency"] + "=X"
+                        ).history(period="1d")["Close"][0]
+                except Exception:
+                    self.benchmark_assets_info[i] = ticker
+                    self.benchmark_currencies[i] = "USD"
+                    self.benchmark_exchange_rates[i] = 1
+                    warnings.warn(
+                        f"Couldn't obtain info from `yfinance` for *benchmark asset* with ticker: `{ticker}`. Values `{ticker}`, `'USD'`, and `1` is assigned to its `benchmark_assets_info`, `currencies`, and `exchange_rates` properties respectively. Use `_set_benchmark_info()` to set `benchmark_assets_info`, `benchmark_currencies`, `benchmark_exchange_rates` properties as desired"
+                    )
+
+            self.benchmark_prices = benchmark_prices / self.benchmark_exchange_rates
             self.benchmark_weights = pd.Series(
                 benchmark_weights, index=self.benchmark_prices.columns
             )
@@ -266,7 +314,31 @@ class Analytics:
             interval,
         )
 
-        self.benchmark_prices = benchmark_prices
+        self.benchmark_tickers = self.benchmark_prices.columns.tolist()
+        self.benchmark_assets_info = np.empty(len(self.benchmark_tickers), dtype=object)
+        self.benchmark_currencies = np.empty(len(self.benchmark_tickers), dtype="<U16")
+        self.benchmark_exchange_rates = np.empty(
+            len(self.benchmark_tickers), dtype=float
+        )
+        for i, ticker in enumerate(self.benchmark_tickers):
+            try:
+                self.benchmark_assets_info[i] = yf.Ticker(ticker).info
+                self.benchmark_currencies[i] = self.assets_info[i]["currency"]
+                if self.benchmark_currencies[i] == "USD":
+                    self.benchmark_exchange_rates[i] = 1
+                else:
+                    self.benchmark_exchange_rates[i] = yf.Ticker(
+                        self.benchmark_assets_info[i]["currency"] + "=X"
+                    ).history(period="1d")["Close"][0]
+            except Exception:
+                self.benchmark_assets_info[i] = ticker
+                self.benchmark_currencies[i] = "USD"
+                self.benchmark_exchange_rates[i] = 1
+                warnings.warn(
+                    f"Couldn't obtain info from `yfinance` for *benchmark asset* with ticker: `{ticker}`. Values `{ticker}`, `'USD'`, and `1` is assigned to its `benchmark_assets_info`, `currencies`, and `exchange_rates` properties respectively. Use `_set_benchmark_info()` to set `benchmark_assets_info`, `benchmark_currencies`, `benchmark_exchange_rates` properties as desired"
+                )
+
+        self.benchmark_prices = benchmark_prices / self.benchmark_exchange_rates
         self.benchmark_weights = pd.Series(
             benchmark_weights, index=self.benchmark_prices.columns
         )
@@ -304,10 +376,54 @@ class Analytics:
             - 1
         )[0]
 
-    def _set_info_names(self, assets_info=None, assets_names=None):
-        print("(Re)setting `assets_info` and `assets_names` properties")
+    def _set_info(
+        self, assets_info=None, assets_names=None, currencies=None, exchange_rates=None
+    ):
+        print(
+            "(Re)setting `assets_info`, `assets_names`, `currencies` and `exchange_rates` properties"
+        )
         self.assets_info = assets_info
         self.assets_names = assets_names
+        self.currencies = currencies
+        self.exchange_rates = exchange_rates
+
+        print(
+            "Recalculating `self.prices` and other properties based on provided exchange rates"
+        )
+        self.prices = self.prices / self.exchange_rates
+        self.allocation_assets = pd.Series(
+            np.divide(self.allocation_funds, self.prices.iloc[0].T), index=self.tickers
+        )
+
+        self.state = pd.DataFrame(
+            np.multiply(self.prices, self.allocation_assets),
+            index=self.prices.index,
+            columns=self.tickers,
+        )
+        self.state[self.name] = self.state.sum(axis=1)
+
+        self.min_aum = self.state[self.name].min()
+        self.max_aum = self.state[self.name].max()
+        self.mean_aum = self.state[self.name].mean()
+        self.final_aum = self.state.iloc[-1, -1]
+
+    def _set_benchmark_info(
+        self,
+        benchmark_assets_info=None,
+        benchmark_currencies=None,
+        benchmark_exchange_rates=None,
+    ):
+        print(
+            "(Re)setting `benchmark_assets_info`, `benchmark_currencies` and `benchmark_exchange_rates` properties"
+        )
+        self.benchmark_assets_info = benchmark_assets_info
+        self.benchmark_currencies = benchmark_currencies
+        self.benchmark_exchange_rates = benchmark_exchange_rates
+
+        print(
+            "Recalculating `self.benchmark_prices` based on provided benchmark exchange rates"
+        )
+        self.benchmark_prices = self.benchmark_prices / self.benchmark_exchange_rates
 
     def _rate_conversion(self, annual_rate):
         return (annual_rate + 1) ** (1 / self.frequency) - 1
@@ -3810,6 +3926,11 @@ class Analytics:
                 market_cap[i] = np.nan
                 warnings.warn(
                     f"Couldn't obtain market capitalization data from `yfinance` for ticker `{ticker}`, so value `np.nan` is assigned"
+                )
+            if self.currencies[i] != "USD":
+                market_cap[i] = market_cap[i] / self.exchange_rates[i]
+                warnings.warn(
+                    f"Asset with ticker {self.tickers[i]} is denominated in a currency other than `USD`, so its market capitalization is converted to `USD`"
                 )
 
         return pd.Series(
